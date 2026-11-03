@@ -22,7 +22,9 @@ export type Command =
   | { verb: 'say'; to: string | null; text: string; volume?: keyof typeof HEARING }
   | { verb: 'wait'; seconds: number }
   | { verb: 'arrive' }
-  | { verb: 'go_home' };
+  | { verb: 'go_home' }
+  /** the Boss only: direct steering (m/s in plan axes); the crowd still keeps him out of walls and people */
+  | { verb: 'steer'; vx: number; vz: number };
 
 export type RejectCode = 'NOT_PRESENT' | 'OCCUPIED' | 'OUT_OF_REACH' | 'NO_PATH' | 'HANDS_FULL' | 'HANDS_EMPTY'
   | 'NOT_ALLOWED' | 'BUSY' | 'UNKNOWN_TARGET' | 'NO_SPACE' | 'OFFSITE' | 'OUT_OF_EARSHOT';
@@ -198,6 +200,16 @@ export class World {
     }
     if (b.state === 'offsite') return rej('OFFSITE', 'not in the office');
 
+    if (c.verb === 'steer') {
+      if (agentId !== 'boss') return rej('NOT_ALLOWED', 'only the Boss steers directly');
+      if (b.state === 'sitting') return rej('BUSY', 'sitting — stand up first');
+      if (!b.agent) return rej('OFFSITE', 'not in the office');
+      const sp = Math.hypot(c.vx, c.vz), max = 1.6, k = sp > max ? max / sp : 1;
+      this.cancel(b);
+      b.agent.requestMoveVelocity({ x: c.vx * k, y: 0, z: c.vz * k });
+      b.state = sp > 0.05 ? 'walking' : 'standing'; b.anim = sp > 0.05 ? 'walk' : 'idle';
+      return { ok: true, actionId: 0 };
+    }
     if (c.verb === 'say') {
       const vol = c.volume ?? 'normal';
       if (c.to) {

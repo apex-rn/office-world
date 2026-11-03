@@ -31,7 +31,54 @@ func _ready() -> void:
 	_furniture()
 	_camera()
 	_hud()
-	ws.connect_to_url(SERVER_URL)
+	var tok := ""
+	for f in ["user://boss.token", "res://boss.token"]:
+		if FileAccess.file_exists(f): tok = FileAccess.get_file_as_string(f).strip_edges(); break
+	url = SERVER_URL + ("?token=" + tok if tok != "" else "")
+	ws.connect_to_url(url)
+	_chat_box()
+
+# ---------------------------------------------------------------- the Boss: WASD walk, F enter/leave, Enter talk
+var url := SERVER_URL
+var steer_sent := Vector2.ZERO
+var steer_t := 0.0
+var chat: LineEdit
+
+func _send_boss(cmd: Dictionary) -> void:
+	if ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		ws.send_text(JSON.stringify({"t": "boss", "cmd": cmd}))
+
+func _boss_input(dt: float) -> void:
+	if chat.has_focus():
+		return
+	var v := Vector2(Input.get_axis("ui_left", "ui_right") + float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
+		Input.get_axis("ui_up", "ui_down") + float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
+	if v.length() > 1.0: v = v.normalized()
+	# camera-relative: "up" walks away from the camera
+	var fwd := Vector2(-sin(orbit.yaw), -cos(orbit.yaw)); var right := Vector2(-fwd.y, fwd.x)
+	var world_v := (right * v.x - fwd * v.y) * 1.4
+	steer_t += dt
+	if (world_v - steer_sent).length() > 0.05 or (world_v.length() > 0.05 and steer_t > 0.2):
+		_send_boss({"verb": "steer", "vx": world_v.x, "vz": world_v.y})
+		steer_sent = world_v; steer_t = 0.0
+	if people.has("boss") and people["boss"].state != "offsite" and follow_id == "":
+		orbit.target = orbit.target.lerp(people["boss"].node.position, clamp(dt * 4.0, 0, 1))
+
+func _chat_box() -> void:
+	var layer := CanvasLayer.new(); add_child(layer)
+	chat = LineEdit.new()
+	chat.placeholder_text = "Enter — eng yaqin xodimga gapiring (o'zbekcha)"
+	chat.position = Vector2(16, 1020); chat.size = Vector2(720, 40)
+	chat.text_submitted.connect(func(t: String):
+		var near := ""; var best := 6.0
+		if people.has("boss"):
+			for id in people:
+				if id == "boss" or people[id].state == "offsite": continue
+				var d: float = people[id].node.position.distance_to(people["boss"].node.position)
+				if d < best: best = d; near = id
+		_send_boss({"verb": "say", "to": near if near != "" else null, "text": t})
+		chat.text = ""; chat.release_focus())
+	layer.add_child(chat)
 
 # ---------------------------------------------------------------- look: light, sky, post
 func _environment() -> void:
@@ -275,7 +322,8 @@ func _process(dt: float) -> void:
 			if m.t == "snap": _apply_snap(m)
 			elif m.t == "event" and m.e.get("type", "") == "speech": _speech(m.e)
 	elif ws.get_ready_state() == WebSocketPeer.STATE_CLOSED:
-		ws.connect_to_url(SERVER_URL)
+		ws.connect_to_url(url)
+	_boss_input(dt)
 	var now := Time.get_ticks_msec() / 1000.0
 	for id in people:
 		var p: Dictionary = people[id]
@@ -292,7 +340,7 @@ func _process(dt: float) -> void:
 	if follow_id != "" and people.has(follow_id):
 		orbit.target = orbit.target.lerp(people[follow_id].node.position, clamp(dt * 3.0, 0, 1))
 	_update_camera()
-	hud.text = "Compound Chronicle HQ   ·   %s   ·   %d people   ·   drag: rotate · wheel: zoom · 1-9: follow · 0: free" % ["live" if ws.get_ready_state() == WebSocketPeer.STATE_OPEN else "connecting…", people.size()]
+	hud.text = "Compound Chronicle HQ   ·   %s   ·   %d people   ·   drag: rotate · wheel: zoom · 1-9: follow · 0: free" % ["live" if ws.get_ready_state() == WebSocketPeer.STATE_OPEN else "connecting…", people.size()] + "   ·   Boss: F kirish/chiqish · WASD yurish · Enter gapirish"
 
 # ---------------------------------------------------------------- camera + hud
 func _camera() -> void:
@@ -313,6 +361,11 @@ func _unhandled_input(e: InputEvent) -> void:
 	elif e is InputEventMouseButton and e.pressed:
 		if e.button_index == MOUSE_BUTTON_WHEEL_UP: orbit.dist = max(1.5, orbit.dist * 0.9)
 		elif e.button_index == MOUSE_BUTTON_WHEEL_DOWN: orbit.dist = min(60.0, orbit.dist * 1.1)
+	elif e is InputEventKey and e.pressed and e.keycode == KEY_F and not chat.has_focus():
+		var inside: bool = people.has("boss") and people["boss"].state != "offsite"
+		_send_boss({"verb": "go_home"} if inside else {"verb": "arrive"})
+	elif e is InputEventKey and e.pressed and e.keycode == KEY_ENTER and not chat.has_focus():
+		chat.grab_focus()
 	elif e is InputEventKey and e.pressed:
 		var k: int = e.keycode - KEY_0
 		if k == 0: follow_id = ""

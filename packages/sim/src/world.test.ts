@@ -72,3 +72,15 @@ test('12 bodies, 30 simulated minutes of random errands: no overlaps, nobody ins
   assert.equal(r.offMesh, 0);
   assert.ok(r.completed > 60, `completed ${r.completed} errands`);
 });
+
+test('the Boss steers directly and still cannot walk through walls', async () => {
+  const w = await world(['boss', 'leo']);
+  w.command('boss', { verb: 'arrive' });
+  const r = w.command('leo', { verb: 'steer', vx: 1, vz: 0 });
+  assert.ok(!r.ok && r.code === 'OFFSITE' || !r.ok);
+  const x0 = w.bodies.get('boss')!.pos.x;
+  for (let i = 0; i < 40; i++) { w.command('boss', { verb: 'steer', vx: 1.2, vz: 0 }); w.step(0.05); }
+  assert.ok(w.bodies.get('boss')!.pos.x > x0 + 1, 'he walks east');
+  for (let i = 0; i < 200; i++) { w.command('boss', { verb: 'steer', vx: -1.6, vz: 0 }); w.step(0.05); }
+  assert.ok(w.bodies.get('boss')!.pos.x > -0.3, 'he never leaves the building slab (the entrance door is right there)');
+});
