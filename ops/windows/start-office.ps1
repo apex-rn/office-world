@@ -7,9 +7,11 @@ param([ValidateSet('view', 'boss')][string]$Mode = 'view')
 $ErrorActionPreference = 'Stop'
 $cfgPath = Join-Path $env:USERPROFILE '.config\office\launch.json'
 $log = Join-Path $env:USERPROFILE '.config\office\launcher.log'
-function Say($m) { Add-Content -Path $log -Value ("{0:u} {1}" -f (Get-Date), $m) }
+function Say($m) { Add-Content -Path $log -Value ("{0:yyyy-MM-dd HH:mm:ss} {1}" -f (Get-Date), $m) }   # local time (the u format adds a false Z)
 function Fail($m) { Say "ERROR $m"; Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show($m, 'Office') | Out-Null; exit 1 }
 function PortOpen($port) { try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1', $port); $c.Close(); $true } catch { $false } }
+# the window is hidden: any unexpected error must reach the log and the Boss, not vanish
+trap { Fail "Kutilmagan xato: $_" }
 
 if (-not (Test-Path $cfgPath)) { Fail "launch.json topilmadi: $cfgPath. install-desktop.ps1 ni bir marta ishga tushiring." }
 $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
@@ -35,7 +37,13 @@ if (-not (PortOpen 8765)) {
   Push-Location $repo
   try { git pull --ff-only --quiet 2>&1 | Out-Null; Say 'git pull ok' } catch { Say "git pull skipped: $_" }
   # node_modules installed from WSL hold Linux binaries (esbuild): Windows needs its own once
-  if (-not (Test-Path (Join-Path $repo 'node_modules\@esbuild\win32-x64'))) { Say 'npm install (Windows binaries)'; npm install --no-audit --no-fund 2>&1 | Out-Null }
+  # through cmd: in Windows PowerShell 5.1 with ErrorActionPreference=Stop, npm's stderr warnings would
+  # abort this hidden script silently
+  if (-not (Test-Path (Join-Path $repo 'node_modules\@esbuild\win32-x64'))) {
+    Say 'npm install (Windows binaries)'
+    & cmd.exe /c "npm install --no-audit --no-fund >> `"$log`" 2>&1"
+    if ($LASTEXITCODE -ne 0) { Fail "npm install muvaffaqiyatsiz (log: $log)" }
+  }
   Pop-Location
   $data = Join-Path $env:USERPROFILE 'office-world-data'
   New-Item -ItemType Directory -Force -Path $data | Out-Null
