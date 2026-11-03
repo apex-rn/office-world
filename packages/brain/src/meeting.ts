@@ -31,15 +31,18 @@ function persona(m: Mind): string {
 /** One spoken turn. Reasoning models (gpt-oss) spend part of max_tokens thinking before they answer: give room,
  *  ask for brief thinking, and retry once if the answer came back empty (the meeting must never fall silent). */
 async function say(router: Router, m: Mind, prompt: string, now: number, maxTokens = 160, json = false): Promise<string> {
-  const r = router.pick('dialogue', now);
-  if ('deferred' in r) return '';
+  // the strong (dialogue) model first; if it errors or stays empty, the fast life model speaks instead —
+  // a meeting must never fall silent because one model name or provider is down
+  const routes = [router.pick('dialogue', now), router.pick('life', now)];
   const msgs: ChatMessage[] = [{ role: 'system', content: persona(m) }, { role: 'user', content: json ? prompt : `${prompt}\nReply with only the words you say out loud.` }];
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (const [k, r] of routes.entries()) {
+    if ('deferred' in r) continue;
     try {
-      const raw = await r.llm.chat(msgs, { model: r.model, maxTokens: maxTokens + 700 + attempt * 600, temperature: 0.7, reasoning: 'low' });
+      const raw = await r.llm.chat(msgs, { model: r.model, maxTokens: maxTokens + 700 + k * 600, temperature: 0.7, reasoning: 'low' });
       const text = json ? raw.trim() : clean(raw, m.me.name);
       if (text) return text;
-    } catch { /* retry once */ }
+      console.error(`meeting: ${m.me.id} got an empty reply from ${r.model}`);
+    } catch (e) { console.error(`meeting: ${m.me.id} via ${r.model} failed: ${(e as Error).message.slice(0, 200)}`); }
   }
   return '';
 }

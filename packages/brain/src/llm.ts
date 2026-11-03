@@ -7,6 +7,8 @@ export interface ChatOpts { model?: string; maxTokens?: number; temperature?: nu
 export interface LLM { chat(messages: ChatMessage[], opts?: ChatOpts): Promise<string> }
 
 export class OpenAICompatClient implements LLM {
+  /** every failed call is reported (the office log shows why someone stayed silent) */
+  onError?: (msg: string) => void;
   constructor(private baseUrl: string, private apiKey: string, private defaultModel = 'auto') {}
   async chat(messages: ChatMessage[], opts: ChatOpts = {}): Promise<string> {
     const r = await fetch(`${this.baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
@@ -21,7 +23,7 @@ export class OpenAICompatClient implements LLM {
       // a hung provider must not freeze a person: give up and let the retry / next thought handle it
       signal: AbortSignal.timeout(opts.timeoutMs ?? 20_000),
     });
-    if (!r.ok) throw new Error(`LLM ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    if (!r.ok) { const e = `LLM ${r.status} (${opts.model ?? this.defaultModel}): ${(await r.text()).slice(0, 200)}`; this.onError?.(e); throw new Error(e); }
     const j = await r.json() as { choices?: { message?: { content?: string } }[] };
     return j.choices?.[0]?.message?.content ?? '';
   }

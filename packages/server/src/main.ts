@@ -28,7 +28,12 @@ const STATE = join(DATA, 'state.json');
 
 const key = process.env.FREELLM_KEY ?? readFileSync(home(env('FREELLM_KEY_FILE', '~/.config/freellmapi/unified_key')), 'utf8').trim();
 const free = new OpenAICompatClient(env('FREELLM_URL', 'http://127.0.0.1:3001'), key, env('FAST_MODEL', 'claude-opus-4-5'));
-const router = new Router(free, null, { fast: env('FAST_MODEL', 'claude-opus-4-5'), strong: env('STRONG_MODEL', 'claude-opus-4-5') });
+free.onError = msg => console.error(`llm: ${msg}`);
+// bare "auto" is not a model (FreeLLM's safety classifier blocks it, providers 404 it): fall back to the fast model
+const fastModel = env('FAST_MODEL', 'claude-opus-4-5');
+const strongModel = (m => (m === 'auto' || !m ? fastModel : m))(env('STRONG_MODEL', fastModel));
+const router = new Router(free, null, { fast: fastModel, strong: strongModel });
+console.log(`models: fast=${fastModel} strong=${strongModel} via ${env('FREELLM_URL', 'http://127.0.0.1:3001')}`);
 const claudeDown = home(env('CLAUDE_DOWN_FILE', '~/office/claude_down_until'));
 
 // SIM_START_SEOUL=2026-11-04T10:00 starts the office clock at that Seoul time (demos at night); real time otherwise
