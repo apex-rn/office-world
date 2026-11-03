@@ -14,10 +14,12 @@
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
-    "recast-navigation": "0.43.1"
+    "recast-navigation": "0.43.1",
+    "ws": "8.18.3"
   },
   "devDependencies": {
     "@types/node": "22.18.12",
+    "@types/ws": "8.18.1",
     "three": "0.170.0",
     "tsx": "4.20.6",
     "typescript": "6.0.3"
