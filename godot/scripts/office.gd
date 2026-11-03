@@ -640,6 +640,8 @@ func _process(dt: float) -> void:
 		if p.bubble_until > 0 and now > p.bubble_until:
 			p.tag.text = id
 			p.bubble_until = 0.0
+		# names only for whoever is speaking or close by: twelve labels at once covered the whole view
+		p.tag.visible = p.bubble_until > 0 or cam.global_position.distance_to(n.position) < 5.0
 	_roll_chairs(dt)
 	for id in doors:
 		var want := 1.35 if door_open.get(id, false) else 0.0
