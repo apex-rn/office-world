@@ -5,6 +5,9 @@ import { type Identity, SHARED_WORLDVIEW } from './identity.js';
 import type { ChatMessage, Router } from './llm.js';
 import { MemoryStream } from './memory.js';
 import { nameOf, perceive } from './perception.js';
+import voiceData from '../data/voice_samples.json' with { type: 'json' };
+
+const VOICES = voiceData as Record<string, { en: string[]; uz: string[] }>;
 
 // One person's mind — WORLD_PLAN §11.3. Event-driven: it thinks only when something happens (an action finished,
 // someone spoke to them, a new card) or after a quiet spell — never on a fixed loop. The model returns one action
@@ -89,12 +92,21 @@ export class Mind {
       `You are ${p.name}, ${p.title} at Compound Chronicle. You live your own life in this office; you decide what your body does next.`,
       `Character: ${p.character} Values: ${p.values.join(', ')}.`,
       `Habits: ${p.habits.coffeePerDay} coffees a day${p.habits.smoker ? ', you smoke on the balcony' : ''}; snacks: ${p.habits.snacks}; ${p.habits.focusStyle}.`,
-      `How you speak: ${p.speech.rules.join(' ')} Examples: ${p.speech.samples.slice(0, 3).map(s => `"${s}"`).join(' ')}`,
+      `How you speak: ${p.speech.rules.join(' ')} Examples (vary, never copy): ${this.voiceExamples().map(s => `"${s}"`).join(' ')}`,
       ...SHARED_WORLDVIEW,
       `Your dreams: ${p.dreams.map(d => d.text).join(' / ')}`,
       'Never repeat the same thing twice in a row; vary what you do like a real person. Work hours 09:00-21:00.',
       ACTION_SCHEMA,
     ].join('\n');
+  }
+
+  /** A few different voice samples each time, so the person's tone is stable but their lines never repeat. */
+  private voiceExamples(): string[] {
+    const v = VOICES[this.me.id];
+    const pool = [...(v?.en ?? []), ...this.me.speech.samples.filter(s => !s.startsWith('Boss'))];
+    const out: string[] = [];
+    for (let i = 0; i < 4 && pool.length; i++) out.push(pool.splice((this.deps.world.now / 1000 + i * 7919) % pool.length | 0, 1)[0]!);
+    return out;
   }
 
   /** Think once and act. Returns the command issued (or null). */
