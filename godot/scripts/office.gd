@@ -624,9 +624,16 @@ func _speech(e: Dictionary) -> void:
 		return
 	var p: Dictionary = people[e.from]
 	var who: String = NAMES.get(e.from, e.from)
-	p.bubble.text = "%s: %s" % [who, e.text]
+	# bubbles stay readable: at most the two latest speakers, words cut short (the full line is in the log)
+	var words: String = e.text if e.text.length() <= 110 else e.text.substr(0, 107).strip_edges() + "…"
+	p.bubble.text = "%s: %s" % [who, words]
 	p.bubble.visible = true
-	p.bubble_until = Time.get_ticks_msec() / 1000.0 + clamp(e.text.length() * 0.07, 3.0, 9.0)
+	p.bubble_until = Time.get_ticks_msec() / 1000.0 + clamp(words.length() * 0.07, 3.0, 8.0)
+	p.spoke_at = Time.get_ticks_msec()
+	var talking: Array = people.values().filter(func(q): return q.bubble_until > 0)
+	talking.sort_custom(func(x, y): return x.get("spoke_at", 0) > y.get("spoke_at", 0))
+	for i in range(2, talking.size()):
+		talking[i].bubble.visible = false; talking[i].bubble_until = 0.0
 	_log_line(who, e.text)
 
 # ---------------------------------------------------------------- conversation log (bottom left, up to 1/4 of the screen)
