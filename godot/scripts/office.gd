@@ -33,7 +33,9 @@ var orbit := {"yaw": -0.6, "pitch": -0.75, "dist": 26.0, "target": Vector3(12, 0
 # eye-level view (V toggles): a person standing in the office, 1.68 m eye height
 var eye_mode := true
 var eye := {"pos": Vector3(3.0, 1.68, 14.5), "yaw": 2.4, "pitch": -0.05}
-var eye_locked := false     # a tool (screenshots, tours) places the eye itself: do not ride with the Boss
+var eye_locked := false
+var ceiling_parts := []    # slab + LED panels: hidden in the top-down (V) view, which they would block
+var ceiling_shown := true     # a tool (screenshots, tours) places the eye itself: do not ride with the Boss
 var follow_id := ""
 var hud: Label
 
@@ -83,13 +85,15 @@ func _boss_input(dt: float) -> void:
 	var v := Vector2(Input.get_axis("ui_left", "ui_right") + float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
 		Input.get_axis("ui_up", "ui_down") + float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 	if v.length() > 1.0: v = v.normalized()
-	# camera-relative: "up" walks away from the camera
-	var fwd := Vector2(-sin(orbit.yaw), -cos(orbit.yaw)); var right := Vector2(-fwd.y, fwd.x)
-	var world_v := (right * v.x - fwd * v.y) * 1.4
+	# camera-relative: W walks where the camera looks (the mouse look in first person, the orbit from above)
+	var look_yaw: float = eye.yaw if eye_mode else orbit.yaw
+	var fwd := Vector2(-sin(look_yaw), -cos(look_yaw)); var right := Vector2(-fwd.y, fwd.x)
+	var speed := 3.5 if Input.is_key_pressed(KEY_SHIFT) else 2.0   # brisk office walk; Shift to hurry
+	var world_v := (right * v.x - fwd * v.y) * speed
 	steer_t += dt
 	if eye_mode and not (people.has("boss") and people["boss"].state != "offsite"):
 		var f3 := Vector3(-sin(eye.yaw), 0, -cos(eye.yaw)); var r3 := Vector3(-f3.z, 0, f3.x)
-		eye.pos += (r3 * v.x - f3 * v.y) * 1.4 * dt
+		eye.pos += (r3 * v.x - f3 * v.y) * speed * dt
 		return
 	if (world_v - steer_sent).length() > 0.05 or (world_v.length() > 0.05 and steer_t > 0.2):
 		_send_boss({"verb": "steer", "vx": world_v.x, "vz": world_v.y})
@@ -654,6 +658,9 @@ func _camera() -> void:
 	_update_camera()
 
 func _update_camera() -> void:
+	if ceiling_shown != eye_mode:
+		ceiling_shown = eye_mode
+		for c in ceiling_parts: c.visible = eye_mode
 	if eye_mode:
 		if not eye_locked and people.has("boss") and people["boss"].state != "offsite":
 			eye.pos = people["boss"].node.position + Vector3(0, 1.82, 0)   # the Boss is 2.00 m tall
@@ -670,7 +677,7 @@ func _update_camera() -> void:
 func _ceiling() -> void:
 	var w: float = L.room.w; var d: float = L.room.d; var h: float = L.room.h
 	var ceil_m := _mat("ceiling", Color(0.96, 0.96, 0.95), 0.9)
-	_box(Vector3(w + 0.4, 0.05, d + 0.4), Vector3(w / 2, h + 0.025, d / 2), 0, ceil_m)
+	ceiling_parts.append(_box(Vector3(w + 0.4, 0.05, d + 0.4), Vector3(w / 2, h + 0.025, d / 2), 0, ceil_m))
 	# recessed 600x600 LED panels on a 2.4 m grid with real (baked) light sources
 	var panel := StandardMaterial3D.new()
 	panel.albedo_color = Color(1, 1, 1); panel.emission_enabled = true; panel.emission = Color(1.0, 0.97, 0.92); panel.emission_energy_multiplier = 3.0
@@ -678,7 +685,7 @@ func _ceiling() -> void:
 	while x < w:
 		var z := 1.2
 		while z < d:
-			_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel)
+			ceiling_parts.append(_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel))
 			var l := OmniLight3D.new()
 			l.position = Vector3(x, h - 0.15, z); l.omni_range = 5.0; l.light_energy = 1.1; l.light_color = Color(1.0, 0.97, 0.93)
 			l.light_bake_mode = Light3D.BAKE_STATIC; l.shadow_enabled = false
