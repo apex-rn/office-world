@@ -441,7 +441,7 @@ Taxmin: 20–30 Pro limit oynasi (bonus va tejash vositalari bilan kamroq). Har 
 
 **Biznes maqsadlari (ofisning bosh vazifasi)**
 - Ofis Compound Chronicle'ning **YouTube va Instagram** hisoblarini to'liq boshqaradi (avvalgi versiya faqat YouTube uchun qurilgan edi).
-- **31-yanvar 2027 gacha:**
+- **Muddat 31-yanvar 2027 gacha (kechi bilan shu kungacha):**
   - YouTube: monetizatsiya (YPP shartlari: 1 000 obunachi + 12 oyda 4 000 soat ko'rish YOKI 90 kunda 10M Shorts ko'rishi);
   - Instagram: 5 000+ obunachi va kamida 5 ta 1M+ ko'rishli kontent.
 - Har bir xodim o'z ishida eng zo'ri bo'lishga intiladi va tajriba to'playdi (§11.2 saboqlar).
@@ -457,4 +457,14 @@ Taxmin: 20–30 Pro limit oynasi (bonus va tejash vositalari bilan kamroq). Har 
 - **Yaqinlik** faqat ofisdan tashqarida bo'ladi (dunyo — faqat ofis); ofisda emas, xodimning xotirasida aks etadi.
 - **FreeLLM:** Contabo hozircha olinmaydi. Miya provayderdan mustaqil yoziladi (OpenAI-mos endpoint). Real sinov Vultr serverida, egasining kompyuteridagi sessiya orqali o'tkaziladi.
 - **Boss personaji:** erkak, bo'yi 2.00 m, vazni 100 kg, endomorf tana tuzilishi, juda keng yelkalar, juda kuchli va chiniqqan mushaklar, massiv gavda. Yuzida chandiqlar bor, "sigma" yuz ifodasi, oqish teri, juda chiroyli. Sochi orqaga taralgan, kaltaroq. Hamma uni "Boss" deb ataydi va 45° egilib salomlashadi.
+
+## 27. Boss qarorlari v1.3 (2026-11-03)
+- Maqsad muddati **31-yanvar 2027 gacha** (o'sha kundan kechikmasdan).
+- Xodimlarga singdiriladi:
+  - ular shu sharafli ish uchun tanlab olingan, dunyodagi eng aqlli odamlar (IQ ~500, hammasi bir darajada);
+  - chiroyli va did bilan kiyingan, hashamatli ofisda ishlaydi.
+- **Dangasalik va aldov yo'q.** Tekshiruv QA va haqiqiy metrikalar orqali bo'ladi (§11.2). Xatoni o'zi erta aytgan xodim hurmat qilinadi (§13 halollik qoidasi).
+- **Maosh** — Viktor (Office Keeper) har oyning 25-sanasida ofis seyfidan qo'lma-qo'l beradi. Seyfga har oyning 25-sanasida pul o'zi paydo bo'ladi (ichki valyuta, USD).
+- **Xodim almashtirilganda:** Manager yangi xodim oladi. Yangi xodimga eski xodimning ish saboqlari (playbook, ish bilimi) beriladi. Qolganlar uni yangi odam deb biladi.
+- **Kutilmoqda (Boss qarori):** Viktor'ning qurolli qo'riqchiligi va qoida buzilganda nima qilinishi — §28 da belgilanadi.
 
