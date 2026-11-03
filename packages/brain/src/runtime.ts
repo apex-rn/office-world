@@ -28,6 +28,8 @@ export class OfficeRuntime {
   readonly social: SocialEvent[] = [];
   /** failed thoughts (model errors, unusable replies) for logs */
   thoughts = 0;
+  /** every world event after the minds heard it (speech, greetings, arrivals, action results), e.g. for the live stream */
+  onEvent?: (e: WorldEvent) => void;
   readonly diagnostics: { t: number; who: string; reason: string }[] = [];
   private greetedToday = new Set<string>();
   private day = '';
@@ -73,7 +75,7 @@ export class OfficeRuntime {
     w.step(dt);
     const t = seoulTime(w.now);
     if (t.date !== this.day) this.planDay(t.date);
-    for (const e of w.drainEvents()) this.route(e);
+    for (const e of w.drainEvents()) { this.route(e); this.onEvent?.(e); }
 
     const plan = this.plan!;
     const now = t.minuteOfDay;

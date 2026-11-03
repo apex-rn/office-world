@@ -61,6 +61,8 @@ function save(): void {
 // ---- stream for renderers ----
 const tokenFile = home(env('BOSS_TOKEN_FILE', join(DATA, 'boss.token')));
 const stream = startStream(rt, { port: Number(env('PORT', '8765')), hz: 10, bossToken: existsSync(tokenFile) ? readFileSync(tokenFile, 'utf8').trim() : undefined });
+// world events (speech, greetings, arrivals, action results) to the renderers; 'yield' is per-tick noise
+rt.onEvent = e => { if (e.type !== 'yield') stream.broadcastEvent(e); };
 
 // ---- world clock: real time ----
 setInterval(() => rt.step(0.05), 50);
