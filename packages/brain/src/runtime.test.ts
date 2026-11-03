@@ -48,3 +48,13 @@ test('the morning meeting gathers everyone in the meeting room', async () => {
   const z = w.layout.zones.find(z => z.id === 'meeting')!;
   for (const id of ['manager', 'writer', 'facts']) assert.ok(pointInPolygon(w.bodies.get(id)!.pos, z.poly), `${id} is in the meeting room`);
 });
+
+test('the Boss walks in: staff bow 45° and notice him', async () => {
+  const { w, rt, run } = await small(Date.UTC(2026, 10, 4, 1, 30), ['guard', 'writer']); // 10:30 Seoul
+  await run(120);
+  assert.ok(w.command('boss', { verb: 'arrive' }).ok);
+  w.command('boss', { verb: 'go_to', target: 'writer' });
+  await run(60);
+  const toBoss = rt.social.filter(s => s.to === 'boss');
+  assert.ok(toBoss.length > 0 && toBoss.every(s => s.bowDeg === 45), 'everyone bows 45° to the Boss');
+});

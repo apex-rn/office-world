@@ -16,7 +16,7 @@ import { pointInPolygon } from '../../shared/src/math.js';
 export type SocialEvent =
   | { t: number; type: 'greet'; from: string; to: string; bowDeg: 15 | 30 | 45; handshake: boolean };
 
-export interface RuntimeOpts { maxConcurrentThoughts?: number; seed?: number; staff?: Identity[] }
+export interface RuntimeOpts { maxConcurrentThoughts?: number; seed?: number; staff?: Identity[]; /** add the Boss's body (driven by the Boss, never by a model) */ boss?: boolean }
 
 export class OfficeRuntime {
   readonly minds = new Map<string, Mind>();
@@ -38,6 +38,7 @@ export class OfficeRuntime {
   constructor(readonly world: World, readonly router: Router, opts: RuntimeOpts = {}) {
     this.maxConcurrent = opts.maxConcurrentThoughts ?? 3;
     this.rand = rng(opts.seed ?? 1);
+    if (opts.boss ?? true) world.addBody({ id: BOSS.id, name: 'Boss', heightM: 2.0, walkSpeed: 1.4 });
     for (const p of opts.staff ?? STAFF) {
       world.addBody({ id: p.id, name: p.name, heightM: p.heightM, walkSpeed: 1.25 + 0.1 * p.bigFive.conscientiousness });
       const mind = new Mind(p, { world, router });
