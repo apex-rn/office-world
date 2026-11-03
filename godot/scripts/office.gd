@@ -449,6 +449,9 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 		anim_name = state
 	elif state == "walking" and p.get("still", 0.0) > 0.4:
 		anim_name = "standing"
+	# the housekeeper is never seen frozen: between errands she stands wiping the surface in front of her
+	if p.get("cleaner", false) and anim_name in ["idle", "standing", "wait_queue"] and state == "standing":
+		anim_name = "work_standing"
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
 		# 0.3 s blend between poses; sitting down / standing up eases over 0.6 s so the body lowers instead of popping
@@ -488,6 +491,7 @@ func _apply_snap(s: Dictionary) -> void:
 	for b in s.bodies:
 		if not people.has(b.id):
 			people[b.id] = _person(b.id)
+			people[b.id].cleaner = b.id == "cleaner"
 		var p: Dictionary = people[b.id]
 		# the root stays on the floor: the seated clip itself puts the pelvis on the seat (no double lift)
 		p.pos = Vector3(b.x, 0.0, b.z)
@@ -523,7 +527,7 @@ func _add_screen(i: Dictionary, node: Node3D) -> void:
 	var box := _aabb(node, node.transform.affine_inverse())
 	var sz: Vector2; var cy: float
 	match String(i.def):
-		"monitor_24": sz = Vector2(i.w - 0.016, 0.30); cy = i.h - 0.159   # = the glass of monitor_24.glb (furnish.py)
+		"monitor_24": sz = Vector2(i.w - 0.006, 0.312); cy = i.h - 0.159   # = the glass of monitor_24.glb (furnish.py)
 		"tv_65": sz = Vector2(i.w - 0.03, i.h - 0.03); cy = i.h / 2
 		_: sz = Vector2(i.w - 0.08, i.h - 0.12); cy = i.h / 2 + 0.03
 	var panel := MeshInstance3D.new()
@@ -571,6 +575,9 @@ func _update_screens(snap: Dictionary) -> void:
 			if on:
 				var c := _card_of(sc.owner)
 				text = "%s\n\n%s" % [APP.get(sc.owner, "Workspace"), ("▶ " + String(c.title) + "  [" + String(c.status) + "]") if not c.is_empty() else "Inbox — no open card"]
+			else:
+				# an empty desk shows its lock screen, not a dead black glass beside a lit one
+				text = "\n\n      %s\n      Locked" % NAMES.get(sc.owner, sc.owner.capitalize())
 		elif sc.def == "tv_65":
 			on = true
 			if act.begins_with("meeting:"):
@@ -585,8 +592,10 @@ func _update_screens(snap: Dictionary) -> void:
 		if text == sc.last: continue
 		sc.last = text
 		sc.label.text = text
-		sc.mat.emission = Color(0.1, 0.13, 0.2) if on else Color(0, 0, 0)
-		sc.mat.emission_energy_multiplier = 0.6 if on else 0.0
+		var lock: bool = not on and sc.def == "monitor_24"
+		sc.mat.emission = Color(0.1, 0.13, 0.2) if on else (Color(0.07, 0.09, 0.16) if lock else Color(0, 0, 0))
+		sc.mat.emission_energy_multiplier = 0.6 if on or lock else 0.0
+		sc.label.modulate.a = 0.55 if lock else 1.0
 
 func _write_whiteboard(e: Dictionary) -> void:
 	# after a meeting the Manager's decisions stay written on the meeting-room whiteboard
