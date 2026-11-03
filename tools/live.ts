@@ -20,16 +20,17 @@ const rt = new OfficeRuntime(w, router, { maxConcurrentThoughts: Number(process.
 const write = (o: object) => appendFileSync(log, JSON.stringify(o) + '\n');
 const origDrain = w.drainEvents.bind(w);
 w.drainEvents = () => { const ev = origDrain(); for (const e of ev) if (e.type !== 'yield') write(e); return ev; };
-let seenSocial = 0;
+let seenSocial = 0, seenDiag = 0;
 
 const dt = 0.05, end = Date.now() + Number(minutes) * 60_000 / Number(speed);
 const tick = setInterval(() => {
   for (let k = 0; k < Number(speed); k++) rt.step(dt);
   for (; seenSocial < rt.social.length; seenSocial++) write(rt.social[seenSocial]!);
+  for (; seenDiag < rt.diagnostics.length; seenDiag++) { const d = rt.diagnostics[seenDiag]!; write({ type: 'think_failed', ...d }); }
   if (Date.now() > end) {
     clearInterval(tick);
     const people = [...w.bodies.values()].map(b => `${b.spec.name}: ${b.state}${b.active ? ` (${b.active.verb})` : ''}`);
-    console.log(`done. activity=${rt.activity}\n${people.join('\n')}\nlog: ${log}`);
+    console.log(`done. activity=${rt.activity} thoughts=${rt.thoughts} failed=${rt.diagnostics.length}\n${rt.diagnostics.slice(-3).map(d => `  ${d.who}: ${d.reason}`).join('\n')}\n${people.join('\n')}\nlog: ${log}`);
     process.exit(0);
   }
 }, dt * 1000);

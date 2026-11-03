@@ -21,6 +21,9 @@ export interface RuntimeOpts { maxConcurrentThoughts?: number; seed?: number; st
 export class OfficeRuntime {
   readonly minds = new Map<string, Mind>();
   readonly social: SocialEvent[] = [];
+  /** failed thoughts (model errors, unusable replies) for logs */
+  thoughts = 0;
+  readonly diagnostics: { t: number; who: string; reason: string }[] = [];
   private greetedToday = new Set<string>();
   private day = '';
   private inFlight = 0;
@@ -37,7 +40,9 @@ export class OfficeRuntime {
     this.rand = rng(opts.seed ?? 1);
     for (const p of opts.staff ?? STAFF) {
       world.addBody({ id: p.id, name: p.name, heightM: p.heightM, walkSpeed: 1.25 + 0.1 * p.bigFive.conscientiousness });
-      this.minds.set(p.id, new Mind(p, { world, router }));
+      const mind = new Mind(p, { world, router });
+      mind.onThinkError = reason => { this.diagnostics.push({ t: world.now, who: p.id, reason }); if (this.diagnostics.length > 500) this.diagnostics.shift(); };
+      this.minds.set(p.id, mind);
     }
   }
 
@@ -105,7 +110,7 @@ export class OfficeRuntime {
       }
       if (now >= leave && b.state === 'sitting' && !b.active) { w.command(id, { verb: 'stand' }); continue; }
       if (this.inFlight < this.maxConcurrent && m.shouldThink()) {
-        this.inFlight++;
+        this.inFlight++; this.thoughts++;
         m.think(this.cardOf.get(id)).catch(() => null).finally(() => { this.inFlight--; });
       }
     }

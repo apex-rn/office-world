@@ -31,6 +31,8 @@ export class Mind {
   /** someone spoke to me: worth interrupting what my body is doing */
   private addressed = false;
   thinking = false;
+  /** diagnostics hook: called with a short reason when a thought fails (model error or unusable reply) */
+  onThinkError?: (reason: string) => void;
 
   constructor(readonly me: Identity, private deps: MindDeps, memory?: MemoryStream) {
     this.memory = memory ?? new MemoryStream();
@@ -125,7 +127,13 @@ export class Mind {
       const route = this.deps.router.pick('life', w.now);
       if ('deferred' in route) return null;
       let raw = '';
-      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 300 }); } catch { raw = ''; }
+      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 300 }); }
+      catch (e1) {
+        // some providers reject response_format: retry once in plain mode, then report the failure
+        try { raw = await route.llm.chat(messages, { model: route.model, maxTokens: 300 }); }
+        catch (e2) { raw = ''; this.onThinkError?.(`${(e1 as Error).message} | retry: ${(e2 as Error).message}`); }
+      }
+      if (raw && !parseDecision(raw)) this.onThinkError?.(`unparseable reply: ${raw.slice(0, 160)}`);
       const parsed = parseDecision(raw);
       if (!parsed) { const c: Command = { verb: 'wait', seconds: 30 }; w.command(this.me.id, c); return c; }
       const res = w.command(this.me.id, parsed.command);
