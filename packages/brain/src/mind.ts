@@ -79,6 +79,9 @@ export class Mind {
     }
   }
 
+  /** Something I notice about the day (a meeting soon, a party): taken into my next thought. */
+  notice(text: string): void { this.cue = this.cue ? `${this.cue}\n${text}` : text; this.pendingWake = true; }
+
   /** A colleague bowed to me / I bowed to someone: real people say something with the bow (first thing next thought). */
   greeted(other: string, theyGreetedMe: boolean, t: number): void {
     this.cue = theyGreetedMe ? `${nameOf(other)} (${other}) just bowed to me in greeting — I greet them back out loud (use "say" with "to": "${other}").`

@@ -6,6 +6,7 @@ import type { Router } from './llm.js';
 import { type BoardChange, type Card, ErrandRunner, diffBoard, errandsFor } from './board.js';
 import { type DayPlan, dayPlan } from './calendar.js';
 import { Mind } from './mind.js';
+import { urgency } from './needs.js';
 import { Society } from './social.js';
 import { pointInPolygon } from '../../shared/src/math.js';
 
@@ -40,6 +41,7 @@ export class OfficeRuntime {
   plan: DayPlan | null = null;
   private inFlightIds = new Set<string>();
   private coatTaken = new Set<string>();
+  private noticed = '';
   readonly frictions = new Map<string, { what: string; why: string; n: number; who: Set<string> }>();
   /** the day's most common frictions, for the evening review and the improvement list */
   topFrictions(k = 8): { what: string; why: string; n: number; who: string[] }[] {
@@ -97,6 +99,12 @@ export class OfficeRuntime {
     const party = plan.events.find(e =>
       (e.kind === 'birthday' && now >= e.surpriseAt && now < e.partyEnd) ||
       ((e.kind === 'anniversary' || e.kind === 'new_year') && now >= e.partyStart && now < e.partyEnd));
+    // ~12 minutes before a meeting everyone knows it is coming (real people go to the toilet or grab a coffee first)
+    for (const e of plan.events) if (e.kind === 'meeting' && now === e.start - 12 && this.noticed !== `${t.date}:${e.type}`) {
+      this.noticed = `${t.date}:${e.type}`;
+      const hh = `${String(Math.floor(e.start / 60)).padStart(2, '0')}:${String(e.start % 60).padStart(2, '0')}`;
+      for (const m of this.minds.values()) if (w.present(m.me.id)) m.notice(`The ${e.type.replace('_', ' ')} meeting starts at ${hh} (in 12 minutes): if I need the toilet, water or a coffee, now is the time.`);
+    }
     this.activity = meeting ? `meeting:${meeting.kind === 'meeting' ? meeting.type : ''}` : party ? `party:${party.kind}` : 'work';
     for (const m of this.minds.values()) {
       const id = m.me.id, b = w.bodies.get(id)!;
@@ -115,6 +123,9 @@ export class OfficeRuntime {
         if (meeting && !seatedHere && !goingToSeat) {
           // everyone sits at the table: the Manager at the head, the others in the nearest seat nobody has taken
           // (slotTaken is set the moment someone heads for a chair, so two people never aim at the same seat)
+          // desk work, a drink or a pause in the seat is put down for the meeting (standing up ends it)
+          const seatedActivity = b.state === 'sitting' && !!b.active && (b.active.verb === 'use' || b.active.verb === 'wait' || b.active.verb === 'consume');
+          if (seatedActivity) { w.command(id, { verb: 'stand' }); continue; }
           if (b.active && b.active.verb !== 'go_to') continue;            // finishing something (standing up, a step) first
           if (b.state === 'sitting') { w.command(id, { verb: 'stand' }); continue; }
           const free = (i: { id: string }) => !w.slotTaken.has(`${i.id}#0`);
@@ -144,6 +155,8 @@ export class OfficeRuntime {
       // after a gathering, people go back to their desks
       if (!meeting && !party && !b.active && b.seat?.inst.startsWith('meeting.') && now < plan.workEnds) { w.command(id, { verb: 'stand' }); this.errands.add({ who: id, why: 'back to desk', steps: [{ verb: 'sit', target: `chair.${id}` }] }); continue; }
       // board errands take priority over free thinking (habits, no model call)
+      // a pressing need (the toilet, real hunger) beats a self-made plan: the plan is dropped and the mind decides again
+      if (this.errands.has(id) && !this.inFlightIds.has(id) && urgency(m.needs, m.me.habits.smoker) >= 0.9) this.errands.drop(id, 'plan');
       // someone spoke to a person who is following their own plan: the plan waits, the answer comes first
       if (m.wantsReply && this.errands.has(id) && !this.inFlightIds.has(id)) this.errands.drop(id, 'plan');
       if (!b.active && this.errands.has(id)) {

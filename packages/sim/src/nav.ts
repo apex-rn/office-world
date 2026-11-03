@@ -82,7 +82,7 @@ export async function buildNav(l: Layout, maxAgents = 32): Promise<Nav> {
 
 export const AGENT_PARAMS = {
   radius: BODY_RADIUS, height: BODY_HEIGHT,
-  maxAcceleration: 3.0, maxSpeed: 1.35,
+  maxAcceleration: 2.0, maxSpeed: 1.35,   // ~2 m/s²: people ease into and out of walking
   // separation acts over the whole query range in Detour, so keep both modest: people only adjust when close
   collisionQueryRange: BODY_RADIUS * 6, pathOptimizationRange: BODY_RADIUS * 30,
   separationWeight: 0.4,
