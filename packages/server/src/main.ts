@@ -16,6 +16,7 @@ import { OfficeRuntime } from '../../brain/src/runtime.js';
 import { OFFICE_V1 } from '../../catalog/src/layout.js';
 import { seoulTime } from '../../shared/src/time.js';
 import { World } from '../../sim/src/world.js';
+import { confirmedLessons, workBrief } from '../../brain/src/workbrief.js';
 import { dueNow } from './scheduler.js';
 import { startStream } from './stream.js';
 
@@ -99,6 +100,23 @@ setInterval(async () => {
   } catch (e) { console.error('calendar step failed:', (e as Error).message); }
   finally { busy = false; }
 }, 20_000);
+
+// ---- work briefs: the same person at work and in the office (run_agent.sh prepends <agent>.identity.md) ----
+const AGENTS_DIR = home(env('AGENTS_DIR', '~/office/agents')), LESSONS_DIR = home(env('LESSONS_DIR', '~/office/lessons'));
+const agentFile = (id: string) => (id === 'manager' ? 'director' : id);   // the board's agents call the Manager "director"
+setInterval(async () => {
+  try {
+    mkdirSync(AGENTS_DIR, { recursive: true });
+    for (const [id, m] of rt.minds) {
+      const lf = join(LESSONS_DIR, `${agentFile(id)}.txt`);
+      if (existsSync(lf)) {
+        const known = new Set(m.memory.all().filter(x => x.kind === 'lesson').map(x => x.text));
+        for (const l of confirmedLessons(readFileSync(lf, 'utf8').split('\n'))) if (!known.has(l)) await m.memory.add('lesson', l, 7, world.now);
+      }
+      writeFileSync(join(AGENTS_DIR, `${agentFile(id)}.identity.md`), workBrief(m.me, m.feelings, m.memory.all(), world.now));
+    }
+  } catch (e) { console.error('work briefs failed:', (e as Error).message); }
+}, 600_000);
 
 // ---- persistence ----
 setInterval(save, 60_000);
