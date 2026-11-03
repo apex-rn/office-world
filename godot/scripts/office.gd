@@ -9,7 +9,16 @@
 #   res://assets/hdri/interior.hdr                              sky / reflections
 extends Node3D
 
-const SERVER_URL := "ws://127.0.0.1:8765"
+# server address: --server=ws://host:port on the command line, CC_SERVER_URL env, user://server.txt, else localhost
+# (when the office service runs inside WSL, use the WSL address, e.g. ws://172.18.250.139:8765)
+var SERVER_URL := _server_url()
+
+func _server_url() -> String:
+	for a in OS.get_cmdline_user_args() + OS.get_cmdline_args():
+		if a.begins_with("--server="): return a.substr(9)
+	if OS.get_environment("CC_SERVER_URL") != "": return OS.get_environment("CC_SERVER_URL")
+	if FileAccess.file_exists("user://server.txt"): return FileAccess.get_file_as_string("user://server.txt").strip_edges()
+	return "ws://127.0.0.1:8765"
 var L: Dictionary
 var ws := WebSocketPeer.new()
 var people := {}            # id -> {node, anim, target_pos, target_yaw, state}
@@ -220,7 +229,7 @@ func _fitted(path: String, size: Vector3) -> Node3D:
 func _aabb(n: Node, t: Transform3D) -> AABB:
 	var out := AABB()
 	var first := true
-	var tt := t * (n.transform if n is Node3D else Transform3D.IDENTITY)
+	var tt: Transform3D = t * (n.transform if n is Node3D else Transform3D.IDENTITY)
 	if n is MeshInstance3D and n.mesh:
 		out = tt * n.mesh.get_aabb()
 		first = false
