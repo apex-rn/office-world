@@ -6,6 +6,7 @@ import type { Router } from './llm.js';
 import { type BoardChange, type Card, ErrandRunner, diffBoard, errandsFor } from './board.js';
 import { type DayPlan, dayPlan } from './calendar.js';
 import { Mind } from './mind.js';
+import { Society } from './social.js';
 import { pointInPolygon } from '../../shared/src/math.js';
 
 // Office runtime — ties the world (bodies) to the minds. Real Seoul time, workday 09:00-21:00 every day (§26).
@@ -20,6 +21,8 @@ export interface RuntimeOpts { maxConcurrentThoughts?: number; seed?: number; st
 
 export class OfficeRuntime {
   readonly minds = new Map<string, Mind>();
+  readonly society: Society;
+  private eveningDone = '';
   readonly social: SocialEvent[] = [];
   /** failed thoughts (model errors, unusable replies) for logs */
   thoughts = 0;
@@ -38,10 +41,11 @@ export class OfficeRuntime {
   constructor(readonly world: World, readonly router: Router, opts: RuntimeOpts = {}) {
     this.maxConcurrent = opts.maxConcurrentThoughts ?? 3;
     this.rand = rng(opts.seed ?? 1);
+    this.society = new Society(opts.staff ?? STAFF, opts.seed ?? 1);
     if (opts.boss ?? true) world.addBody({ id: BOSS.id, name: 'Boss', heightM: 2.0, walkSpeed: 1.4 });
     for (const p of opts.staff ?? STAFF) {
       world.addBody({ id: p.id, name: p.name, heightM: p.heightM, walkSpeed: 1.25 + 0.1 * p.bigFive.conscientiousness });
-      const mind = new Mind(p, { world, router });
+      const mind = new Mind(p, { world, router, social: this.society });
       mind.onThinkError = reason => { this.diagnostics.push({ t: world.now, who: p.id, reason }); if (this.diagnostics.length > 500) this.diagnostics.shift(); };
       this.minds.set(p.id, mind);
     }
@@ -116,6 +120,10 @@ export class OfficeRuntime {
       }
     }
     this.greetings();
+    if (now >= plan.leaveFrom + 30 && this.eveningDone !== t.date && [...w.bodies.values()].every(b => b.state === 'offsite' || b.spec.id === BOSS.id)) {
+      this.eveningDone = t.date;
+      for (const f of this.society.evening(w.now)) void this.minds.get(f.who)?.feel(f.appraisal);
+    }
   }
 
   /** what the office is doing right now: work, meeting:<type>, party:<kind> */
@@ -138,6 +146,13 @@ export class OfficeRuntime {
   }
 
   private route(e: WorldEvent): void {
+    // conversations build relationships; mutual warmth can turn into romance (rarely, in stages)
+    if (e.type === 'speech' && e.to && this.minds.has(e.from) && this.minds.has(e.to)) {
+      const tone = /thank|great|love|nice|well done|barakalla|rahmat|haha|:\)/i.test(e.text) ? 0.8 : /wrong|late|again|fix/i.test(e.text) ? 0 : 0.35;
+      this.society.talked(e.from, e.to, e.t, tone);
+      const r = this.society.romance(e.from, e.to, e.t);
+      if (r) for (const f of r.feelings) void this.minds.get(f.who)?.feel(f.appraisal);
+    }
     // arriving: walk in and go to your own place first (habit reflex), then start thinking
     if (e.type === 'arrived') {
       const m = this.minds.get(e.agent);

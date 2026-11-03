@@ -18,7 +18,7 @@ const ACTION_SCHEMA = `Reply with ONE JSON object only:
  "action": {"verb": "go_to|sit|stand|use|consume|pick|place|say|wait|go_home", "target": "<id>", "action": "<device verb>", "to": "<person id or null>", "text": "<what you say>", "seconds": <number>}}
 Use only ids from the lists. "say" needs "text" (and "to" if you address someone). Use "use" with the device id and its verb.`;
 
-export interface MindDeps { world: World; router: Router }
+export interface MindDeps { world: World; router: Router; social?: { describe(id: string): string } }
 
 export class Mind {
   readonly memory: MemoryStream;
@@ -129,7 +129,7 @@ export class Mind {
       const quietMin = Math.floor((w.now - (this.lastSpokeAt || w.now - 3_600_000)) / 60_000);
       const messages: ChatMessage[] = [
         { role: 'system', content: this.systemPrompt() },
-        { role: 'user', content: `${obs}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}What do I do next?` },
+        { role: 'user', content: `${obs}\n${this.deps.social?.describe(this.me.id) ?? ''}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}What do I do next?` },
       ];
       const route = this.deps.router.pick('life', w.now);
       if ('deferred' in route) return null;

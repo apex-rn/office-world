@@ -40,6 +40,7 @@ if (existsSync(STATE)) {
   try {
     const s = JSON.parse(readFileSync(STATE, 'utf8'));
     ledger.load(s.ledger);
+    if (s.society) rt.society.load(s.society);
     for (const k of s.done ?? []) done.add(k);
     const minds = (s.minds ?? {}) as Record<string, { memory: ReturnType<MemoryStream['toJSON']>; feelings: Feelings }>;
     for (const [id, m] of Object.entries(minds)) {
@@ -50,7 +51,7 @@ if (existsSync(STATE)) {
   } catch (e) { console.error('state restore failed, starting fresh:', (e as Error).message); }
 }
 function save(): void {
-  const s = { savedAt: Date.now(), ledger: ledger.toJSON(), done: [...done].slice(-500), minds: Object.fromEntries([...rt.minds].map(([id, m]) => [id, { memory: m.memory.toJSON(), feelings: m.feelings }])) };
+  const s = { savedAt: Date.now(), ledger: ledger.toJSON(), society: rt.society.toJSON(), done: [...done].slice(-500), minds: Object.fromEntries([...rt.minds].map(([id, m]) => [id, { memory: m.memory.toJSON(), feelings: m.feelings }])) };
   writeFileSync(`${STATE}.tmp`, JSON.stringify(s)); renameSync(`${STATE}.tmp`, STATE);
 }
 
