@@ -719,18 +719,13 @@ func _process(dt: float) -> void:
 		var n: Node3D = p.node
 		var before := n.position
 		var at: Dictionary = _interp(p, now - INTERP_DELAY)
-		if id == "boss" and p.state != "offsite" and (boss_v.length() > 0.01 or p.get("pred", false)):
-			# client-side prediction: the Boss moves the moment a key is pressed; the server's position (which runs
-			# ~0.15 s behind the keys) only pulls him back gently, or at once after a real block (wall, person)
-			var local: Vector3 = p.get("local", n.position) + Vector3(boss_v.x, 0, boss_v.y) * dt
-			var server: Vector3 = p.pos + Vector3(boss_v.x, 0, boss_v.y) * 0.15
-			local = server if local.distance_to(server) > 1.2 else local.lerp(server, clamp(dt * 2.5, 0, 1))
-			p.local = local
-			p.pred = boss_v.length() > 0.01 or local.distance_to(p.pos) > 0.03
+		if id == "boss" and p.state != "offsite":
+			# the Boss is never drawn from the 100 ms buffer: he follows the newest server position (nudged 0.1 s
+			# ahead along his own steering) with a fast smooth lerp, so keys answer at once and nothing fights the
+			# server (a local copy that ran ahead and snapped back made him jerk at walls and people)
+			var target: Vector3 = p.pos + Vector3(boss_v.x, 0, boss_v.y) * 0.1
 			var face: float = atan2(boss_v.x, boss_v.y) if boss_v.length() > 0.01 else p.yaw
-			at = {"pos": local, "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 10.0, 0, 1))}
-		else:
-			p.local = at.pos
+			at = {"pos": n.position.lerp(target, clamp(dt * 12.0, 0, 1)), "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 10.0, 0, 1))}
 		n.position = at.pos
 		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
