@@ -35,6 +35,8 @@ export class Mind {
   plan: Command[] = [];
   /** a one-shot situational cue for the next thought (e.g. a greeting to answer) */
   private cue = '';
+  /** what I said lately, word for word (anti-repetition) */
+  readonly saidLines: string[] = [];
   onFriction?: (what: string, why: string) => void;
   private lastSpokeAt = 0;
   private satAt = 0;
@@ -166,7 +168,7 @@ export class Mind {
       const quietMin = Math.floor((w.now - (this.lastSpokeAt || w.now - 3_600_000)) / 60_000);
       const messages: ChatMessage[] = [
         { role: 'system', content: this.systemPrompt() },
-        { role: 'user', content: `${obs}\n${this.deps.social?.describe(this.me.id) ?? ''}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${this.cue ? `${this.cue}\n` : ''}${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}What do I do next?` },
+        { role: 'user', content: `${obs}\n${this.deps.social?.describe(this.me.id) ?? ''}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${this.cue ? `${this.cue}\n` : ''}${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}${this.saidLines.length ? `Lines I already said today (never say the same again, say something new): ${this.saidLines.slice(-5).map(x => `"${x}"`).join(' ')}\n` : ''}What do I do next?` },
       ];
       this.cue = '';
       const route = this.deps.router.pick('life', w.now);
@@ -187,7 +189,7 @@ export class Mind {
       if (parsed.command.verb === 'stand' && w.now - this.satAt < 90_000 && !wasAddressed) parsed.command = { verb: 'wait', seconds: 60 };
       const res = w.command(this.me.id, parsed.command);
       this.plan = res.ok ? parsed.then : [];
-      if (res.ok && parsed.command.verb === 'say') this.lastSpokeAt = w.now;
+      if (res.ok && parsed.command.verb === 'say') { this.lastSpokeAt = w.now; this.saidLines.push(parsed.command.text); if (this.saidLines.length > 12) this.saidLines.shift(); }
       const summary = summarize(parsed.command);
       this.recent.push(summary); if (this.recent.length > 20) this.recent.shift();
       await this.memory.add('observation', res.ok ? `I ${summary}. (${parsed.thought})` : `I wanted to ${summary}, but: ${res.msg}.`, res.ok ? 2 : 3, w.now);

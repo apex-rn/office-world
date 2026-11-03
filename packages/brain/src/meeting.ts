@@ -23,6 +23,16 @@ const PURPOSE: Record<MeetingType, string> = {
   weekly_review: 'last week in depth: views, followers, wins and misses, why, and the three bets for this week',
 };
 
+// what each person actually does, so an empty board never makes people copy each other's update
+const ROLE_WORK: Record<string, string> = {
+  manager: 'run the team, set priorities, unblock people', guard: 'office security, the safe and payday, visitors, the CCTV',
+  cleaner: 'keep the office clean and tidy', ig_res: 'Instagram research: trends, competitor Reels, which hooks get saves and shares',
+  yt_res: 'YouTube research: analytics, retention curves, topics with search demand, the path to monetization',
+  facts: 'fact-checking every script and claim before it ships', writer: 'scripts and hooks for Shorts, Reels and long videos',
+  shorts: 'editing Shorts and Reels: pacing, captions, the first 2 seconds', longform: 'long-form YouTube videos: structure, edit, chapters',
+  qa: 'quality checks before publishing: facts, audio, captions, platform rules', publisher: 'publishing: titles, thumbnails, schedule, upload limits',
+};
+
 function persona(m: Mind): string {
   const p = m.me;
   return [`You are ${p.name}, ${p.title}. ${p.character}`, `How you speak: ${p.speech.rules.join(' ')}`, ...SHARED_WORLDVIEW].join('\n');
@@ -51,7 +61,7 @@ async function say(router: Router, m: Mind, prompt: string, now: number, maxToke
 export function clean(raw: string, name: string): string {
   let t = raw.trim().replace(/^```[a-z]*|```$/g, '').trim().replace(/^"|"$/g, '').trim();
   const first = name.split(' ')[0]!;
-  t = t.replace(new RegExp(`^(${name}|${first})\\s*:\\s*`, 'i'), '').replace(/^\*[^*]*\*\s*/, '').replace(/^"|"$/g, '').trim();
+  t = t.replace(new RegExp(`^(${name}|${first})\\s*:\\s*`, 'i'), '').replace(/^[A-Z][\w'-]*( [A-Z][\w'-]*)?\s*:\s+/, '').replace(/^\*[^*]*\*\s*/, '').replace(/^"|"$/g, '').trim();
   const sentences = t.match(/[^.!?]+[.!?]+/g);
   if (sentences && sentences.length > 4) t = sentences.slice(0, 4).join('').trim();
   return t.slice(0, 400);
@@ -71,13 +81,23 @@ export async function runMeeting(
     if (!text) return;
     out.transcript.push({ who, text });
     w.command(who, { verb: 'say', to: null, text, volume: 'loud' });
+    const mm = minds.get(who); if (mm) { mm.saidLines.push(text); if (mm.saidLines.length > 12) mm.saidLines.shift(); }
   };
 
   speak('manager', await say(router, manager, `${lang}\nOpen the ${type.replace('_', ' ')} meeting in 2-3 sentences. Purpose: ${PURPOSE[type]}.\nBoard:\n${board}\nNumbers: ${ctx.metrics}`, w.now));
   for (const m of present) {
     const mine = ctx.cards.filter(c => c.owner === m.me.id).map(c => `${c.id} [${c.status}] ${c.title}`).join('; ') || 'no card right now';
-    const heard = out.transcript.slice(-3).map(t => `${t.who}: ${t.text}`).join('\n');
-    speak(m.me.id, await say(router, m, `${lang}\nYou are in the ${type.replace('_', ' ')} meeting. Your work: ${mine}.\nJust said:\n${heard}\nGive your update in 1-2 sentences (status, next step, any blocker or idea). Be yourself.`, w.now, 120));
+    const heard = out.transcript.slice(-3).map(t => `${minds.get(t.who)?.me.name ?? t.who}: ${t.text}`).join('\n');
+    const job = ROLE_WORK[m.me.id] ?? m.me.title;
+    const ask = (extra: string) => `${lang}\nYou are ${m.me.name}, ${m.me.title}, in the ${type.replace('_', ' ')} meeting.\n` +
+      `Your own job: ${job}. Your cards: ${mine}.\n` +
+      `Colleagues just said (context only — never repeat or paraphrase them, never speak for them):\n${heard || '(nobody yet)'}\n` +
+      'Give YOUR OWN update in 1-2 sentences, about your own work only: status, next step, a blocker or an idea.' +
+      `${m.saidLines.length ? ` Do not repeat what you said before: ${m.saidLines.slice(-3).map(x => `"${x}"`).join(' ')}` : ''}${extra}`;
+    let line = await say(router, m, ask(''), w.now, 120);
+    // an echo of someone else's update is no update: ask once more, firmly
+    if (line && out.transcript.some(t => similar(t.text, line))) line = await say(router, m, ask(`\nYour last attempt repeated a colleague. Talk about ${job} instead.`), w.now, 120);
+    if (line && !out.transcript.some(t => similar(t.text, line))) speak(m.me.id, line);
   }
   const closing = await say(router, manager, `${lang}\nClose the meeting. Transcript:\n${out.transcript.map(t => `${t.who}: ${t.text}`).join('\n')}\n` +
     'Reply as JSON only: {"speech": "<your closing words>", "decisions": [{"owner": "<id>", "title": "<task>"}], "praise": [{"who": "<id>", "reason": "<why>"}], "criticism": [{"who": "<id>", "reason": "<work-only, respectful>"}]}', w.now, 400, true);
@@ -91,4 +111,13 @@ export async function runMeeting(
   for (const p of out.praise) await minds.get(p.who)!.feel({ kind: 'praise', by: 'manager', reason: p.reason, publicly: true });
   for (const c of out.criticism) await minds.get(c.who)!.feel({ kind: 'reprimand', reason: c.reason, publicly: true });
   return out;
+}
+
+/** Two lines say the same thing (word overlap) — used to drop echoes in meetings. */
+export function similar(a: string, b: string): boolean {
+  const words = (x: string) => new Set(x.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3));
+  const A = words(a), B = words(b);
+  if (Math.min(A.size, B.size) < 4) return false;      // too short to call it an echo
+  let both = 0; for (const w of A) if (B.has(w)) both++;
+  return both / Math.min(A.size, B.size) >= 0.6;
 }

@@ -39,3 +39,10 @@ test('meeting speech is cleaned to spoken words', () => {
   assert.equal(clean('One. Two. Three. Four. Five. Six.', 'X Y'), 'One. Two. Three. Four.');
   assert.equal(clean('', 'X Y'), '');
 });
+
+test('meeting echoes are recognised, speaker labels stripped', async () => {
+  const { similar } = await import('./meeting.js');
+  assert.ok(similar('Guard: Reel pre-cut, 5 minutes edit left, tap-to-save overlay', 'Reel pre-cut, five minutes edit left, tap-to-save overlay next'));
+  assert.ok(!similar('Retention dropped at second 3 on yesterday’s Short', 'Fact-check of the Seoul script is done'));
+  assert.equal(clean('Viktor: All quiet at the entrance.', 'Mia Chen'), 'All quiet at the entrance.');
+});

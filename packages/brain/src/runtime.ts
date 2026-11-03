@@ -134,7 +134,12 @@ export class OfficeRuntime {
           continue;
         }
         b.anim = party ? (party.kind === 'birthday' ? 'clap' : 'dance') : b.anim;
-        continue;   // during gatherings the meeting/party module drives speech
+        // the meeting/party module drives the talk; but whoever is spoken to (the Boss above all) answers right away
+        if (m.wantsReply && this.inFlight < this.maxConcurrent + 3 && !this.inFlightIds.has(id)) {
+          this.inFlight++; this.thoughts++; this.inFlightIds.add(id);
+          m.think(this.cardOf.get(id)).catch(() => null).finally(() => { this.inFlight--; this.inFlightIds.delete(id); });
+        }
+        continue;
       }
       // after a gathering, people go back to their desks
       if (!meeting && !party && !b.active && b.seat?.inst.startsWith('meeting.') && now < plan.workEnds) { w.command(id, { verb: 'stand' }); this.errands.add({ who: id, why: 'back to desk', steps: [{ verb: 'sit', target: `chair.${id}` }] }); continue; }

@@ -11,6 +11,17 @@ export class OpenAICompatClient implements LLM {
   onError?: (msg: string) => void;
   constructor(private baseUrl: string, private apiKey: string, private defaultModel = 'auto') {}
   async chat(messages: ChatMessage[], opts: ChatOpts = {}): Promise<string> {
+    for (let attempt = 0; ; attempt++) {
+      try { return await this.once(messages, opts); }
+      catch (e) {
+        // a provider's rate limit (429) or a busy moment (503): wait a little and try once more
+        if (attempt === 0 && /LLM (429|503)/.test((e as Error).message)) { await new Promise(r => setTimeout(r, 2500 + Math.random() * 2500)); continue; }
+        throw e;
+      }
+    }
+  }
+
+  private async once(messages: ChatMessage[], opts: ChatOpts): Promise<string> {
     const r = await fetch(`${this.baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
