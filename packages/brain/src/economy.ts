@@ -21,6 +21,12 @@ export class Ledger {
     return x;
   }
   all(): readonly Entry[] { return this.entries; }
+  toJSON() { return { seq: this.seq, entries: this.entries, balances: [...this.balances], pending: [...this.pending] }; }
+  load(s: ReturnType<Ledger['toJSON']>): void {
+    this.seq = s.seq; this.entries = s.entries;
+    this.balances.clear(); for (const [k, v] of s.balances) this.balances.set(k, v);
+    this.pending.clear(); for (const [k, v] of s.pending) this.pending.set(k, v);
+  }
   balance(who: string): number { return this.balances.get(who) ?? 0; }
 
   /** Pending bonus/penalty for the current month, per person (paid on the 25th together with the salary). */

@@ -23,6 +23,8 @@ export class MemoryStream {
   }
 
   get size(): number { return this.items.length; }
+  toJSON(): { next: number; items: Memory[] } { return { next: this.next, items: this.items.map(({ embedding: _e, ...m }) => m) }; }
+  load(s: { next: number; items: Memory[] }): void { this.items = s.items; this.next = s.next; }
   all(): readonly Memory[] { return this.items; }
 
   /** Top-k memories for a situation. recency half-life 24 h; weights follow Generative Agents (equal). */
