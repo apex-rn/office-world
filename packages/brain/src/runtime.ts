@@ -3,7 +3,10 @@ import { rng } from '../../shared/src/rng.js';
 import type { World, WorldEvent } from '../../sim/src/world.js';
 import { BOSS, type Identity, STAFF } from './identity.js';
 import type { Router } from './llm.js';
+import { type BoardChange, type Card, ErrandRunner, diffBoard, errandsFor } from './board.js';
+import { type DayPlan, dayPlan } from './calendar.js';
 import { Mind } from './mind.js';
+import { pointInPolygon } from '../../shared/src/math.js';
 
 // Office runtime — ties the world (bodies) to the minds. Real Seoul time, workday 09:00-21:00 every day (§26).
 // Thinking is event-driven and rate-limited (max concurrent model calls) to respect free-tier limits.
@@ -24,6 +27,10 @@ export class OfficeRuntime {
   private arrivalMin = new Map<string, number>();   // minute of day each person walks in today
   private rand: () => number;
   private readonly maxConcurrent: number;
+  plan: DayPlan | null = null;
+  readonly errands = new ErrandRunner();
+  private cards: Card[] = [];
+  readonly cardOf = new Map<string, Card>();
 
   constructor(readonly world: World, readonly router: Router, opts: RuntimeOpts = {}) {
     this.maxConcurrent = opts.maxConcurrentThoughts ?? 3;
@@ -37,10 +44,14 @@ export class OfficeRuntime {
   /** Arrival minute from the person's habit text, jittered a few minutes each day (never the same twice). */
   private planDay(dateStr: string): void {
     this.day = dateStr; this.greetedToday.clear();
+    this.plan = dayPlan(dateStr, [...this.minds.values()].map(m => m.me));
+    const bday = this.plan.events.find(e => e.kind === 'birthday');
     for (const m of this.minds.values()) {
       const hm = /(\d{2}):(\d{2})/.exec(m.me.habits.arrival);
-      const base = hm ? Number(hm[1]) * 60 + Number(hm[2]) : 8 * 60 + 55;
-      this.arrivalMin.set(m.me.id, base + Math.round((this.rand() - 0.5) * 8));
+      let at = (hm ? Number(hm[1]) * 60 + Number(hm[2]) : 8 * 60 + 55) + Math.round((this.rand() - 0.5) * 8);
+      // birthday: everyone else comes at 07:30 to decorate; the birthday person comes at their usual time
+      if (bday && bday.kind === 'birthday' && bday.person !== m.me.id) at = Math.min(at, bday.decorateFrom + Math.round(this.rand() * 10));
+      this.arrivalMin.set(m.me.id, at);
     }
   }
 
@@ -52,25 +63,72 @@ export class OfficeRuntime {
     if (t.date !== this.day) this.planDay(t.date);
     for (const e of w.drainEvents()) this.route(e);
 
+    const plan = this.plan!;
+    const now = t.minuteOfDay;
+    const leave = plan.leaveFrom;
+    const meeting = plan.events.find(e => e.kind === 'meeting' && now >= e.start - 5 && now < e.end);
+    const party = plan.events.find(e =>
+      (e.kind === 'birthday' && now >= e.surpriseAt && now < e.partyEnd) ||
+      ((e.kind === 'anniversary' || e.kind === 'new_year') && now >= e.partyStart && now < e.partyEnd));
+    this.activity = meeting ? `meeting:${meeting.kind === 'meeting' ? meeting.type : ''}` : party ? `party:${party.kind}` : 'work';
     for (const m of this.minds.values()) {
       const id = m.me.id, b = w.bodies.get(id)!;
-      // arrivals and departures follow the workday; the office keeper stays until everyone has left
+      // arrivals and departures follow the day plan; the office keeper stays until everyone has left
       if (b.state === 'offsite') {
         const arr = this.arrivalMin.get(id) ?? 540;
-        if (t.minuteOfDay >= arr && t.minuteOfDay < 21 * 60) w.command(id, { verb: 'arrive' });
+        if (!plan.noWork && now >= arr && now < leave) w.command(id, { verb: 'arrive' });
         continue;
       }
-      if (t.minuteOfDay >= 21 * 60 && !b.active && b.state !== 'sitting') {
+      // meetings and parties gather everyone (a body already busy finishes its step first)
+      if (!b.active && (meeting || party)) {
+        const zone = meeting ? 'meeting' : 'lounge';
+        const z = w.layout.zones.find(x => x.id === zone)!;
+        if (!pointInPolygon(b.pos, z.poly) && !(b.seat && b.seat.inst.startsWith(`${zone}.`))) {
+          if (b.state === 'sitting') { w.command(id, { verb: 'stand' }); continue; }
+          const chair = meeting && id !== 'manager' ? w.layout.instances.find(i => i.id.startsWith('meeting.chair') && !w.occupancy.get(i.id)?.size) : undefined;
+          w.command(id, chair ? { verb: 'sit', target: chair.id } : { verb: 'go_to', target: zone });
+          continue;
+        }
+        b.anim = party ? (party.kind === 'birthday' ? 'clap' : 'dance') : b.anim;
+        continue;   // during gatherings the meeting/party module drives speech
+      }
+      // after a gathering, people go back to their desks
+      if (!meeting && !party && !b.active && b.seat?.inst.startsWith('meeting.') && now < plan.workEnds) { w.command(id, { verb: 'stand' }); this.errands.add({ who: id, why: 'back to desk', steps: [{ verb: 'sit', target: `chair.${id}` }] }); continue; }
+      // board errands take priority over free thinking (habits, no model call)
+      if (!b.active && this.errands.has(id)) {
+        if (b.state === 'sitting' && this.errands.peek(id)?.verb !== 'sit') { w.command(id, { verb: 'stand' }); continue; }
+        this.errands.next(id, w.now, c => w.command(id, c)); continue;
+      }
+      if (now >= leave && !b.active && b.state !== 'sitting') {
         const othersIn = [...w.bodies.values()].some(o => o.spec.id !== id && o.state !== 'offsite' && o.spec.id !== BOSS.id);
         if (id !== 'guard' || !othersIn) { w.command(id, { verb: 'go_home' }); continue; }
       }
-      if (t.minuteOfDay >= 21 * 60 && b.state === 'sitting' && !b.active) { w.command(id, { verb: 'stand' }); continue; }
+      if (now >= leave && b.state === 'sitting' && !b.active) { w.command(id, { verb: 'stand' }); continue; }
       if (this.inFlight < this.maxConcurrent && m.shouldThink()) {
         this.inFlight++;
-        m.think().catch(() => null).finally(() => { this.inFlight--; });
+        m.think(this.cardOf.get(id)).catch(() => null).finally(() => { this.inFlight--; });
       }
     }
     this.greetings();
+  }
+
+  /** what the office is doing right now: work, meeting:<type>, party:<kind> */
+  activity = 'work';
+
+  /** Feed the latest board snapshot; changes become errands and feelings. */
+  applyBoard(next: Card[]): BoardChange[] {
+    const ch = diffBoard(this.cards, next);
+    this.cards = next;
+    for (const c of next) if (c.owner && !['done', 'approved', 'rejected'].includes(c.status)) this.cardOf.set(c.owner, c); else if (c.owner && this.cardOf.get(c.owner)?.id === c.id) this.cardOf.delete(c.owner);
+    for (const x of ch) {
+      for (const e of errandsFor(x)) this.errands.add(e);
+      const m = x.card.owner ? this.minds.get(x.card.owner) : undefined;
+      if (m && x.type === 'status') {
+        if (x.card.status === 'approved' || x.card.status === 'done') void m.feel({ kind: 'qa', passed: true, firstTry: x.from === 'review' });
+        if (x.card.status === 'rejected') void m.feel({ kind: 'qa', passed: false, firstTry: false });
+      }
+    }
+    return ch;
   }
 
   private route(e: WorldEvent): void {
