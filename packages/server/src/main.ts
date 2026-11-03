@@ -26,8 +26,8 @@ mkdirSync(DATA, { recursive: true });
 const STATE = join(DATA, 'state.json');
 
 const key = process.env.FREELLM_KEY ?? readFileSync(home(env('FREELLM_KEY_FILE', '~/.config/freellmapi/unified_key')), 'utf8').trim();
-const free = new OpenAICompatClient(env('FREELLM_URL', 'http://127.0.0.1:3001'), key, env('FAST_MODEL', 'auto'));
-const router = new Router(free, null, { fast: env('FAST_MODEL', 'auto'), strong: env('STRONG_MODEL', 'auto') });
+const free = new OpenAICompatClient(env('FREELLM_URL', 'http://127.0.0.1:3001'), key, env('FAST_MODEL', 'claude-opus-4-5'));
+const router = new Router(free, null, { fast: env('FAST_MODEL', 'claude-opus-4-5'), strong: env('STRONG_MODEL', 'claude-opus-4-5') });
 const claudeDown = home(env('CLAUDE_DOWN_FILE', '~/office/claude_down_until'));
 
 const world = await World.create(structuredClone(OFFICE_V1), Date.now(), Date.now() % 1_000_003);

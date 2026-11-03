@@ -30,6 +30,8 @@ export class Mind {
   pendingWake = false;
   /** someone spoke to me: worth interrupting what my body is doing */
   private addressed = false;
+  private lastSpokeAt = 0;
+  private satAt = 0;
   thinking = false;
   /** diagnostics hook: called with a short reason when a thought fails (model error or unusable reply) */
   onThinkError?: (reason: string) => void;
@@ -48,6 +50,7 @@ export class Mind {
       else if (e.to === null) this.pendingWake = true;
       void this.memory.add('conversation', `${nameOf(e.from)} said${e.to === this.me.id ? ' to me' : ''}: "${e.text}"`, e.to === this.me.id ? 4 : 2, e.t);
     }
+    if (e.type === 'action_done' && e.agent === this.me.id && e.verb === 'sit') this.satAt = e.t;
     if ((e.type === 'action_done' || e.type === 'action_failed') && e.agent === this.me.id) {
       this.pendingWake = true;
       if (e.type === 'action_failed') void this.memory.add('observation', `I tried to ${e.verb} but couldn't: ${e.msg}.`, 3, e.t);
@@ -98,6 +101,8 @@ export class Mind {
       ...SHARED_WORLDVIEW,
       `Your dreams: ${p.dreams.map(d => d.text).join(' / ')}`,
       'Never repeat the same thing twice in a row; vary what you do like a real person. Work hours 09:00-21:00.',
+      'You are a social person in a real office: when someone speaks to you, answer them first; when a colleague you know is near and you have been quiet for a while, talk to them — about work (ideas, help, a question, feedback) or a little about life. Keep lines short and natural.',
+      'Output ONLY the JSON object. No reasoning, no prose, no code fences.',
       ACTION_SCHEMA,
     ].join('\n');
   }
@@ -114,29 +119,34 @@ export class Mind {
   /** Think once and act. Returns the command issued (or null). */
   async think(card?: { id: string; title: string; status: string }): Promise<Command | null> {
     const w = this.deps.world;
+    const wasAddressed = this.addressed;
     this.thinking = true; this.pendingWake = false; this.addressed = false; this.lastThought = w.now;
     try {
       this.tickFeelings();
       const feeling = behaviour(this.me, this.feelings).selfReport;
       const obs = perceive(w, this.me.id, { heard: this.heard.splice(0), card, feeling, recent: this.recent });
       const mems = await this.memory.recall(obs, w.now, 6);
+      const quietMin = Math.floor((w.now - (this.lastSpokeAt || w.now - 3_600_000)) / 60_000);
       const messages: ChatMessage[] = [
         { role: 'system', content: this.systemPrompt() },
-        { role: 'user', content: `${obs}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\nWhat do I do next?` },
+        { role: 'user', content: `${obs}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}What do I do next?` },
       ];
       const route = this.deps.router.pick('life', w.now);
       if ('deferred' in route) return null;
       let raw = '';
-      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 300 }); }
+      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 700 }); }
       catch (e1) {
         // some providers reject response_format: retry once in plain mode, then report the failure
-        try { raw = await route.llm.chat(messages, { model: route.model, maxTokens: 300 }); }
+        try { raw = await route.llm.chat(messages, { model: route.model, maxTokens: 700 }); }
         catch (e2) { raw = ''; this.onThinkError?.(`${(e1 as Error).message} | retry: ${(e2 as Error).message}`); }
       }
       if (raw && !parseDecision(raw)) this.onThinkError?.(`unparseable reply: ${raw.slice(0, 160)}`);
       const parsed = parseDecision(raw);
       if (!parsed) { const c: Command = { verb: 'wait', seconds: 30 }; w.command(this.me.id, c); return c; }
+      // no sit/stand ping-pong: having just sat down, a person stays at least 90 s unless someone needs them
+      if (parsed.command.verb === 'stand' && w.now - this.satAt < 90_000 && !wasAddressed) parsed.command = { verb: 'wait', seconds: 60 };
       const res = w.command(this.me.id, parsed.command);
+      if (res.ok && parsed.command.verb === 'say') this.lastSpokeAt = w.now;
       const summary = summarize(parsed.command);
       this.recent.push(summary); if (this.recent.length > 20) this.recent.shift();
       await this.memory.add('observation', res.ok ? `I ${summary}. (${parsed.thought})` : `I wanted to ${summary}, but: ${res.msg}.`, res.ok ? 2 : 3, w.now);
@@ -148,13 +158,43 @@ export class Mind {
 
 const VERBS = new Set(['go_to', 'sit', 'stand', 'use', 'consume', 'pick', 'place', 'say', 'wait', 'go_home']);
 
+const VERB_ALIASES: Record<string, string> = {
+  get_to: 'go_to', walk_to: 'go_to', go: 'go_to', move_to: 'go_to', walk: 'go_to', approach: 'go_to', visit: 'go_to',
+  talk: 'say', speak: 'say', tell: 'say', greet: 'say', ask: 'say', reply: 'say', chat: 'say',
+  sit_down: 'sit', take_seat: 'sit', stand_up: 'stand', get_up: 'stand',
+  drink: 'consume', eat: 'consume', use_device: 'use', operate: 'use', idle: 'wait', rest: 'wait', leave: 'go_home',
+};
+
+/** Every balanced {...} block in a reply (models sometimes reason in prose or fences before the JSON). */
+function jsonCandidates(raw: string): string[] {
+  const out: string[] = [];
+  const text = raw.replace(/```(?:json)?/gi, '');
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== '{') continue;
+    let depth = 0, inStr = false, esc = false;
+    for (let j = i; j < text.length; j++) {
+      const ch = text[j]!;
+      if (inStr) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === '"') inStr = false; continue; }
+      if (ch === '"') inStr = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}' && --depth === 0) { out.push(text.slice(i, j + 1)); i = j; break; }
+    }
+  }
+  return out;
+}
+
 export function parseDecision(raw: string): { thought: string; command: Command } | null {
-  const m = /\{[\s\S]*\}/.exec(raw);
-  if (!m) return null;
-  let j: { thought?: unknown; action?: Record<string, unknown> };
-  try { j = JSON.parse(m[0]); } catch { return null; }
+  // prefer the last complete object that carries an action (reasoning models often draft first)
+  let j: { thought?: unknown; action?: Record<string, unknown> } | null = null;
+  for (const c of jsonCandidates(raw).reverse()) {
+    try { const o = JSON.parse(c); if (o && typeof o === 'object' && o.action) { j = o; break; } } catch { /* next */ }
+  }
+  if (!j) return null;
   const a = j.action;
-  if (!a || typeof a.verb !== 'string' || !VERBS.has(a.verb)) return null;
+  if (!a || typeof a.verb !== 'string') return null;
+  const verb = VERB_ALIASES[a.verb.toLowerCase()] ?? a.verb.toLowerCase();
+  if (!VERBS.has(verb)) return null;
+  a.verb = verb;
   const s = (k: string) => (typeof a[k] === 'string' ? (a[k] as string) : undefined);
   const thought = typeof j.thought === 'string' ? j.thought.slice(0, 200) : '';
   switch (a.verb) {

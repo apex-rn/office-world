@@ -1,4 +1,5 @@
 // Live office run with real models (on the server, next to FreeLLMAPI).
+// Default model: FreeLLM's free 'claude-opus-4-5' alias (a free provider model, verified by the PC session); bare 'auto' can land on a safety classifier.
 //   FREELLM_URL=http://127.0.0.1:3001 FREELLM_KEY_FILE=~/.config/freellmapi/unified_key \
 //   FAST_MODEL=<fast> STRONG_MODEL=<strong> npx tsx tools/live.ts [minutes=10] [speed=1] [log=live.jsonl]
 // Logs every speech, greeting and action to JSONL (no secrets). speed>1 accelerates the world clock.
@@ -12,8 +13,8 @@ import { World } from '../packages/sim/src/world.js';
 const [minutes = '10', speed = '1', log = 'live.jsonl'] = process.argv.slice(2);
 const keyFile = (process.env.FREELLM_KEY_FILE ?? '~/.config/freellmapi/unified_key').replace(/^~/, homedir());
 const key = process.env.FREELLM_KEY ?? readFileSync(keyFile, 'utf8').trim();
-const free = new OpenAICompatClient(process.env.FREELLM_URL ?? 'http://127.0.0.1:3001', key, process.env.FAST_MODEL ?? 'auto');
-const router = new Router(free, null, { fast: process.env.FAST_MODEL ?? 'auto', strong: process.env.STRONG_MODEL ?? 'auto' });
+const free = new OpenAICompatClient(process.env.FREELLM_URL ?? 'http://127.0.0.1:3001', key, process.env.FAST_MODEL ?? 'claude-opus-4-5');
+const router = new Router(free, null, { fast: process.env.FAST_MODEL ?? 'claude-opus-4-5', strong: process.env.STRONG_MODEL ?? 'claude-opus-4-5' });
 
 const w = await World.create(structuredClone(OFFICE_V1), Date.now(), Date.now() % 100000);
 const rt = new OfficeRuntime(w, router, { maxConcurrentThoughts: Number(process.env.MAX_THOUGHTS ?? 3) });

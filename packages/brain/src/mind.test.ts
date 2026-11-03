@@ -50,3 +50,12 @@ test('router: critical work waits for Claude, life always runs free; limit reset
   const hard = r.pick('work_hard', now); assert.ok(!('deferred' in hard) && hard.engine === 'free');
   const later = r.pick('work_hard', r.claudeDownUntil + 1); assert.ok(!('deferred' in later) && later.engine === 'claude');
 });
+
+test('the parser survives reasoning prose, code fences, truncated drafts and verb synonyms', () => {
+  const r1 = parseDecision('We need to produce JSON. Draft: {"thought":"x","action":{"verb":"go_to","targe\nFinal:\n```json\n{"thought":"coffee","action":{"verb":"get_to","target":"kitchen"}}\n```');
+  assert.deepEqual(r1!.command, { verb: 'go_to', target: 'kitchen' });
+  const r2 = parseDecision('{"thought":"hi","action":{"verb":"talk","to":"facts","text":"Elena, quick question about p8?"}}');
+  assert.deepEqual(r2!.command, { verb: 'say', to: 'facts', text: 'Elena, quick question about p8?' });
+  assert.equal(parseDecision('{"User Safety":"safe"}'), null);
+  assert.equal(parseDecision('[]'), null);
+});
