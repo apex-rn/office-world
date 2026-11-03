@@ -14,9 +14,14 @@ function PortOpen($port) { try { $c = New-Object Net.Sockets.TcpClient; $c.Conne
 if (-not (Test-Path $cfgPath)) { Fail "launch.json topilmadi: $cfgPath. install-desktop.ps1 ni bir marta ishga tushiring." }
 $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
 $repo = $cfg.repo
+# portable Node (not on PATH) — the launcher brings its own
+if ($cfg.node_dir) { $env:PATH = "$($cfg.node_dir);$env:PATH" }
+# the minds' model endpoint: local FreeLLM (default) or a provider directly (e.g. https://api.groq.com/openai)
+$llmUrl = if ($cfg.llm_url) { $cfg.llm_url } else { 'http://127.0.0.1:3001' }
+$keyFile = if ($cfg.llm_key_file) { $cfg.llm_key_file } else { $cfg.freellm_key_file }
 
 # 1) FreeLLM (the staff's minds) on 127.0.0.1:3001
-if (-not (PortOpen 3001)) {
+if ($llmUrl -like '*127.0.0.1:3001*' -and -not (PortOpen 3001)) {
   if ($cfg.freellm_start) {
     Say "starting FreeLLM"
     Start-Process -WindowStyle Hidden -FilePath 'cmd.exe' -ArgumentList '/c', $cfg.freellm_start -WorkingDirectory $cfg.freellm_dir
@@ -29,14 +34,15 @@ if (-not (PortOpen 3001)) {
 if (-not (PortOpen 8765)) {
   Push-Location $repo
   try { git pull --ff-only --quiet 2>&1 | Out-Null; Say 'git pull ok' } catch { Say "git pull skipped: $_" }
-  if (-not (Test-Path (Join-Path $repo 'node_modules'))) { npm install --silent 2>&1 | Out-Null }
+  # node_modules installed from WSL hold Linux binaries (esbuild): Windows needs its own once
+  if (-not (Test-Path (Join-Path $repo 'node_modules\@esbuild\win32-x64'))) { Say 'npm install (Windows binaries)'; npm install --no-audit --no-fund 2>&1 | Out-Null }
   Pop-Location
   $data = Join-Path $env:USERPROFILE 'office-world-data'
   New-Item -ItemType Directory -Force -Path $data | Out-Null
   $tok = Join-Path $data 'boss.token'
   if (-not (Test-Path $tok)) { -join ((48..57) + (97..122) | Get-Random -Count 32 | ForEach-Object { [char]$_ }) | Set-Content -NoNewline $tok }
-  $env:FREELLM_URL = 'http://127.0.0.1:3001'
-  $env:FREELLM_KEY_FILE = $cfg.freellm_key_file
+  $env:FREELLM_URL = $llmUrl
+  $env:FREELLM_KEY_FILE = $keyFile
   $env:FAST_MODEL = $cfg.fast_model
   $env:STRONG_MODEL = $cfg.strong_model
   $env:LIFE_REASONING = 'low'
