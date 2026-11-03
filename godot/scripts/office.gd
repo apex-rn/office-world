@@ -301,9 +301,38 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 		return
 	if anim_map.is_empty() and ResourceLoader.exists("res://assets/people/anims.json"):
 		anim_map = JSON.parse_string(FileAccess.get_file_as_string("res://assets/people/anims.json"))
+	if anim_name.begins_with("bow_") or anim_name == "bow_handshake":
+		_bow(p, 45.0 if anim_name == "bow_45" else 30.0 if anim_name == "bow_30" else 15.0)
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
 		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
+
+# Korean bow (Rocketbox has no bow clip): bend the spine chain forward, hold, and straighten — on top of idle
+func _bow(p: Dictionary, deg: float) -> void:
+	if p.get("bowing", false) or p.node.get_child_count() == 0:
+		return
+	var sk: Skeleton3D = p.node.find_child("*", true, false) as Skeleton3D
+	if sk == null:
+		for c in p.node.find_children("*", "Skeleton3D", true, false): sk = c; break
+	if sk == null:
+		return
+	var bones: Array[int] = []
+	for i in sk.get_bone_count():
+		var n := sk.get_bone_name(i).to_lower()
+		if n.contains("spine") or n.contains("pelvis"): bones.append(i)
+	if bones.is_empty():
+		return
+	p.bowing = true
+	var per := deg_to_rad(deg) / bones.size()
+	var tw := create_tween()
+	tw.tween_method(func(t: float):
+		for b in bones:
+			sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * Quaternion(Vector3.RIGHT, per * t)), 0.0, 1.0, 0.6).set_trans(Tween.TRANS_SINE)
+	tw.tween_interval(0.8)
+	tw.tween_method(func(t: float):
+		for b in bones:
+			sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * Quaternion(Vector3.RIGHT, per * t)), 1.0, 0.0, 0.7).set_trans(Tween.TRANS_SINE)
+	tw.finished.connect(func(): p.bowing = false)
 
 func _apply_snap(s: Dictionary) -> void:
 	for b in s.bodies:

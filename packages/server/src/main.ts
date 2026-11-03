@@ -31,7 +31,9 @@ const free = new OpenAICompatClient(env('FREELLM_URL', 'http://127.0.0.1:3001'),
 const router = new Router(free, null, { fast: env('FAST_MODEL', 'claude-opus-4-5'), strong: env('STRONG_MODEL', 'claude-opus-4-5') });
 const claudeDown = home(env('CLAUDE_DOWN_FILE', '~/office/claude_down_until'));
 
-const world = await World.create(structuredClone(OFFICE_V1), Date.now(), Date.now() % 1_000_003);
+// SIM_START_SEOUL=2026-11-04T10:00 starts the office clock at that Seoul time (demos at night); real time otherwise
+const simStart = process.env.SIM_START_SEOUL ? Date.parse(`${process.env.SIM_START_SEOUL}:00+09:00`) : Date.now();
+const world = await World.create(structuredClone(OFFICE_V1), simStart, Date.now() % 1_000_003);
 const rt = new OfficeRuntime(world, router, { maxConcurrentThoughts: Number(env('MAX_THOUGHTS', '3')) });
 const ledger = new Ledger();
 const done = new Set<string>();
