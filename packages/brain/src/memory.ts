@@ -26,6 +26,12 @@ export class MemoryStream {
   toJSON(): { next: number; items: Memory[] } { return { next: this.next, items: this.items.map(({ embedding: _e, ...m }) => m) }; }
   load(s: { next: number; items: Memory[] }): void { this.items = s.items; this.next = s.next; }
   all(): readonly Memory[] { return this.items; }
+  /** Forget small things: older than `days`, importance below `minImportance` (lessons and reflections stay). */
+  prune(now: number, days = 7, minImportance = 4): number {
+    const before = this.items.length;
+    this.items = this.items.filter(m => m.kind === 'lesson' || m.kind === 'reflection' || m.importance >= minImportance || now - m.at < days * 86_400_000);
+    return before - this.items.length;
+  }
 
   /** Top-k memories for a situation. recency half-life 24 h; weights follow Generative Agents (equal). */
   async recall(query: string, now: number, k = 6): Promise<Memory[]> {

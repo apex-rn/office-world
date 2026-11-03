@@ -59,3 +59,16 @@ test('the parser survives reasoning prose, code fences, truncated drafts and ver
   assert.equal(parseDecision('{"User Safety":"safe"}'), null);
   assert.equal(parseDecision('[]'), null);
 });
+
+test('evening reflection: first-person conclusions are remembered, trivia is forgotten', async () => {
+  const w = await World.create(structuredClone(OFFICE_V1), T0, 3);
+  w.addBody({ id: 'writer', name: 'writer', heightM: 1.8, walkSpeed: 1.35 });
+  const llm = new ScriptedLLM(['- Elena caught my number again; I will double-source before I hand in.\n- Aziza and I make a good team on hooks.']);
+  const leo = new Mind(STAFF_BY_ID.get('writer')!, { world: w, router: new Router(llm, null, { fast: 'f', strong: 's' }) });
+  await leo.memory.add('observation', 'I walked to the kitchen', 1, T0 - 10 * 86_400_000);
+  for (const t of ['QA rejected my hook', 'Elena corrected my 2019 figure', 'Aziza loved the five-word hook']) await leo.memory.add('feeling', t, 6, T0 - 3_600_000);
+  const lines = await leo.reflect();
+  assert.equal(lines.length, 2);
+  assert.ok(leo.memory.all().some(m => m.kind === 'reflection' && /double-source/.test(m.text)));
+  assert.ok(!leo.memory.all().some(m => /walked to the kitchen/.test(m.text)), 'old trivia pruned');
+});

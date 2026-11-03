@@ -116,6 +116,26 @@ export class Mind {
     return out;
   }
 
+  /** Evening reflection (§11.2): a few first-person conclusions from today's important memories, then forget trivia. */
+  async reflect(): Promise<string[]> {
+    const w = this.deps.world;
+    const today = this.memory.all().filter(m => m.at > w.now - 18 * 3_600_000 && m.importance >= 4).slice(-25);
+    if (today.length < 3) { this.memory.prune(w.now); return []; }
+    const r = this.deps.router.pick('reflection', w.now);
+    if ('deferred' in r) return [];
+    let raw = '';
+    try {
+      raw = await r.llm.chat([
+        { role: 'system', content: `You are ${this.me.name}, ${this.me.title}. ${this.me.character}` },
+        { role: 'user', content: `Today, in my own words:\n${today.map(m => `- ${m.text}`).join('\n')}\n\nWrite 2-3 short first-person conclusions I will carry into tomorrow (about my work, people, how I feel). One per line, no numbering. Output only the lines.` },
+      ], { model: r.model, maxTokens: 400, temperature: 0.6 });
+    } catch (e) { this.onThinkError?.(`reflection: ${(e as Error).message}`); }
+    const lines = raw.split('\n').map(s => s.replace(/^[-*\d.)\s]+/, '').trim()).filter(s => s.length > 12 && s.length < 240).slice(0, 3);
+    for (const l of lines) await this.memory.add('reflection', l, 7, w.now);
+    this.memory.prune(w.now);
+    return lines;
+  }
+
   /** Think once and act. Returns the command issued (or null). */
   async think(card?: { id: string; title: string; status: string }): Promise<Command | null> {
     const w = this.deps.world;

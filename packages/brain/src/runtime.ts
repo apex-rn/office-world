@@ -123,6 +123,8 @@ export class OfficeRuntime {
     if (now >= plan.leaveFrom + 30 && this.eveningDone !== t.date && [...w.bodies.values()].every(b => b.state === 'offsite' || b.spec.id === BOSS.id)) {
       this.eveningDone = t.date;
       for (const f of this.society.evening(w.now)) void this.minds.get(f.who)?.feel(f.appraisal);
+      // evening reflection, one person after another (free model, small and rare)
+      void (async () => { for (const m of this.minds.values()) await m.reflect().catch(() => []); })();
     }
   }
 
