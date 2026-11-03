@@ -138,6 +138,7 @@ func _mat(name: String, fallback: Color, rough := 0.6, metal := 0.0, scale := 1.
 		if ResourceLoader.exists(base + "nor.jpg"):
 			m.normal_enabled = true
 			m.normal_texture = load(base + "nor.jpg")
+			if name == "plaster": m.normal_scale = 0.25   # painted plaster is smooth, not raw concrete
 		if ResourceLoader.exists(base + "rough.jpg"):
 			m.roughness_texture = load(base + "rough.jpg")
 			m.roughness = 1.0
@@ -247,6 +248,8 @@ func _furniture() -> void:
 		var path := "res://assets/furniture/%s.glb" % i.def
 		if ResourceLoader.exists(path):
 			node = _fitted(path, size)
+		elif _built(i.def, size) != null:
+			node = _built(i.def, size)
 		else:
 			node = Node3D.new()
 			_box(size, Vector3(0, i.h / 2, 0), 0, _placeholder_mat(i.def), node)
@@ -254,6 +257,38 @@ func _furniture() -> void:
 		node.rotation.y = i.yaw
 		node.name = String(i.id).replace(".", "_")
 		add_child(node)
+
+# Small electronics built to their real geometry (a box the size of a monitor's bounding volume looks like a crate)
+func _built(def_id: String, s: Vector3) -> Node3D:
+	var n := Node3D.new()
+	var alu := _mat("aluminium", Color(0.78, 0.79, 0.81), 0.22, 0.9)
+	var dark := _mat("metal_black", Color(0.08, 0.08, 0.09), 0.35, 0.5)
+	var screen := StandardMaterial3D.new()
+	screen.albedo_color = Color(0.05, 0.08, 0.12); screen.emission_enabled = true
+	screen.emission = Color(0.35, 0.55, 0.85); screen.emission_energy_multiplier = 0.8; screen.roughness = 0.1
+	match def_id:
+		"monitor_24":
+			_box(Vector3(0.22, 0.012, 0.17), Vector3(0, 0.006, 0), 0, alu, n)                      # foot
+			_box(Vector3(0.035, 0.24, 0.025), Vector3(0, 0.13, -0.05), 0, alu, n)                   # neck
+			_box(Vector3(s.x, 0.312, 0.018), Vector3(0, s.y - 0.156, -0.03), 0, dark, n)           # thin panel
+			_box(Vector3(s.x - 0.012, 0.3, 0.002), Vector3(0, s.y - 0.156, -0.02), 0, screen, n)   # lit screen
+		"laptop_14":
+			_box(Vector3(s.x, 0.009, s.z), Vector3(0, 0.0045, 0), 0, alu, n)
+			var lid := Node3D.new(); lid.position = Vector3(0, 0.009, -s.z / 2); lid.rotation.x = -1.85; n.add_child(lid)
+			_box(Vector3(s.x, 0.006, s.z), Vector3(0, 0, s.z / 2), 0, alu, lid)
+			_box(Vector3(s.x - 0.02, 0.001, s.z - 0.03), Vector3(0, -0.0035, s.z / 2), 0, screen, lid)
+		"keyboard":
+			_box(Vector3(s.x, 0.011, s.z), Vector3(0, 0.0055, 0), 0, alu, n)
+			var keys := _mat("keycap", Color(0.92, 0.92, 0.9), 0.5)
+			for r in 5:
+				for c in 15:
+					_box(Vector3(0.024, 0.007, 0.019), Vector3(-s.x / 2 + 0.03 + c * 0.0273, 0.014, -s.z / 2 + 0.018 + r * 0.023), 0, keys, n)
+		"mouse":
+			var mi := MeshInstance3D.new(); var sm := SphereMesh.new(); sm.radius = 0.5; sm.height = 1.0
+			mi.mesh = sm; mi.scale = Vector3(s.x, s.y * 1.6, s.z); mi.material_override = dark; n.add_child(mi)
+		_:
+			return null
+	return n
 
 func _placeholder_mat(def_id: String) -> Material:
 	if def_id in ["desk_140", "reception_desk"]: return _mat("desk_white", Color(0.94, 0.93, 0.91), 0.42)   # white matte top, black steel frame in the GLB
@@ -339,7 +374,8 @@ func _apply_snap(s: Dictionary) -> void:
 		if not people.has(b.id):
 			people[b.id] = _person(b.id)
 		var p: Dictionary = people[b.id]
-		p.pos = Vector3(b.x, b.y if b.state == "sitting" else 0.0, b.z)
+		# the root stays on the floor: the seated clip itself puts the pelvis on the seat (no double lift)
+		p.pos = Vector3(b.x, 0.0, b.z)
 		p.yaw = b.yaw
 		p.state = b.state
 		p.node.visible = b.state != "offsite"
