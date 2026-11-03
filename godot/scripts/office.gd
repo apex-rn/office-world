@@ -448,7 +448,10 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 		anim_name = "standing"
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
-		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
+		# 0.3 s blend between poses; sitting down / standing up eases over 0.6 s so the body lowers instead of popping
+		var sit_clip: String = anim_map.get("sitting", "")
+		var blend := 0.6 if (want == sit_clip or ap.current_animation == sit_clip) else 0.3
+		ap.play(want, blend)
 	p.walk_clip = anim_map.get("walk", "")
 
 # Korean bow (Rocketbox has no bow clip): bend the spine chain forward, hold, and straighten — on top of idle
@@ -486,6 +489,11 @@ func _apply_snap(s: Dictionary) -> void:
 		# the root stays on the floor: the seated clip itself puts the pelvis on the seat (no double lift)
 		p.pos = Vector3(b.x, 0.0, b.z)
 		p.yaw = b.yaw
+		# snapshot buffer: bodies are drawn ~100 ms in the past, between two real samples (no jumps at 10 Hz)
+		var hist: Array = p.get("hist", [])
+		hist.append({"t": Time.get_ticks_msec() / 1000.0, "pos": p.pos, "yaw": b.yaw})
+		if hist.size() > 6: hist.pop_front()
+		p.hist = hist
 		p.state = b.state
 		# when the camera is the Boss's own eyes, his body is not drawn (he saw the top of his own capsule)
 		var own_eyes: bool = b.id == "boss" and eye_mode and not eye_locked
@@ -619,6 +627,24 @@ func _pin_cards(cards: Array) -> void:
 			more.font_size = 64; more.pixel_size = 0.0005; more.modulate = Color(0.1, 0.1, 0.12)
 			more.position = Vector3(-w / 2 + 0.02 + ci * cw + cw / 2, 0.08, 0.017); root.add_child(more)
 
+const INTERP_DELAY := 0.1   # seconds bodies are drawn behind the newest snapshot (one 10 Hz interval)
+
+# position and facing at render time t, between the two buffered snapshots around it
+func _interp(p: Dictionary, t: float) -> Dictionary:
+	var h: Array = p.get("hist", [])
+	if h.is_empty():
+		return {"pos": p.pos, "yaw": p.yaw}
+	if h.size() == 1 or t <= h[0].t:
+		return {"pos": h[0].pos, "yaw": h[0].yaw}
+	for i in range(h.size() - 1, 0, -1):
+		var a: Dictionary = h[i - 1]; var b: Dictionary = h[i]
+		if t >= a.t:
+			var k: float = clamp((t - a.t) / max(b.t - a.t, 0.001), 0.0, 1.0)
+			# a big step is a teleport (arrival, seat snap): no slide across the room
+			if (b.pos as Vector3).distance_to(a.pos) > 2.0: k = 1.0
+			return {"pos": (a.pos as Vector3).lerp(b.pos, k), "yaw": lerp_angle(a.yaw, b.yaw, k)}
+	return {"pos": h[-1].pos, "yaw": h[-1].yaw}
+
 func _speech(e: Dictionary) -> void:
 	if not people.has(e.from):
 		return
@@ -689,7 +715,8 @@ func _process(dt: float) -> void:
 		var p: Dictionary = people[id]
 		var n: Node3D = p.node
 		var before := n.position
-		n.position = n.position.lerp(p.pos, clamp(dt * 10.0, 0, 1))
+		var at: Dictionary = _interp(p, now - INTERP_DELAY)
+		n.position = at.pos
 		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
 		# striding on the spot
@@ -699,7 +726,7 @@ func _process(dt: float) -> void:
 			(p.anim as AnimationPlayer).speed_scale = clamp(spd / 1.3, 0.6, 1.5)
 		elif p.anim:
 			(p.anim as AnimationPlayer).speed_scale = 1.0
-		n.rotation.y = lerp_angle(n.rotation.y, p.yaw, clamp(dt * 6.0, 0, 1))
+		n.rotation.y = at.yaw
 		if p.bubble_until > 0 and now > p.bubble_until:
 			p.bubble.visible = false
 			p.bubble_until = 0.0
