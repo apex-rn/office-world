@@ -244,6 +244,9 @@ export class OfficeRuntime {
       this.social.push({ t: w.now, type: 'greet', from: a.spec.id, to: b.spec.id, bowDeg, handshake });
       // face each other, pause ~1.5 s for the bow, then carry on
       this.world.pauseToGreet(a.spec.id, b.spec.id, handshake ? 'bow_handshake' : `bow_${bowDeg}`);
+      // the bow comes with words: the greeter says hello, the greeted answers (each in their own voice, by their own mind)
+      this.minds.get(a.spec.id)?.greeted(b.spec.id, false, w.now);
+      this.minds.get(b.spec.id)?.greeted(a.spec.id, true, w.now);
     }
   }
 }

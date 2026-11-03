@@ -33,6 +33,8 @@ export class Mind {
   private addressed = false;
   /** follow-up steps from the last thought (run by the runtime without another model call) */
   plan: Command[] = [];
+  /** a one-shot situational cue for the next thought (e.g. a greeting to answer) */
+  private cue = '';
   onFriction?: (what: string, why: string) => void;
   private lastSpokeAt = 0;
   private satAt = 0;
@@ -59,6 +61,14 @@ export class Mind {
       this.pendingWake = true;
       if (e.type === 'action_failed') void this.memory.add('observation', `I tried to ${e.verb} but couldn't: ${e.msg}.`, 3, e.t);
     }
+  }
+
+  /** A colleague bowed to me / I bowed to someone: real people say something with the bow (first thing next thought). */
+  greeted(other: string, theyGreetedMe: boolean, t: number): void {
+    this.cue = theyGreetedMe ? `${nameOf(other)} (${other}) just bowed to me in greeting — I greet them back out loud (use "say" with "to": "${other}").`
+      : `I just bowed to ${nameOf(other)} (${other}) — I say a short greeting to them (use "say" with "to": "${other}").`;
+    this.pendingWake = true; if (theyGreetedMe) this.addressed = true;
+    void this.memory.add('observation', theyGreetedMe ? `${nameOf(other)} greeted me.` : `I greeted ${nameOf(other)}.`, 2, t);
   }
 
   /** Something happened to me emotionally (salary, praise, romance...). */
@@ -156,8 +166,9 @@ export class Mind {
       const quietMin = Math.floor((w.now - (this.lastSpokeAt || w.now - 3_600_000)) / 60_000);
       const messages: ChatMessage[] = [
         { role: 'system', content: this.systemPrompt() },
-        { role: 'user', content: `${obs}\n${this.deps.social?.describe(this.me.id) ?? ''}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}What do I do next?` },
+        { role: 'user', content: `${obs}\n${this.deps.social?.describe(this.me.id) ?? ''}\n\nWhat I remember:\n${mems.map(m => `- ${m.text}`).join('\n') || '- nothing special yet'}\n\n${this.options()}\n\n${this.cue ? `${this.cue}\n` : ''}${wasAddressed ? 'Someone just spoke to me — I should answer them now.\n' : ''}${quietMin >= 20 ? `I haven't talked to anyone for ${quietMin} minutes.\n` : ''}What do I do next?` },
       ];
+      this.cue = '';
       const route = this.deps.router.pick('life', w.now);
       if ('deferred' in route) return null;
       let raw = '';
