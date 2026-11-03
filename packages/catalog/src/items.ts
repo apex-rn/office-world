@@ -55,12 +55,12 @@ export const ITEMS: ItemDef[] = [
     id: 'kitchen_counter', name: 'Kitchen counter 240', kind: 'furniture', placement: 'floor',
     dims: { w: 2.40, d: 0.60, h: 0.90 }, source: 'EN 1116 worktop height 0.90, depth 0.60',
     massKg: 120, nav: 'static', support: [top(2.4, 0.6, 0.90)],
-    anchors: { front: { x: 0, z: 0.65 } },
+    anchors: { front: { x: 0, z: 0.58 } },
   },
   {
     id: 'sink_unit', name: 'Sink unit 80', kind: 'device', placement: 'floor',
     dims: { w: 0.80, d: 0.60, h: 0.90 }, source: 'EN 1116 height 0.90; 800 sink base',
-    massKg: 40, nav: 'static', anchors: { front: { x: 0, z: 0.62 } },
+    massKg: 40, nav: 'static', anchors: { front: { x: 0, z: 0.58 } },
     affordances: [{ verb: 'wash', at: 'front', duration: [20, 60], capacity: 1, anim: 'wash_hands' }],
   },
   {
@@ -81,7 +81,7 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'bookcase', name: 'Bookcase', kind: 'furniture', placement: 'floor',
     dims: { w: 0.80, d: 0.35, h: 1.80 }, source: 'VERIFY: 800x350x1800 office shelf',
-    massKg: 35, nav: 'static', anchors: { front: { x: 0, z: 0.55 } },
+    massKg: 35, nav: 'static', anchors: { front: { x: 0, z: 0.46 } },
     // people take a book and read it at their desk or on the sofa — nobody reads for ten minutes standing at a shelf
     affordances: [{ verb: 'read', at: 'front', duration: [20, 60], capacity: 1, anim: 'browse_shelf', yields: 'book' }],
   },
@@ -106,7 +106,7 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'fridge', name: 'Fridge', kind: 'device', placement: 'floor',
     dims: { w: 0.60, d: 0.65, h: 1.80 }, source: 'standard 600 mm built-in width; VERIFY depth/height',
-    massKg: 65, nav: 'static', powered: true, anchors: { front: { x: 0, z: 0.75 } },
+    massKg: 65, nav: 'static', powered: true, anchors: { front: { x: 0, z: 0.65 } },
     affordances: [
       { verb: 'take_food', at: 'front', duration: [10, 25], capacity: 1, anim: 'open_fridge', yields: 'lunchbox' },
       { verb: 'take_drink', at: 'front', duration: [6, 12], capacity: 1, anim: 'open_fridge', yields: 'water_bottle' },
@@ -115,7 +115,7 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'water_dispenser', name: 'Water dispenser', kind: 'device', placement: 'floor',
     dims: { w: 0.33, d: 0.33, h: 1.05 }, source: 'VERIFY: floor water cooler 330x330x1050',
-    massKg: 18, nav: 'static', powered: true, anchors: { front: { x: 0, z: 0.55 } },
+    massKg: 18, nav: 'static', powered: true, anchors: { front: { x: 0, z: 0.45 } },
     affordances: [{ verb: 'fill_water', at: 'front', duration: [8, 15], capacity: 1, anim: 'fill_cup', yields: 'paper_cup' }],
   },
   {
@@ -179,19 +179,19 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'coffee_machine', name: 'Espresso machine', kind: 'device', placement: 'surface',
     dims: { w: 0.30, d: 0.45, h: 0.40 }, source: 'VERIFY: bean-to-cup machine 300x450x400',
-    massKg: 9, nav: 'none', powered: true, anchors: { front: { x: 0, z: 0.85 } },
+    massKg: 9, nav: 'none', powered: true, anchors: { front: { x: 0, z: 0.65 } },
     affordances: [{ verb: 'brew_coffee', at: 'front', duration: [45, 75], capacity: 1, anim: 'use_machine', yields: 'mug' }],
   },
   {
     id: 'microwave', name: 'Microwave', kind: 'device', placement: 'surface',
     dims: { w: 0.48, d: 0.36, h: 0.28 }, source: 'VERIFY: 20 L microwave 480x360x280',
-    massKg: 11, nav: 'none', powered: true, anchors: { front: { x: 0, z: 0.80 } },
+    massKg: 11, nav: 'none', powered: true, anchors: { front: { x: 0, z: 0.68 } },
     affordances: [{ verb: 'heat_food', at: 'front', duration: [90, 180], capacity: 1, anim: 'use_machine' }],
   },
   {
     id: 'printer', name: 'Laser printer', kind: 'device', placement: 'surface',
     dims: { w: 0.42, d: 0.42, h: 0.35 }, source: 'VERIFY: A4 laser MFP 420x420x350',
-    massKg: 15, nav: 'none', powered: true, anchors: { front: { x: 0, z: 0.85 } },
+    massKg: 15, nav: 'none', powered: true, anchors: { front: { x: 0, z: 0.55 } },
     affordances: [{ verb: 'print', at: 'front', duration: [15, 60], capacity: 1, anim: 'use_machine', yields: 'paper_stack' }],
   },
   { id: 'lunchbox', name: 'Lunch box', kind: 'item', placement: 'surface', dims: { w: 0.20, d: 0.15, h: 0.07 }, source: 'VERIFY', massKg: 0.6, nav: 'none' },

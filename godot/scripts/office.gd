@@ -323,6 +323,10 @@ func _person(id: String) -> Dictionary:
 	var path := "res://assets/people/%s.glb" % id
 	if ResourceLoader.exists(path):
 		var body: Node3D = load(path).instantiate()
+		# avatars must face +Z like the catalog; anims.json "forward_yaw_deg" corrects a model authored facing -Z (180)
+		if anim_map.is_empty() and ResourceLoader.exists("res://assets/people/anims.json"):
+			anim_map = JSON.parse_string(FileAccess.get_file_as_string("res://assets/people/anims.json"))
+		body.rotation.y = deg_to_rad(float(anim_map.get("forward_yaw_deg", 0)))
 		node.add_child(body)
 		anim = body.find_child("AnimationPlayer", true, false)
 	else:

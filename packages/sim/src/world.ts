@@ -148,7 +148,8 @@ export class World {
     const a = def(i.def).anchors?.[name];
     if (!a) return null;
     const w = localToWorld(i.x, i.z, i.yaw, a.x, a.z);
-    return { p: { x: w.x, y: (a.y ?? 0) + baseY(this.layout, i), z: w.z }, yaw: i.yaw + (a.yaw ?? 0) };
+    // standing points are on the floor (even for a machine on a counter); only seats carry a height
+    return { p: { x: w.x, y: a.y !== undefined ? a.y + baseY(this.layout, i) : 0, z: w.z }, yaw: i.yaw + (a.yaw ?? 0) };
   }
 
   zoneOf(p: Vec2): string | null {
