@@ -523,7 +523,7 @@ func _add_screen(i: Dictionary, node: Node3D) -> void:
 	var box := _aabb(node, node.transform.affine_inverse())
 	var sz: Vector2; var cy: float
 	match String(i.def):
-		"monitor_24": sz = Vector2(i.w - 0.03, 0.29); cy = i.h - 0.159
+		"monitor_24": sz = Vector2(i.w - 0.016, 0.30); cy = i.h - 0.159   # = the glass of monitor_24.glb (furnish.py)
 		"tv_65": sz = Vector2(i.w - 0.03, i.h - 0.03); cy = i.h / 2
 		_: sz = Vector2(i.w - 0.08, i.h - 0.12); cy = i.h / 2 + 0.03
 	var panel := MeshInstance3D.new()
@@ -534,7 +534,10 @@ func _add_screen(i: Dictionary, node: Node3D) -> void:
 	if not lit: m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.emission_enabled = lit; m.emission = Color(0.0, 0.0, 0.0); m.roughness = 0.15
 	panel.material_override = m
-	panel.position = Vector3(0, cy, box.end.z + 0.0015)
+	# on the glass itself: the monitor's box reaches past the screen (its stand base sits 5 cm further forward),
+	# which left the live panel floating in front of the lit glass as a second screen
+	var front: float = 0.0425 if i.def == "monitor_24" else box.end.z + 0.0015
+	panel.position = Vector3(0, cy, front)
 	node.add_child(panel)
 	var t := Label3D.new()
 	t.font_size = 40 if i.def == "monitor_24" else 64
