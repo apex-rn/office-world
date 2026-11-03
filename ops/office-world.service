@@ -1,0 +1,28 @@
+# systemd user unit for the Compound Chronicle office service (runs as user cc, no root).
+# Install: ops/install.sh (copies to ~/.config/systemd/user/, enables lingering is done once by root).
+[Unit]
+Description=Compound Chronicle Office World (24/7 simulation + AI staff + live stream)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/office-world
+Environment=FREELLM_URL=http://127.0.0.1:3001
+Environment=FREELLM_KEY_FILE=%h/.config/freellmapi/unified_key
+Environment=FAST_MODEL=auto:office-fast
+Environment=STRONG_MODEL=auto:office-strong
+Environment=BOARD_PATH=%h/office/board.json
+Environment=CLAUDE_DOWN_FILE=%h/office/claude_down_until
+Environment=DATA_DIR=%h/office-world-data
+Environment=PORT=8765
+Environment=MAX_THOUGHTS=3
+ExecStart=/usr/bin/env npx tsx packages/server/src/main.ts
+Restart=always
+RestartSec=5
+# keep the box healthy: the office must never starve the owner's other services
+MemoryMax=900M
+CPUQuota=120%
+Nice=5
+
+[Install]
+WantedBy=default.target
