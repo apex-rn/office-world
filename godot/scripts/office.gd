@@ -723,9 +723,16 @@ func _process(dt: float) -> void:
 			# the Boss is never drawn from the 100 ms buffer: he follows the newest server position (nudged 0.1 s
 			# ahead along his own steering) with a fast smooth lerp, so keys answer at once and nothing fights the
 			# server (a local copy that ran ahead and snapped back made him jerk at walls and people)
-			var target: Vector3 = p.pos + Vector3(boss_v.x, 0, boss_v.y) * 0.1
+			# the target glides continuously: newest snapshot + steering x time since it arrived (not a step every 100 ms)
+			var h: Array = p.get("hist", [])
+			var age: float = clamp(now - (h[-1].t if not h.is_empty() else now), 0.0, 0.15)
+			var v3 := Vector3(boss_v.x, 0, boss_v.y)
+			var target: Vector3 = p.pos + v3 * age
+			# while walking, never step back along the walk (a snapshot slightly behind the glide): hold that frame
+			if v3.length() > 0.01 and (target - n.position).dot(v3) < 0.0 and target.distance_to(n.position) < 0.6:
+				target = n.position
 			var face: float = atan2(boss_v.x, boss_v.y) if boss_v.length() > 0.01 else p.yaw
-			at = {"pos": n.position.lerp(target, clamp(dt * 12.0, 0, 1)), "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 10.0, 0, 1))}
+			at = {"pos": n.position.lerp(target, clamp(dt * 20.0, 0, 1)), "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 10.0, 0, 1))}
 		n.position = at.pos
 		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
