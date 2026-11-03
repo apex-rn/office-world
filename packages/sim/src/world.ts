@@ -300,7 +300,7 @@ export class World {
           b.anim = aff.anim;
           return r;
         }
-        if (aff.verb === 'work' && b.seat?.inst !== i.id.replace(/^desk\./, 'chair.')) return rej('NOT_ALLOWED', `sit at ${i.id.replace(/^desk\./, 'chair.')} first, then work`);
+        if (aff.verb === 'work') return rej('NOT_ALLOWED', `sit at ${i.id.replace(/^desk\./, 'chair.')} first, then work`);
         if (aff.yields && b.holding) return rej('HANDS_FULL', `hands full (${b.holding})`);
         const at = aff.at === 'self' ? { p: { x: i.x, y: 0, z: i.z }, yaw: i.yaw } : this.anchorWorld(i, aff.at);
         if (!at) return rej('UNKNOWN_TARGET', 'device has no use point');
@@ -425,6 +425,18 @@ export class World {
       const d = def(i.def);
       const a = (d.anchors?.front && this.anchorWorld(i, 'front')) || (d.anchors?.approach && this.anchorWorld(i, 'approach'));
       if (a) return { p: a.p, yaw: a.yaw + Math.PI };
+      // no use point (a desk, a table, a shelf): stand at a free reachable spot along its edge, facing it —
+      // never at its centre, which is inside the furniture and can't be reached
+      const r0 = Math.max(d.dims.w, d.dims.d) / 2;
+      let best: Vec3 | null = null, bestD = Infinity;
+      for (const r of [r0 * 0.55 + 0.45, r0 + 0.45, r0 * 0.8 + 0.5]) for (let k = 0; k < 16; k++) {
+        const ang = (k / 16) * Math.PI * 2;
+        const sp = snap(this.nav, { x: i.x + Math.sin(ang) * r, y: 0, z: i.z + Math.cos(ang) * r }, { x: 0.12, y: 1, z: 0.12 });
+        if (!sp || !this.freeSpot(sp, b.spec.id)) continue;
+        const dist = Math.hypot(sp.x - b.pos.x, sp.z - b.pos.z);
+        if (dist < bestD) { best = sp; bestD = dist; }
+      }
+      if (best) return { p: best, yaw: Math.atan2(i.x - best.x, i.z - best.z) };
       return { p: { x: i.x, y: 0, z: i.z } };
     }
     const spot = this.zoneSpot.get(t);
@@ -448,6 +460,8 @@ export class World {
     const slot = b.seat.anchor === 'seat' ? 0 : Number(b.seat.anchor.slice(4));
     const ap = this.seatApproach(i, slot)!;
     if (!this.freeSpot(ap.p, b.spec.id)) return { ok: false, code: 'BUSY', msg: 'someone is standing right behind the seat' };
+    // whatever was being done in the seat (typing, a drink, waiting) ends when you get up
+    if (b.active) this.cancel(b);
     this.release(i.id, b.spec.id);
     this.freeSlot(`${i.id}#${slot}`);
     b.seat = null;
