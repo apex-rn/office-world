@@ -1,0 +1,412 @@
+{
+ "source": "Poly Haven (CC0 1.0)",
+ "resolution": "2k",
+ "total_bytes": 167645728,
+ "items": [
+  {
+   "path": "hdri/evening_city_sunset_jhbcentral_2k.hdr",
+   "kind": "hdris",
+   "polyhaven_id": "sunset_jhbcentral",
+   "page": "https://polyhaven.com/a/sunset_jhbcentral",
+   "bytes": 6099369,
+   "sha256": "d906ad6158a3bb9571ec82d238cdad7390211040aea506b3670b52475ad69737",
+   "in_git": true
+  },
+  {
+   "path": "hdri/interior_hotel_room_2k.hdr",
+   "kind": "hdris",
+   "polyhaven_id": "hotel_room",
+   "page": "https://polyhaven.com/a/hotel_room",
+   "bytes": 6186669,
+   "sha256": "14fdf682ee084d8ad68c77b47031e473fd89413c8b99cb988366c6ac1afb3918",
+   "in_git": true
+  },
+  {
+   "path": "materials/carpet/carpet_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "poly_wool_herringbone",
+   "page": "https://polyhaven.com/a/poly_wool_herringbone",
+   "bytes": 3650614,
+   "sha256": "ca21de8e2e7f43178f8290361bfb2271eb264af0d2887c7c93e76a113ff3cc64",
+   "in_git": true
+  },
+  {
+   "path": "materials/carpet/carpet_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "poly_wool_herringbone",
+   "page": "https://polyhaven.com/a/poly_wool_herringbone",
+   "bytes": 3959002,
+   "sha256": "f99d4173a3771722a77a07475ef1fc4783ab6b43f7acb3fcbbbf93d8f558269b",
+   "in_git": true
+  },
+  {
+   "path": "materials/carpet/carpet_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "poly_wool_herringbone",
+   "page": "https://polyhaven.com/a/poly_wool_herringbone",
+   "bytes": 3674893,
+   "sha256": "8678dfb7f474440c12a5f317fe01802dd1aabbb205a6c947bb044ade72294fa7",
+   "in_git": true
+  },
+  {
+   "path": "materials/dark_metal/dark_metal_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "metal_plate",
+   "page": "https://polyhaven.com/a/metal_plate",
+   "bytes": 2670774,
+   "sha256": "864c9a653acd1f5034c9bbe7f955b18cc9687a81bbdfa805e7a2319939676910",
+   "in_git": true
+  },
+  {
+   "path": "materials/dark_metal/dark_metal_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "metal_plate",
+   "page": "https://polyhaven.com/a/metal_plate",
+   "bytes": 2539342,
+   "sha256": "9732b2099e8b16e902d7f1bb956f2536329fb88ad4496972ec6533e8bbdc8b32",
+   "in_git": true
+  },
+  {
+   "path": "materials/dark_metal/dark_metal_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "metal_plate",
+   "page": "https://polyhaven.com/a/metal_plate",
+   "bytes": 3045988,
+   "sha256": "3cdc139df4ec5b304dd986278c1fb026c67c42e6623f0ee5caa7f373d51c7bef",
+   "in_git": true
+  },
+  {
+   "path": "materials/grey_fabric/grey_fabric_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "wool_boucle",
+   "page": "https://polyhaven.com/a/wool_boucle",
+   "bytes": 4608820,
+   "sha256": "4776e044f74963c2e93d5ca85a53307cb3946c290c6dd397711b119536e4046a",
+   "in_git": true
+  },
+  {
+   "path": "materials/grey_fabric/grey_fabric_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "wool_boucle",
+   "page": "https://polyhaven.com/a/wool_boucle",
+   "bytes": 4681659,
+   "sha256": "d4d882fb71f0bac2b19a8daf8ea08fa59c8654caf747784b9b51e3519ac9125e",
+   "in_git": true
+  },
+  {
+   "path": "materials/grey_fabric/grey_fabric_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "wool_boucle",
+   "page": "https://polyhaven.com/a/wool_boucle",
+   "bytes": 5122703,
+   "sha256": "3b7e40007d85d78b3ad572708388bd7cbd9e7b07f5f91bdac85654614d4aa7ee",
+   "in_git": true
+  },
+  {
+   "path": "materials/leather_brown/leather_brown_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "brown_leather",
+   "page": "https://polyhaven.com/a/brown_leather",
+   "bytes": 2137518,
+   "sha256": "b0de2403a31efa31e501b0028c0bd8e504d5bd6318f4a5ce90c550c3067f96d8",
+   "in_git": true
+  },
+  {
+   "path": "materials/leather_brown/leather_brown_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "brown_leather",
+   "page": "https://polyhaven.com/a/brown_leather",
+   "bytes": 3143818,
+   "sha256": "1b12a10da8a5b48ee1e9fb17c65da1811c46077889502a302196d1a588141f1b",
+   "in_git": true
+  },
+  {
+   "path": "materials/leather_brown/leather_brown_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "brown_leather",
+   "page": "https://polyhaven.com/a/brown_leather",
+   "bytes": 2801956,
+   "sha256": "8a47afca2630310849034fe40ca9497db0956c67c0d933e6efd49d3cd2befe83",
+   "in_git": true
+  },
+  {
+   "path": "materials/oak_parquet/oak_parquet_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "rectangular_parquet",
+   "page": "https://polyhaven.com/a/rectangular_parquet",
+   "bytes": 2724071,
+   "sha256": "fdc14d07dc9af34715fbd314c4bf343861960b174a0a4768839fd7b589c67b05",
+   "in_git": true
+  },
+  {
+   "path": "materials/oak_parquet/oak_parquet_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "rectangular_parquet",
+   "page": "https://polyhaven.com/a/rectangular_parquet",
+   "bytes": 1824206,
+   "sha256": "acaf365b76eebc529a12577a01f210d481693bb4bcc2462751fdfd9ad491382b",
+   "in_git": true
+  },
+  {
+   "path": "materials/oak_parquet/oak_parquet_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "rectangular_parquet",
+   "page": "https://polyhaven.com/a/rectangular_parquet",
+   "bytes": 1816212,
+   "sha256": "41c3e27ea9cda7e6c7e07c4299c3b9556cb2a44225637c81deb284d49e2ebd9c",
+   "in_git": true
+  },
+  {
+   "path": "materials/plaster_wall/plaster_wall_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "painted_plaster_wall",
+   "page": "https://polyhaven.com/a/painted_plaster_wall",
+   "bytes": 3132937,
+   "sha256": "6fd812ed8dd5be1873c29aeef38ce9bf1fb30a22c6d4b3a12db725e98c26a1be",
+   "in_git": true
+  },
+  {
+   "path": "materials/plaster_wall/plaster_wall_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "painted_plaster_wall",
+   "page": "https://polyhaven.com/a/painted_plaster_wall",
+   "bytes": 4057940,
+   "sha256": "258ed862e80c033b52171786483cb4be7bf9d6e3e1cb8fc3b8ed15a18d3c58c8",
+   "in_git": true
+  },
+  {
+   "path": "materials/plaster_wall/plaster_wall_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "painted_plaster_wall",
+   "page": "https://polyhaven.com/a/painted_plaster_wall",
+   "bytes": 1595466,
+   "sha256": "35aad595469533cc3b7cc209cc6c7e065d660211f02c867f4492d3b371b1fee1",
+   "in_git": true
+  },
+  {
+   "path": "materials/walnut_parquet/walnut_parquet_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "herringbone_parquet",
+   "page": "https://polyhaven.com/a/herringbone_parquet",
+   "bytes": 3482793,
+   "sha256": "8305c12adf1da61f4d267611948bfdc9293c9b9915da64e41cc1ab68c0167ff1",
+   "in_git": true
+  },
+  {
+   "path": "materials/walnut_parquet/walnut_parquet_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "herringbone_parquet",
+   "page": "https://polyhaven.com/a/herringbone_parquet",
+   "bytes": 1848982,
+   "sha256": "d3c4a07200ad3c7198225be1f5da37b64da580507148d302965213e6ff0320fc",
+   "in_git": true
+  },
+  {
+   "path": "materials/walnut_parquet/walnut_parquet_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "herringbone_parquet",
+   "page": "https://polyhaven.com/a/herringbone_parquet",
+   "bytes": 2285252,
+   "sha256": "9fd86e1c5bff348625bab72091d7ea2fa80d197f8e4a5452b378ce8ae0abd9e5",
+   "in_git": true
+  },
+  {
+   "path": "materials/walnut_wood/walnut_wood_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "walnut_veneer",
+   "page": "https://polyhaven.com/a/walnut_veneer",
+   "bytes": 2060618,
+   "sha256": "66c73defcc62ac090cb838e8455b8c1febbfea29a15c8f40a5e2d398b2ba4733",
+   "in_git": true
+  },
+  {
+   "path": "materials/walnut_wood/walnut_wood_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "walnut_veneer",
+   "page": "https://polyhaven.com/a/walnut_veneer",
+   "bytes": 1892675,
+   "sha256": "708f0f2c4228e258fda3f2da17213c7ed0e8840cb3235ec0de9401bf41507d31",
+   "in_git": true
+  },
+  {
+   "path": "materials/walnut_wood/walnut_wood_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "walnut_veneer",
+   "page": "https://polyhaven.com/a/walnut_veneer",
+   "bytes": 2426374,
+   "sha256": "e3a8a7e035a378ce6ce2252fcd4352f62b16a2a6b2f453baacd4e081c2fedb34",
+   "in_git": true
+  },
+  {
+   "path": "materials/white_marble/white_marble_diff_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "marble_01",
+   "page": "https://polyhaven.com/a/marble_01",
+   "bytes": 1269188,
+   "sha256": "d403786171716f86718bdd67eba923d4fb6125c0636bacef0e6a21dd5d623a48",
+   "in_git": true
+  },
+  {
+   "path": "materials/white_marble/white_marble_nor_dx_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "marble_01",
+   "page": "https://polyhaven.com/a/marble_01",
+   "bytes": 380229,
+   "sha256": "d4a48b1e08207295b1b34f89ee38fd137d4cccf10b9e8c9073654bfb2532370a",
+   "in_git": true
+  },
+  {
+   "path": "materials/white_marble/white_marble_rough_2k.jpg",
+   "kind": "textures",
+   "polyhaven_id": "marble_01",
+   "page": "https://polyhaven.com/a/marble_01",
+   "bytes": 281388,
+   "sha256": "1b970e033856c93ee7390d947da5340e101b489fc8c1463354ea9e6655ce039a",
+   "in_git": true
+  },
+  {
+   "path": "models/book_encyclopedia_set_01.glb",
+   "kind": "models",
+   "polyhaven_id": "book_encyclopedia_set_01",
+   "page": "https://polyhaven.com/a/book_encyclopedia_set_01",
+   "bytes": 4660236,
+   "sha256": "ecc9e3b577a947b489c47916fab8276db1ca0cb62a9820059805fb7169e99554",
+   "in_git": true
+  },
+  {
+   "path": "models/brass_vase_01.glb",
+   "kind": "models",
+   "polyhaven_id": "brass_vase_01",
+   "page": "https://polyhaven.com/a/brass_vase_01",
+   "bytes": 1735664,
+   "sha256": "a44722b012bb104dbe3fdb8847778cabbf67f63e533f3e3b940aeb1172fac52b",
+   "in_git": true
+  },
+  {
+   "path": "models/desk_lamp_arm_01.glb",
+   "kind": "models",
+   "polyhaven_id": "desk_lamp_arm_01",
+   "page": "https://polyhaven.com/a/desk_lamp_arm_01",
+   "bytes": 8471304,
+   "sha256": "de22a278254a2e54cc90df341ccc3cdd8b17c34b6ce17cf6d1d8c74aec526325",
+   "in_git": true
+  },
+  {
+   "path": "models/drawer_cabinet.glb",
+   "kind": "models",
+   "polyhaven_id": "drawer_cabinet",
+   "page": "https://polyhaven.com/a/drawer_cabinet",
+   "bytes": 2065664,
+   "sha256": "c76e04bef925427d51e87d408480be0d8f5c9a5a025228267c8ade268959687d",
+   "in_git": true
+  },
+  {
+   "path": "models/metal_office_desk.glb",
+   "kind": "models",
+   "polyhaven_id": "metal_office_desk",
+   "page": "https://polyhaven.com/a/metal_office_desk",
+   "bytes": 5240252,
+   "sha256": "9a8c29b615616eb4bc88b14e31ca388015bf4e84ff899e2b6f0d3d8cc87742a9",
+   "in_git": true
+  },
+  {
+   "path": "models/mid_century_lounge_chair.glb",
+   "kind": "models",
+   "polyhaven_id": "mid_century_lounge_chair",
+   "page": "https://polyhaven.com/a/mid_century_lounge_chair",
+   "bytes": 7740028,
+   "sha256": "80c44ed49cb5f8e12303eb13af0e19928cf36877c49035d890dc08332f11d6ef",
+   "in_git": true
+  },
+  {
+   "path": "models/modern_arm_chair_01.glb",
+   "kind": "models",
+   "polyhaven_id": "modern_arm_chair_01",
+   "page": "https://polyhaven.com/a/modern_arm_chair_01",
+   "bytes": 9219832,
+   "sha256": "54eb24cc85d9aedf9b090486a9eee641222ad7d97fbcf17d0c0b03fd441cc33c",
+   "in_git": true
+  },
+  {
+   "path": "models/modern_ceiling_lamp_01.glb",
+   "kind": "models",
+   "polyhaven_id": "modern_ceiling_lamp_01",
+   "page": "https://polyhaven.com/a/modern_ceiling_lamp_01",
+   "bytes": 1070968,
+   "sha256": "4a4c755bad1cb160ef9104c656de8a106aa301a0d7d651bcd63151d4bbae641a",
+   "in_git": true
+  },
+  {
+   "path": "models/modern_coffee_table_01.glb",
+   "kind": "models",
+   "polyhaven_id": "modern_coffee_table_01",
+   "page": "https://polyhaven.com/a/modern_coffee_table_01",
+   "bytes": 4700232,
+   "sha256": "967f1b6a0179f681a8f3985784e9d76764e6cd189ed3ca78601d3621ec9c82fa",
+   "in_git": true
+  },
+  {
+   "path": "models/modern_coffee_table_02.glb",
+   "kind": "models",
+   "polyhaven_id": "modern_coffee_table_02",
+   "page": "https://polyhaven.com/a/modern_coffee_table_02",
+   "bytes": 9457776,
+   "sha256": "1cfe011f0762265b84a03e12786f0f75f1d4fc25feff88f7e9f77ced2c0b6b6f",
+   "in_git": true
+  },
+  {
+   "path": "models/modern_wooden_cabinet.glb",
+   "kind": "models",
+   "polyhaven_id": "modern_wooden_cabinet",
+   "page": "https://polyhaven.com/a/modern_wooden_cabinet",
+   "bytes": 8215908,
+   "sha256": "20e8b14b41e5d2aad1f1c99dc81fc5481a4c60c48d61a9401b635101c288000f",
+   "in_git": true
+  },
+  {
+   "path": "models/office_notepads.glb",
+   "kind": "models",
+   "polyhaven_id": "office_notepads",
+   "page": "https://polyhaven.com/a/office_notepads",
+   "bytes": 5717704,
+   "sha256": "d19e3b688c34d34df1227dc4459dc10b2d947e4bd922f6cf58726c26bc0b6feb",
+   "in_git": true
+  },
+  {
+   "path": "models/potted_plant_02.glb",
+   "kind": "models",
+   "polyhaven_id": "potted_plant_02",
+   "page": "https://polyhaven.com/a/potted_plant_02",
+   "bytes": 4874508,
+   "sha256": "ee1904655b5db81d699ce8ad98c79c8f9aae26710a2bfb6cdf5efc243d959b5a",
+   "in_git": true
+  },
+  {
+   "path": "models/potted_plant_04.glb",
+   "kind": "models",
+   "polyhaven_id": "potted_plant_04",
+   "page": "https://polyhaven.com/a/potted_plant_04",
+   "bytes": 6254684,
+   "sha256": "bec99be0fcddae2bfc3a5e9647a5d2ffe85fffcf717aad0fb2d9fccddc2c43fa",
+   "in_git": true
+  },
+  {
+   "path": "models/side_table_01.glb",
+   "kind": "models",
+   "polyhaven_id": "side_table_01",
+   "page": "https://polyhaven.com/a/side_table_01",
+   "bytes": 1553712,
+   "sha256": "106a04b45e6338a5e0026618d3fc0003e2c784095674bfa60a0974e7b7e354fe",
+   "in_git": true
+  },
+  {
+   "path": "models/sofa_02.glb",
+   "kind": "models",
+   "polyhaven_id": "sofa_02",
+   "page": "https://polyhaven.com/a/sofa_02",
+   "bytes": 1265800,
+   "sha256": "259d5fb630a548fbc2c83c4fb96be5002da90780441c0725aea13b0c118324b2",
+   "in_git": true
+  }
+ ]
+}
