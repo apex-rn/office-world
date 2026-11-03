@@ -2,7 +2,7 @@
 
 > Har sessiya: 1) shu faylni o'qi, 2) `docs/WORLD_PLAN.md`dan kerakli bo'limni o'qi, 3) bitta vazifa, 4) `npm test`, 5) shu faylni yangila, 6) commit.
 
-## Holat (2026-11-03, tun) — 29/29 test
+## Holat (2026-11-03, tun) — 30/30 test
 **B (dunyo) + C (miya) + server xizmati tayyor; D (ko'rinish) Unreal yo'liga o'tdi.**
 
 ### Qo'shilganlar
@@ -21,7 +21,8 @@
 2. Boss: Epic Launcher + UE 5.x + VS "Game development with C++" (UE 5.x VS 2026 ni qo'llashini tekshirish; bo'lmasa VS 2022 Build Tools).
 3. Unreal U1–U2: LevelBuilder (Editor Python) + CCBridge (C++ WebSocket) — kodi repo'ga `unreal/` ichida tayyorlanadi.
 4. Serverga o'rnatish: systemd unit (main.ts), Caddy/Cloudflare (Boss roziligi bilan), zaxira.
-5. Tiqilinch < 1% (hozir 1.78%).
+5. Tiqilinch: 7.1% → 1.78% → **1.07%** (odam yonida bo'sh joy tanlash, faqat u siljiganda qayta reja; javondan kitob olish 20–60 s). Qolgani WC lobbisi va oshxona — haqiqiy miyali yuklamada qayta o'lchanadi.
+6. Tayyor: Boss tanasi dunyoda (faqat Boss boshqaradi, 45° salom), `ops/` (systemd unit + install.sh, hali o'rnatilmagan), `unreal/` (LevelBuilder.py, CCBridge C++, layout_ue.json).
 
 ## Avvalgi holat (2026-11-03, ertalab)
 **Bosqich B — Dunyo yadrosi: asosiy qismi TAYYOR, testlar yashil.**
