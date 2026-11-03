@@ -79,3 +79,14 @@ test('parseDecision keeps a short follow-up plan without speech', () => {
   assert.equal(d.command.verb, 'go_to');
   assert.deepEqual(d.then.map(c => c.verb), ['use', 'sit', 'wait']);
 });
+
+test('"wait" far from my desk means going back to my chair; standing waits are short', async () => {
+  const w = await World.create(structuredClone(OFFICE_V1), T0, 4);
+  w.addBody({ id: 'manager', name: 'Daniel', heightM: 1.8, walkSpeed: 1.35 });
+  w.command('manager', { verb: 'arrive' });
+  for (let i = 0; i < 40; i++) w.step(0.05);
+  const dan = new Mind(STAFF_BY_ID.get('manager')!, { world: w, router: new Router(new ScriptedLLM(['{"thought":"hm","action":{"verb":"wait","seconds":600}}']), null, { fast: 'f', strong: 's' }) });
+  assert.deepEqual(await dan.think(), { verb: 'sit', target: 'chair.manager' });
+  const lost = new Mind(STAFF_BY_ID.get('manager')!, { world: w, router: new Router(new ScriptedLLM(['not json at all']), null, { fast: 'f', strong: 's' }) });
+  assert.equal((await lost.think())?.verb, 'sit', 'no usable reply: back to the desk, not frozen in the hall');
+});

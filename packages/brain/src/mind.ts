@@ -21,7 +21,7 @@ const ACTION_SCHEMA = `Reply with ONE JSON object only:
 Use only ids from the lists. "say" needs "text" (and "to" if you address someone). Use "use" with the device id and its verb.
 Optionally add "then": [up to 3 more actions in the same format, no "say"] for what you plan right after (e.g. walk to the coffee machine, use it, sit back down).`;
 
-export interface MindDeps { world: World; router: Router; social?: { describe(id: string): string } }
+export interface MindDeps { world: World; router: Router; social?: { describe(id: string): string }; /** a meeting or party is on */ gathering?: () => boolean }
 
 export class Mind {
   readonly memory: MemoryStream;
@@ -77,6 +77,20 @@ export class Mind {
       this.pendingWake = true;
       if (e.type === 'action_failed') void this.memory.add('observation', `I tried to ${e.verb} but couldn't: ${e.msg}.`, 3, e.t);
     }
+  }
+
+  /** Nobody waits standing in a corridor or in front of the whiteboard: "wait" away from my desk means going back to
+   *  my chair (unless I am in a line, a gathering or a conversation), and a standing wait lasts at most 20 s. */
+  private idleInstead(c: Command): Command {
+    if (c.verb !== 'wait') return c;
+    const w = this.deps.world, b = w.bodies.get(this.me.id)!;
+    if (b.state === 'sitting') return c;
+    const chair = w.inst(`chair.${this.me.id}`);
+    const talking = [...this.talks.values()].some(x => w.now - x.at < 120_000);
+    const inLine = [...w.queues.values()].some(q => q.includes(this.me.id));
+    const gathering = this.deps.gathering?.() ?? false;
+    if (chair && !talking && !inLine && !gathering && Math.hypot(chair.x - b.pos.x, chair.z - b.pos.z) > 2) return { verb: 'sit', target: chair.id };
+    return { verb: 'wait', seconds: Math.min(c.seconds, 20) };
   }
 
   /** Something I notice about the day (a meeting soon, a party): taken into my next thought. */
@@ -249,7 +263,8 @@ export class Mind {
       }
       if (raw && !parseDecision(raw)) this.onThinkError?.(`unparseable reply: ${raw.slice(0, 160)}`);
       const parsed = parseDecision(raw);
-      if (!parsed) { const c: Command = { verb: 'wait', seconds: 30 }; w.command(this.me.id, c); return c; }
+      if (!parsed) { const c = this.idleInstead({ verb: 'wait', seconds: 30 }); w.command(this.me.id, c); return c; }
+      parsed.command = this.idleInstead(parsed.command);
       // no sit/stand ping-pong: having just sat down, a person stays at least 90 s unless someone needs them
       if (parsed.command.verb === 'stand' && w.now - this.satAt < 90_000 && !wasAddressed) parsed.command = { verb: 'wait', seconds: 60 };
       let res = w.command(this.me.id, parsed.command);

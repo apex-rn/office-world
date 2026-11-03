@@ -59,11 +59,14 @@ export class OfficeRuntime {
     if (opts.boss ?? true) world.addBody({ id: BOSS.id, name: 'Boss', heightM: 2.0, walkSpeed: 1.4 });
     for (const p of opts.staff ?? STAFF) {
       world.addBody({ id: p.id, name: p.name, heightM: p.heightM, walkSpeed: 1.25 + 0.1 * p.bigFive.conscientiousness });
-      const mind = new Mind(p, { world, router, social: this.society });
+      const mind = new Mind(p, { world, router, social: this.society, gathering: () => this.activity !== 'work' });
       // what got in someone's way today (a full room, a blocked spot, a device they could not use): the Manager's
       // evening review turns these into office improvements for the Boss to approve
       mind.onFriction = (what, why) => { const k = `${what} | ${why}`; const f = this.frictions.get(k); if (f) { f.n++; f.who.add(p.id); } else this.frictions.set(k, { what, why, n: 1, who: new Set([p.id]) }); };
-      mind.onThinkError = reason => { this.diagnostics.push({ t: world.now, who: p.id, reason }); if (this.diagnostics.length > 500) this.diagnostics.shift(); };
+      mind.onThinkError = reason => {
+        this.diagnostics.push({ t: world.now, who: p.id, reason }); if (this.diagnostics.length > 500) this.diagnostics.shift();
+        console.error(`think: ${p.id}: ${reason.slice(0, 220)}`);   // in the office log: why someone stood still
+      };
       this.minds.set(p.id, mind);
     }
   }
