@@ -202,13 +202,19 @@ export class OfficeRuntime {
       const key = `${a.spec.id}>${b.spec.id}`;
       if (this.greetedToday.has(key)) continue;
       if (Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) > 3 || !w.acoustics.canSee(a.pos, b.pos)) continue;
+      // people greet someone they can actually see: the other person is inside a's field of view (±55°)
+      const dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z;
+      const off = Math.abs(((Math.atan2(dx, dz) - a.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (off > (55 * Math.PI) / 180 && a.state !== 'sitting') continue;
+      if (a.state === 'sitting' && b.state === 'sitting') continue;   // two seated people nod later, when one stands
       this.greetedToday.add(key);
       const bowDeg: 15 | 30 | 45 = b.spec.id === BOSS.id ? 45 : b.spec.id === 'manager' && a.spec.id !== BOSS.id ? 30 : 15;
       const pa = this.minds.get(a.spec.id)?.me, pb = this.minds.get(b.spec.id)?.me;
       const handshake = !!pa && !!pb && pa.habits.greeting === 'bow_handshake' && pb.habits.greeting === 'bow_handshake';
       if (a.spec.id === BOSS.id) continue;               // the Boss is greeted; he greets as he likes
       this.social.push({ t: w.now, type: 'greet', from: a.spec.id, to: b.spec.id, bowDeg, handshake });
-      a.anim = handshake ? 'bow_handshake' : `bow_${bowDeg}`;
+      // face each other, pause ~1.5 s for the bow, then carry on
+      this.world.pauseToGreet(a.spec.id, b.spec.id, handshake ? 'bow_handshake' : `bow_${bowDeg}`);
     }
   }
 }

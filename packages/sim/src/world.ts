@@ -69,6 +69,8 @@ export interface Body {
   /** passive reflex target (stepping out of the way); cleared by the next command */
   stepAside?: Vec3;
   stepAsideT?: number;
+  /** standing still for a greeting until (ms) */
+  greetUntil?: number;
   /** waiting for a narrow doorway to clear */
   doorHold?: string;
 }
@@ -459,6 +461,15 @@ export class World {
   }
 
   // ------------------------------------------------------------------ tick
+  /** Greeting reflex: turn to face the other person and stand still for a moment (bow), then resume walking. */
+  pauseToGreet(a: string, b: string, anim: string): void {
+    const A = this.bodies.get(a), B = this.bodies.get(b);
+    if (!A || !B) return;
+    if (A.state !== 'sitting') A.yaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
+    A.anim = anim;
+    if (A.agent && A.state === 'walking') { A.agent.requestMoveVelocity({ x: 0, y: 0, z: 0 }); A.greetUntil = this.now + 1500; if (A.active) A.active.lastProgressT = this.now + 1500; }
+  }
+
   /** The body's current walking target (line spot, goal or a side step). */
   private goalOf(b: Body): Vec3 | undefined { return b.stepAside ?? b.active?.cur ?? b.active?.goal; }
 
@@ -556,7 +567,13 @@ export class World {
       if (b.agent) {
         const p = b.agent.position(), v = b.agent.velocity();
         b.pos = { x: p.x, y: p.y, z: p.z };
-        if (Math.hypot(v.x, v.z) > 0.05) b.yaw = Math.atan2(v.x, v.z);
+        if (b.greetUntil) {
+          if (this.now >= b.greetUntil) { b.greetUntil = undefined; const g = this.goalOf(b); if (g) b.agent.requestMoveTarget(g); }
+        } else if (Math.hypot(v.x, v.z) > 0.05) {
+          // turn at a human rate (~4 rad/s), not instantly
+          const want = Math.atan2(v.x, v.z), d = ((want - b.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+          b.yaw += Math.max(-0.2, Math.min(0.2, d));
+        }
       }
       this.advance(b);
     }

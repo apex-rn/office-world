@@ -126,10 +126,12 @@ func _environment() -> void:
 	we.name = "WorldEnvironment"
 	we.environment = env
 	add_child(we)
+	# an office lit by its ceiling: only a faint daylight fill through the windows, no hard sun shadows
+	env.ambient_light_energy = 1.25
 	var sun := DirectionalLight3D.new()
-	sun.light_energy = 2.4
-	sun.light_color = Color(1.0, 0.92, 0.82)
-	sun.shadow_enabled = true
+	sun.light_energy = 0.25
+	sun.light_color = Color(0.95, 0.97, 1.0)
+	sun.shadow_enabled = false
 	sun.rotation_degrees = Vector3(-38, 200, 0)     # late afternoon, through the south windows
 	add_child(sun)
 
@@ -351,6 +353,7 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
 		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
+	p.walk_clip = anim_map.get("walk", "")
 
 # Korean bow (Rocketbox has no bow clip): bend the spine chain forward, hold, and straighten — on top of idle
 func _bow(p: Dictionary, deg: float) -> void:
@@ -415,8 +418,15 @@ func _process(dt: float) -> void:
 	for id in people:
 		var p: Dictionary = people[id]
 		var n: Node3D = p.node
+		var before := n.position
 		n.position = n.position.lerp(p.pos, clamp(dt * 10.0, 0, 1))
-		n.rotation.y = lerp_angle(n.rotation.y, p.yaw, clamp(dt * 10.0, 0, 1))
+		# stride matches the real ground speed (clip authored at ~1.3 m/s): feet do not skate
+		if p.anim and p.get("walk_clip", "") != "" and (p.anim as AnimationPlayer).current_animation == p.walk_clip:
+			var spd := Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
+			(p.anim as AnimationPlayer).speed_scale = clamp(spd / 1.3, 0.6, 1.5)
+		elif p.anim:
+			(p.anim as AnimationPlayer).speed_scale = 1.0
+		n.rotation.y = lerp_angle(n.rotation.y, p.yaw, clamp(dt * 6.0, 0, 1))
 		if p.bubble_until > 0 and now > p.bubble_until:
 			p.tag.text = id
 			p.bubble_until = 0.0
@@ -463,7 +473,7 @@ func _ceiling() -> void:
 		while z < d:
 			_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel)
 			var l := OmniLight3D.new()
-			l.position = Vector3(x, h - 0.15, z); l.omni_range = 4.2; l.light_energy = 0.55; l.light_color = Color(1.0, 0.95, 0.88)
+			l.position = Vector3(x, h - 0.15, z); l.omni_range = 5.0; l.light_energy = 1.1; l.light_color = Color(1.0, 0.97, 0.93)
 			l.light_bake_mode = Light3D.BAKE_STATIC; l.shadow_enabled = false
 			add_child(l)
 			z += 2.4
