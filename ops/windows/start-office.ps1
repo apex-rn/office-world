@@ -54,6 +54,8 @@ if (-not (PortOpen 8765)) {
   $env:FAST_MODEL = $cfg.fast_model
   $env:STRONG_MODEL = $cfg.strong_model
   $env:LIFE_REASONING = 'low'
+  # free tiers allow only a few requests a minute per model: few minds think at the same time (launch.json max_thoughts)
+  $env:MAX_THOUGHTS = if ($cfg.max_thoughts) { "$($cfg.max_thoughts)" } else { '2' }
   $env:DATA_DIR = $data
   $env:BOSS_TOKEN_FILE = $tok
   $env:PORT = '8765'
