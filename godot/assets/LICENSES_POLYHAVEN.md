@@ -10,11 +10,6 @@
 | `materials/carpet/` | [poly_wool_herringbone](https://polyhaven.com/a/poly_wool_herringbone) | CC0 1.0 |
 | `materials/stone/` | [stone_tiles_02](https://polyhaven.com/a/stone_tiles_02) | CC0 1.0 |
 | `materials/fabric/` | [wool_boucle](https://polyhaven.com/a/wool_boucle) | CC0 1.0 |
-| `furniture/side_chair.glb` | [modern_arm_chair_01](https://polyhaven.com/a/modern_arm_chair_01) | CC0 1.0 |
-| `furniture/sofa_3.glb` | [sofa_02](https://polyhaven.com/a/sofa_02) | CC0 1.0 |
-| `furniture/desk_140.glb` | [metal_office_desk](https://polyhaven.com/a/metal_office_desk) | CC0 1.0 |
-| `furniture/desk_160.glb` | [metal_office_desk](https://polyhaven.com/a/metal_office_desk) | CC0 1.0 |
-| `furniture/coffee_table.glb` | [modern_coffee_table_02](https://polyhaven.com/a/modern_coffee_table_02) | CC0 1.0 |
 | `furniture/cabinet_low.glb` | [modern_wooden_cabinet](https://polyhaven.com/a/modern_wooden_cabinet) | CC0 1.0 |
 | `furniture/plant_floor.glb` | [potted_plant_02](https://polyhaven.com/a/potted_plant_02) | CC0 1.0 |
 | `furniture/desk_plant.glb` | [potted_plant_04](https://polyhaven.com/a/potted_plant_04) | CC0 1.0 |
@@ -22,3 +17,9 @@
 | `hdri/interior.hdr` | [hotel_room](https://polyhaven.com/a/hotel_room) | CC0 1.0 |
 
 `furniture/office_chair.glb` is our own model (tools/assets/make_office_chair.py, CC0): Poly Haven has no office task chair.
+
+## Our own models (CC0)
+
+Built in Blender at the catalog's real dimensions by `tools/assets/furnish.py` and `tools/assets/make_office_chair.py` (textures from the Poly Haven sets above):
+desk_140, desk_160, monitor_24, keyboard, mouse, kitchen_counter, sink_unit, coffee_machine, fridge, microwave, water_dispenser, kitchen_table, side_chair, meeting_table, tv_65, whiteboard, kanban_board, reception_desk, sofa_3, coffee_table, bookcase, trash_bin, coat_rack, server_rack, printer, toilet, wc_partition, office_chair.
+laptop_14 stays office.gd's open laptop: the catalog height (0.018 m) is a closed laptop.

@@ -17,10 +17,8 @@ MATERIALS = {'walnut': 'herringbone_parquet', 'oak': 'oak_veneer_01', 'plaster':
              'leather': 'brown_leather', 'carpet': 'poly_wool_herringbone', 'stone': 'stone_tiles_02',
              'fabric': 'wool_boucle'}
 # catalog def id (packages/catalog/src/items.ts) -> Poly Haven model; ids without a good match keep office.gd's boxes
-# office_chair is built by make_office_chair.py (no task chair on Poly Haven)
-FURNITURE = {'side_chair': 'modern_arm_chair_01', 'sofa_3': 'sofa_02',
-             'desk_140': 'metal_office_desk', 'desk_160': 'metal_office_desk', 'coffee_table': 'modern_coffee_table_02',
-             'cabinet_low': 'modern_wooden_cabinet', 'plant_floor': 'potted_plant_02', 'desk_plant': 'potted_plant_04',
+# the other furniture is built by furnish.py / make_office_chair.py (Poly Haven has no modern office pieces)
+FURNITURE = {'cabinet_low': 'modern_wooden_cabinet', 'plant_floor': 'potted_plant_02', 'desk_plant': 'potted_plant_04',
              'desk_lamp': 'desk_lamp_arm_01'}
 HDRI = 'hotel_room'
 
