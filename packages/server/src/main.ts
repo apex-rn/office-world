@@ -71,7 +71,17 @@ const stream = startStream(rt, { port: Number(env('PORT', '8765')), hz: 10, boss
 rt.onEvent = e => { if (e.type !== 'yield') stream.broadcastEvent(e); };
 
 // ---- world clock: real time ----
-setInterval(() => rt.step(0.05), 50);
+// step by the real time that passed (in 0.05 s physics steps), so the office clock never falls behind the wall clock
+// on a slow machine; a long stall (sleep, debugger) is not replayed beyond 2 s
+let lastTick = Date.now(), owed = 0, slowWarned = 0;
+setInterval(() => {
+  const now = Date.now();
+  owed = Math.min(owed + (now - lastTick) / 1000, 2);
+  lastTick = now;
+  const t0 = Date.now();
+  while (owed >= 0.05) { rt.step(0.05); owed -= 0.05; if (Date.now() - t0 > 40) break; }   // keep the stream responsive
+  if (owed > 1 && now - slowWarned > 60_000) { slowWarned = now; console.error(`clock: ${owed.toFixed(1)} s behind — the machine is too slow for real time`); }
+}, 50);
 
 // ---- board polling ----
 const boardPath = home(env('BOARD_PATH', '~/office/board.json'));
