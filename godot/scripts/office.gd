@@ -33,6 +33,9 @@ var orbit := {"yaw": -0.6, "pitch": -0.75, "dist": 26.0, "target": Vector3(12, 0
 # eye-level view (V toggles): a person standing in the office, 1.68 m eye height
 var eye_mode := true
 var eye := {"pos": Vector3(3.0, 1.68, 14.5), "yaw": 2.4, "pitch": -0.05}
+var eye_locked := false
+var ceiling_parts := []    # slab + LED panels: hidden in the top-down (V) view, which they would block
+var ceiling_shown := true     # a tool (screenshots, tours) places the eye itself: do not ride with the Boss
 var follow_id := ""
 var hud: Label
 
@@ -60,7 +63,9 @@ func _ready() -> void:
 	if not view_only:
 		for f in files:
 			if FileAccess.file_exists(f): tok = FileAccess.get_file_as_string(f).strip_edges(); break
-	url = SERVER_URL + ("?token=" + tok if tok != "" else "")
+	# Godot's WebSocketPeer rejects "ws://host:port?token=..." as an invalid URL: the query needs a path ("/?")
+	var base := SERVER_URL if SERVER_URL.count("/") > 2 else SERVER_URL + "/"
+	url = base + ("?token=" + tok if tok != "" else "")
 	ws.connect_to_url(url)
 	_chat_box()
 
@@ -80,13 +85,15 @@ func _boss_input(dt: float) -> void:
 	var v := Vector2(Input.get_axis("ui_left", "ui_right") + float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
 		Input.get_axis("ui_up", "ui_down") + float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 	if v.length() > 1.0: v = v.normalized()
-	# camera-relative: "up" walks away from the camera
-	var fwd := Vector2(-sin(orbit.yaw), -cos(orbit.yaw)); var right := Vector2(-fwd.y, fwd.x)
-	var world_v := (right * v.x - fwd * v.y) * 1.4
+	# camera-relative: W walks where the camera looks (the mouse look in first person, the orbit from above)
+	var look_yaw: float = eye.yaw if eye_mode else orbit.yaw
+	var fwd := Vector2(-sin(look_yaw), -cos(look_yaw)); var right := Vector2(-fwd.y, fwd.x)
+	var speed := 3.5 if Input.is_key_pressed(KEY_SHIFT) else 2.0   # brisk office walk; Shift to hurry
+	var world_v := (right * v.x - fwd * v.y) * speed
 	steer_t += dt
 	if eye_mode and not (people.has("boss") and people["boss"].state != "offsite"):
 		var f3 := Vector3(-sin(eye.yaw), 0, -cos(eye.yaw)); var r3 := Vector3(-f3.z, 0, f3.x)
-		eye.pos += (r3 * v.x - f3 * v.y) * 1.4 * dt
+		eye.pos += (r3 * v.x - f3 * v.y) * speed * dt
 		return
 	if (world_v - steer_sent).length() > 0.05 or (world_v.length() > 0.05 and steer_t > 0.2):
 		_send_boss({"verb": "steer", "vx": world_v.x, "vz": world_v.y})
@@ -303,11 +310,16 @@ func _furniture() -> void:
 func _roll_chairs(dt: float) -> void:
 	for c in chairs:
 		var want: Vector3 = c.home
+		var occupied := false   # someone sits on it: never roll it out from under them (they sat in the air)
+		var blocked := false    # someone stands where the chair is
 		for id in people:
 			var p: Dictionary = people[id]
-			if p.node.visible and p.state != "sitting" and Vector2(p.node.position.x - c.home.x, p.node.position.z - c.home.z).length() < 0.5:
-				want = c.home + c.back * 0.55
-				break
+			if not p.node.visible and id != "boss": continue
+			var dist := Vector2(p.pos.x - c.home.x, p.pos.z - c.home.z).length()
+			if p.state == "sitting" and dist < 0.6: occupied = true
+			elif p.state != "sitting" and p.state != "offsite" and dist < 0.5: blocked = true
+		if blocked and not occupied:
+			want = c.home + c.back * 0.55
 		c.node.position = c.node.position.lerp(want, clamp(dt * 3.0, 0, 1))
 
 # Small electronics built to their real geometry (a box the size of a monitor's bounding volume looks like a crate)
@@ -378,6 +390,8 @@ func _person(id: String) -> Dictionary:
 	var path := "res://assets/people/%s.glb" % id
 	if ResourceLoader.exists(path):
 		var body: Node3D = load(path).instantiate()
+		if id == "boss":
+			body.scale = Vector3.ONE * 1.13   # Rocketbox men are ~1.77 m; the Boss is 2.00 m
 		# avatars must face +Z like the catalog; anims.json "forward_yaw_deg" corrects a model authored facing -Z (180)
 		if anim_map.is_empty() and ResourceLoader.exists("res://assets/people/anims.json"):
 			anim_map = JSON.parse_string(FileAccess.get_file_as_string("res://assets/people/anims.json"))
@@ -391,13 +405,30 @@ func _person(id: String) -> Dictionary:
 		cap.material_override = _mat("fabric", Color(0.25, 0.28, 0.35), 0.9)
 		node.add_child(cap)
 	var tag := Label3D.new()
-	tag.text = id
+	tag.text = NAMES.get(id, id)
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.position.y = 2.15
-	tag.pixel_size = 0.004
+	tag.pixel_size = 0.0009          # same size on screen near or far (no giant names up close)
+	tag.fixed_size = true
+	tag.font_size = 22
 	tag.outline_size = 8
 	node.add_child(tag)
-	return {"node": node, "anim": anim, "pos": Vector3.ZERO, "yaw": 0.0, "state": "offsite", "tag": tag, "bubble_until": 0.0}
+	# speech bubble over the name: who says what, while they say it
+	var bubble := Label3D.new()
+	bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	bubble.position.y = 2.55
+	bubble.pixel_size = 0.0009
+	bubble.fixed_size = true
+	bubble.font_size = 22
+	bubble.outline_size = 14
+	bubble.outline_modulate = Color(0.05, 0.05, 0.07, 0.95)
+	bubble.modulate = Color(1.0, 0.97, 0.82)
+	bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bubble.width = 420
+	bubble.no_depth_test = true          # readable even when someone stands in front
+	bubble.visible = false
+	node.add_child(bubble)
+	return {"node": node, "anim": anim, "pos": Vector3.ZERO, "yaw": 0.0, "state": "offsite", "tag": tag, "bubble": bubble, "bubble_until": 0.0}
 
 var anim_map := {}
 
@@ -409,6 +440,10 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 		anim_map = JSON.parse_string(FileAccess.get_file_as_string("res://assets/people/anims.json"))
 	if anim_name.begins_with("bow_") or anim_name == "bow_handshake":
 		_bow(p, 45.0 if anim_name == "bow_45" else 30.0 if anim_name == "bow_30" else 15.0)
+	# the world keeps anim "walk" on a body that has stopped (state standing): that played the stride on the spot
+	# forever. Only a walking body walks; a stopped one falls back to its state's clip (idle).
+	if anim_name == "walk" and state != "walking":
+		anim_name = state
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
 		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
@@ -450,7 +485,9 @@ func _apply_snap(s: Dictionary) -> void:
 		p.pos = Vector3(b.x, 0.0, b.z)
 		p.yaw = b.yaw
 		p.state = b.state
-		p.node.visible = b.state != "offsite"
+		# when the camera is the Boss's own eyes, his body is not drawn (he saw the top of his own capsule)
+		var own_eyes: bool = b.id == "boss" and eye_mode and not eye_locked
+		p.node.visible = b.state != "offsite" and not own_eyes
 		_play(p, b.state, b.anim)
 	for id in s.doors:
 		door_open[id] = s.doors[id] > 0
@@ -584,8 +621,42 @@ func _speech(e: Dictionary) -> void:
 	if not people.has(e.from):
 		return
 	var p: Dictionary = people[e.from]
-	p.tag.text = "%s: %s" % [e.from, e.text]
-	p.bubble_until = Time.get_ticks_msec() / 1000.0 + clamp(e.text.length() * 0.06, 2.5, 8.0)
+	var who: String = NAMES.get(e.from, e.from)
+	p.bubble.text = "%s: %s" % [who, e.text]
+	p.bubble.visible = true
+	p.bubble_until = Time.get_ticks_msec() / 1000.0 + clamp(e.text.length() * 0.07, 3.0, 9.0)
+	_log_line(who, e.text)
+
+# ---------------------------------------------------------------- conversation log (bottom left, up to 1/4 of the screen)
+const NAMES := {"boss": "Boss", "manager": "Daniel", "guard": "Viktor", "ig_res": "Mia", "yt_res": "Jun", "facts": "Elena",
+	"writer": "Leo", "shorts": "Aziza", "longform": "Tom", "qa": "Sara", "publisher": "Rustam", "cleaner": "Min-ji"}
+const LOG_HOLD := 10.0   # seconds a line stays fully visible
+const LOG_FADE := 3.0    # then fades away over this long
+var log_box: VBoxContainer
+
+func _log_line(who: String, text: String) -> void:
+	var l := Label.new()
+	l.text = "%s: %s" % [who, text]
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_font_size_override("font_size", 17)
+	l.add_theme_color_override("font_color", Color(1, 1, 1))
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	l.add_theme_constant_override("outline_size", 6)
+	l.set_meta("born", Time.get_ticks_msec() / 1000.0)
+	log_box.add_child(l)
+
+func _update_log() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	log_box.size.x = vp.x * 0.25
+	var now := Time.get_ticks_msec() / 1000.0
+	for l in log_box.get_children():
+		var age: float = now - float(l.get_meta("born"))
+		l.modulate.a = clamp(1.0 - (age - LOG_HOLD) / LOG_FADE, 0.0, 1.0)
+		if age > LOG_HOLD + LOG_FADE: l.queue_free()
+	# never taller than a quarter of the screen: the oldest lines go first
+	while log_box.get_child_count() > 1 and log_box.get_combined_minimum_size().y > vp.y * 0.25:
+		var old := log_box.get_child(0); log_box.remove_child(old); old.queue_free()
+	log_box.position = Vector2(16, vp.y - 72 - log_box.get_combined_minimum_size().y)
 
 func _process(dt: float) -> void:
 	ws.poll()
@@ -618,9 +689,12 @@ func _process(dt: float) -> void:
 			(p.anim as AnimationPlayer).speed_scale = 1.0
 		n.rotation.y = lerp_angle(n.rotation.y, p.yaw, clamp(dt * 6.0, 0, 1))
 		if p.bubble_until > 0 and now > p.bubble_until:
-			p.tag.text = id
+			p.bubble.visible = false
 			p.bubble_until = 0.0
+		# names only for whoever is speaking or close by: twelve labels at once covered the whole view
+		p.tag.visible = p.bubble_until == 0.0 and cam.global_position.distance_to(n.position) < 5.0   # the bubble carries the name while they speak
 	_roll_chairs(dt)
+	_update_log()
 	for id in doors:
 		var want := 1.35 if door_open.get(id, false) else 0.0
 		for d in doors[id]:
@@ -638,8 +712,11 @@ func _camera() -> void:
 	_update_camera()
 
 func _update_camera() -> void:
+	if ceiling_shown != eye_mode:
+		ceiling_shown = eye_mode
+		for c in ceiling_parts: c.visible = eye_mode
 	if eye_mode:
-		if people.has("boss") and people["boss"].state != "offsite":
+		if not eye_locked and people.has("boss") and people["boss"].state != "offsite":
 			eye.pos = people["boss"].node.position + Vector3(0, 1.82, 0)   # the Boss is 2.00 m tall
 		cam.position = eye.pos
 		cam.rotation = Vector3(eye.pitch, eye.yaw, 0)
@@ -654,7 +731,7 @@ func _update_camera() -> void:
 func _ceiling() -> void:
 	var w: float = L.room.w; var d: float = L.room.d; var h: float = L.room.h
 	var ceil_m := _mat("ceiling", Color(0.96, 0.96, 0.95), 0.9)
-	_box(Vector3(w + 0.4, 0.05, d + 0.4), Vector3(w / 2, h + 0.025, d / 2), 0, ceil_m)
+	ceiling_parts.append(_box(Vector3(w + 0.4, 0.05, d + 0.4), Vector3(w / 2, h + 0.025, d / 2), 0, ceil_m))
 	# recessed 600x600 LED panels on a 2.4 m grid with real (baked) light sources
 	var panel := StandardMaterial3D.new()
 	panel.albedo_color = Color(1, 1, 1); panel.emission_enabled = true; panel.emission = Color(1.0, 0.97, 0.92); panel.emission_energy_multiplier = 3.0
@@ -662,7 +739,7 @@ func _ceiling() -> void:
 	while x < w:
 		var z := 1.2
 		while z < d:
-			_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel)
+			ceiling_parts.append(_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel))
 			var l := OmniLight3D.new()
 			l.position = Vector3(x, h - 0.15, z); l.omni_range = 5.0; l.light_energy = 1.1; l.light_color = Color(1.0, 0.97, 0.93)
 			l.light_bake_mode = Light3D.BAKE_STATIC; l.shadow_enabled = false
@@ -724,3 +801,7 @@ func _hud() -> void:
 	hud.position = Vector2(16, 12)
 	hud.add_theme_font_size_override("font_size", 18)
 	layer.add_child(hud)
+	log_box = VBoxContainer.new()
+	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	log_box.add_theme_constant_override("separation", 4)
+	layer.add_child(log_box)

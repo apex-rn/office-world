@@ -209,8 +209,11 @@ export class World {
       if (agentId !== 'boss') return rej('NOT_ALLOWED', 'only the Boss steers directly');
       if (b.state === 'sitting') return rej('BUSY', 'sitting — stand up first');
       if (!b.agent) return rej('OFFSITE', 'not in the office');
-      const sp = Math.hypot(c.vx, c.vz), max = 1.6, k = sp > max ? max / sp : 1;
+      // up to a hurried walk (Shift in the client); the crowd agent's own cap was his stroll speed, which made the
+      // Boss feel slow, so it follows the steering and returns to the stroll speed when he stops
+      const sp = Math.hypot(c.vx, c.vz), max = 3.5, k = sp > max ? max / sp : 1;
       this.cancel(b);
+      b.agent.maxSpeed = sp > 0.05 ? Math.max(b.spec.walkSpeed, sp * k) : b.spec.walkSpeed;
       b.agent.requestMoveVelocity({ x: c.vx * k, y: 0, z: c.vz * k });
       b.state = sp > 0.05 ? 'walking' : 'standing'; b.anim = sp > 0.05 ? 'walk' : 'idle';
       return { ok: true, actionId: 0 };
