@@ -33,6 +33,7 @@ var orbit := {"yaw": -0.6, "pitch": -0.75, "dist": 26.0, "target": Vector3(12, 0
 # eye-level view (V toggles): a person standing in the office, 1.68 m eye height
 var eye_mode := true
 var eye := {"pos": Vector3(3.0, 1.68, 14.5), "yaw": 2.4, "pitch": -0.05}
+var eye_locked := false     # a tool (screenshots, tours) places the eye itself: do not ride with the Boss
 var follow_id := ""
 var hud: Label
 
@@ -380,6 +381,8 @@ func _person(id: String) -> Dictionary:
 	var path := "res://assets/people/%s.glb" % id
 	if ResourceLoader.exists(path):
 		var body: Node3D = load(path).instantiate()
+		if id == "boss":
+			body.scale = Vector3.ONE * 1.13   # Rocketbox men are ~1.77 m; the Boss is 2.00 m
 		# avatars must face +Z like the catalog; anims.json "forward_yaw_deg" corrects a model authored facing -Z (180)
 		if anim_map.is_empty() and ResourceLoader.exists("res://assets/people/anims.json"):
 			anim_map = JSON.parse_string(FileAccess.get_file_as_string("res://assets/people/anims.json"))
@@ -456,7 +459,9 @@ func _apply_snap(s: Dictionary) -> void:
 		p.pos = Vector3(b.x, 0.0, b.z)
 		p.yaw = b.yaw
 		p.state = b.state
-		p.node.visible = b.state != "offsite"
+		# when the camera is the Boss's own eyes, his body is not drawn (he saw the top of his own capsule)
+		var own_eyes: bool = b.id == "boss" and eye_mode and not eye_locked
+		p.node.visible = b.state != "offsite" and not own_eyes
 		_play(p, b.state, b.anim)
 	for id in s.doors:
 		door_open[id] = s.doors[id] > 0
@@ -645,7 +650,7 @@ func _camera() -> void:
 
 func _update_camera() -> void:
 	if eye_mode:
-		if people.has("boss") and people["boss"].state != "offsite":
+		if not eye_locked and people.has("boss") and people["boss"].state != "offsite":
 			eye.pos = people["boss"].node.position + Vector3(0, 1.82, 0)   # the Boss is 2.00 m tall
 		cam.position = eye.pos
 		cam.rotation = Vector3(eye.pitch, eye.yaw, 0)
