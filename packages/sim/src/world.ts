@@ -48,6 +48,8 @@ interface Active {
   /** seat or device slot index this action holds */
   slot?: number;
   lastRetarget?: number;
+  /** where the person we walk to stood when we chose our spot */
+  targetAt?: Vec2;
   /** waiting outside a full small room since */
   roomWait?: number;
   after?: 'sit' | 'use' | 'home' | 'go';
@@ -376,9 +378,19 @@ export class World {
     const other = this.bodies.get(t);
     if (other) {
       if (other.state === 'offsite') return null;
-      // stand 1.0 m from the other person, on the side facing us
-      const dx = b.pos.x - other.pos.x, dz = b.pos.z - other.pos.z, L = Math.hypot(dx, dz) || 1;
-      return { p: { x: other.pos.x + (dx / L) * 1.0, y: 0, z: other.pos.z + (dz / L) * 1.0 }, yaw: Math.atan2(-dx, -dz) };
+      // a free, reachable spot 0.9-1.3 m around them (beside a desk, not inside it), the nearest one to us
+      let best: Vec3 | null = null, bestD = Infinity;
+      for (const r of [1.0, 1.3, 0.9]) for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2;
+        const c = { x: other.pos.x + Math.sin(a) * r, y: 0, z: other.pos.z + Math.cos(a) * r };
+        const sp = snap(this.nav, c, { x: 0.12, y: 1, z: 0.12 });
+        if (!sp || !this.freeSpot(sp, b.spec.id)) continue;
+        if (!this.acoustics.canHear(sp, other.pos, 'normal')) continue;        // same room, no wall between
+        const d = Math.hypot(sp.x - b.pos.x, sp.z - b.pos.z);
+        if (d < bestD) { best = sp; bestD = d; }
+      }
+      if (!best) return null;
+      return { p: best, yaw: Math.atan2(other.pos.x - best.x, other.pos.z - best.z) };
     }
     const i = this.inst(t);
     if (i) {
@@ -692,10 +704,18 @@ export class World {
 
     if (a.phase === 'walk' && a.goal && a.verb === 'go_to' && a.target && this.bodies.has(a.target) && this.now - (a.lastRetarget ?? 0) > 1000) {
       a.lastRetarget = this.now;
-      const g = this.resolveTarget(b, a.target);
-      if (!g) return fail('NOT_PRESENT', `${a.target} left`);
-      const s2 = snap(this.nav, g.p);
-      if (s2 && Math.hypot(s2.x - a.goal.x, s2.z - a.goal.z) > 0.3) { a.goal = s2; a.goalYaw = g.yaw; b.agent?.requestMoveTarget(s2); }
+      const other = this.bodies.get(a.target)!;
+      if (other.state === 'offsite') return fail('NOT_PRESENT', `${a.target} left`);
+      // re-plan only when the person has really moved away from where we were heading (not on every small shift)
+      if (!a.targetAt) a.targetAt = { x: other.pos.x, z: other.pos.z };
+      if (Math.hypot(other.pos.x - a.targetAt.x, other.pos.z - a.targetAt.z) > 0.8) {
+        const g = this.resolveTarget(b, a.target);
+        if (g) {
+          a.targetAt = { x: other.pos.x, z: other.pos.z };
+          a.goal = g.p; a.goalYaw = g.yaw; a.bestDist = Infinity; a.lastProgressT = this.now;
+          b.agent?.requestMoveTarget(g.p);
+        }
+      }
     }
     if (a.roomWait && this.now - a.roomWait > 180_000) return fail('BUSY', 'the room stayed full for 3 minutes');
     if (a.phase === 'walk' && a.goal && b.stepAside) {

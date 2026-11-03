@@ -82,7 +82,8 @@ export const ITEMS: ItemDef[] = [
     id: 'bookcase', name: 'Bookcase', kind: 'furniture', placement: 'floor',
     dims: { w: 0.80, d: 0.35, h: 1.80 }, source: 'VERIFY: 800x350x1800 office shelf',
     massKg: 35, nav: 'static', anchors: { front: { x: 0, z: 0.55 } },
-    affordances: [{ verb: 'read', at: 'front', duration: [60, 600], capacity: 1, anim: 'browse_shelf' }],
+    // people take a book and read it at their desk or on the sofa — nobody reads for ten minutes standing at a shelf
+    affordances: [{ verb: 'read', at: 'front', duration: [20, 60], capacity: 1, anim: 'browse_shelf', yields: 'book' }],
   },
   {
     id: 'cabinet_low', name: 'Low cabinet', kind: 'furniture', placement: 'floor',
@@ -197,6 +198,7 @@ export const ITEMS: ItemDef[] = [
   { id: 'water_bottle', name: 'Water bottle 500 ml', kind: 'item', placement: 'surface', dims: { w: 0.065, d: 0.065, h: 0.21 }, source: 'PET 500 ml dia 65, h 210', massKg: 0.52, nav: 'none' },
   { id: 'paper_cup', name: 'Paper cup', kind: 'item', placement: 'surface', dims: { w: 0.08, d: 0.08, h: 0.09 }, source: '8 oz cup', massKg: 0.25, nav: 'none' },
   { id: 'paper_stack', name: 'A4 paper stack', kind: 'item', placement: 'surface', dims: { w: 0.21, d: 0.297, h: 0.01 }, source: 'ISO 216 A4 210x297', massKg: 0.1, nav: 'none' },
+  { id: 'book', name: 'Hardcover book', kind: 'item', placement: 'surface', dims: { w: 0.16, d: 0.24, h: 0.03 }, source: 'royal octavo hardcover 156x234 mm', massKg: 0.6, nav: 'none' },
   { id: 'notebook', name: 'A5 notebook', kind: 'item', placement: 'surface', dims: { w: 0.148, d: 0.21, h: 0.012 }, source: 'ISO 216 A5 148x210', massKg: 0.2, nav: 'none' },
   { id: 'headphones', name: 'Headphones', kind: 'item', placement: 'surface', dims: { w: 0.17, d: 0.08, h: 0.19 }, source: 'VERIFY: over-ear headphones', massKg: 0.25, nav: 'none' },
   { id: 'photo_frame', name: 'Photo frame 10x15', kind: 'item', placement: 'surface', dims: { w: 0.13, d: 0.06, h: 0.18 }, source: '10x15 cm photo frame', massKg: 0.3, nav: 'none' },
