@@ -211,9 +211,9 @@ def handle_bar(x, y, z, length, vertical=False):
             cyl(0.004, 0.025, (x + s * (length / 2 - 0.02), y - 0.0125, z), STEEL(), rot=(math.pi / 2, 0, 0), verts=12)
 
 
-def text(body, loc, size, m, extrude=0.001, spacing=1.0):
-    """Raised lettering facing -Y (front)."""
-    bpy.ops.object.text_add(location=loc, rotation=(math.pi / 2, 0, 0))
+def text(body, loc, size, m, extrude=0.001, spacing=1.0, back=False):
+    """Raised lettering facing -Y (front), or +Y (back=True: e.g. a desk's visitor side)."""
+    bpy.ops.object.text_add(location=loc, rotation=(math.pi / 2, 0, math.pi if back else 0))
     t = bpy.context.object
     t.data.body = body; t.data.align_x = 'CENTER'; t.data.align_y = 'CENTER'
     t.data.size = size; t.data.extrude = extrude; t.data.space_character = spacing
@@ -391,16 +391,18 @@ def kanban_board():
 
 
 def reception_desk():
-    """Reception desk: white top, walnut front and returns, brushed brass COMPOUND CHRONICLE lettering."""
+    """Reception desk: white top, walnut returns and a walnut modesty panel on the VISITOR side (+Y, away from
+    the person sitting at it) with brushed brass COMPOUND CHRONICLE lettering; the user's side (-Y) is open
+    for the knees and the chair."""
     w, d, h = 1.6, 0.75, 0.74
     tt = 0.03
     box((w, d, tt), (0, 0, h - tt / 2), WHITE_MATTE(), 0.004)
-    box((w, 0.03, h - tt), (0, -d / 2 + 0.015, (h - tt) / 2), WALNUT(), 0.004)
+    box((w, 0.03, h - tt), (0, d / 2 - 0.015, (h - tt) / 2), WALNUT(), 0.004)
     for sx in (-1, 1):
-        box((0.03, d - 0.03, h - tt), (sx * (w / 2 - 0.015), 0.015, (h - tt) / 2), WALNUT(), 0.004)
+        box((0.03, d - 0.03, h - tt), (sx * (w / 2 - 0.015), -0.015, (h - tt) / 2), WALNUT(), 0.004)
     brass = mat('brass', (0.86, 0.66, 0.36), 0.25, 1.0)
-    text('COMPOUND CHRONICLE', (0, -d / 2 - 0.0, h * 0.5), 0.07, brass, 0.003, 1.15)
-    box((0.9, 0.003, 0.004), (0, -d / 2 + 0.0, h * 0.5 - 0.065), brass)
+    text('COMPOUND CHRONICLE', (0, d / 2, h * 0.5), 0.07, brass, 0.003, 1.15, back=True)
+    box((0.9, 0.003, 0.004), (0, d / 2, h * 0.5 - 0.065), brass)
 
 
 def sofa_3():
