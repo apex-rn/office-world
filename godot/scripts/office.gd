@@ -173,7 +173,7 @@ func _fitted(path: String, size: Vector3) -> Node3D:
 func _aabb(n: Node, t: Transform3D) -> AABB:
 	var out := AABB()
 	var first := true
-	var tt := t * (n.transform if n is Node3D else Transform3D.IDENTITY)
+	var tt: Transform3D = t * (n.transform if n is Node3D else Transform3D.IDENTITY)
 	if n is MeshInstance3D and n.mesh:
 		out = tt * n.mesh.get_aabb()
 		first = false
