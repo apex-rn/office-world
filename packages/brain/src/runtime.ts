@@ -110,7 +110,11 @@ export class OfficeRuntime {
         const z = w.layout.zones.find(x => x.id === zone)!;
         if (!pointInPolygon(b.pos, z.poly) && !(b.seat && b.seat.inst.startsWith(`${zone}.`))) {
           if (b.state === 'sitting') { w.command(id, { verb: 'stand' }); continue; }
-          const chair = meeting && id !== 'manager' ? w.layout.instances.find(i => i.id.startsWith('meeting.chair') && !w.occupancy.get(i.id)?.size) : undefined;
+          // the Manager chairs the meeting from the head of the table; everyone else takes a free side chair
+          const free = (i: { id: string }) => !w.occupancy.get(i.id)?.size;
+          const chair = !meeting ? undefined : id === 'manager'
+            ? w.layout.instances.find(i => i.id === 'meeting.chairHead' && free(i))
+            : w.layout.instances.find(i => i.id.startsWith('meeting.chair') && i.id !== 'meeting.chairHead' && free(i));
           w.command(id, chair ? { verb: 'sit', target: chair.id } : { verb: 'go_to', target: zone });
           continue;
         }

@@ -131,13 +131,15 @@ put('wc.toilet3', 'toilet', 2.75, 0.34, 0, { group: 'wc', queueAt: wcLine });
 put('wc.sink', 'vanity_basin', 3.9, 0.23, 0);
 onTop('wc.tap', 'faucet', 'wc.sink', 0, -0.09);
 
-// meeting room: table runs north-south, 4 chairs a side (0.7 m per seat); ~1.9 m aisles; screen and whiteboard
+// meeting room: table runs north-south, 5 chairs a side (0.6 m per seat, a full room) and the Manager's chair at
+// the north head facing the team: one seat for each of the 11 staff; ~1.9 m aisles; screen and whiteboard
 // on the solid north wall at the head of the table
 put('meeting.table', 'meeting_table', 14.75, 3.2, PI / 2);
-[2.15, 2.85, 3.55, 4.25].forEach((z, i) => {
+[1.95, 2.55, 3.15, 3.75, 4.35].forEach((z, i) => {
   put(`meeting.chairW${i}`, 'office_chair', 13.8, z, PI / 2);
   put(`meeting.chairE${i}`, 'office_chair', 15.7, z, -PI / 2);
 });
+put('meeting.chairHead', 'office_chair', 14.75, 1.2, 0);
 put('meeting.tv', 'tv_65', 13.6, 0.03, 0, { wall: 'N' });
 put('meeting.whiteboard', 'whiteboard', 16.3, 0.015, 0, { wall: 'N' });
 put('meeting.plant', 'plant_floor', 11.95, 5.5);

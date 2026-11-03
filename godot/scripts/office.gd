@@ -405,13 +405,30 @@ func _person(id: String) -> Dictionary:
 		cap.material_override = _mat("fabric", Color(0.25, 0.28, 0.35), 0.9)
 		node.add_child(cap)
 	var tag := Label3D.new()
-	tag.text = id
+	tag.text = NAMES.get(id, id)
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.position.y = 2.15
-	tag.pixel_size = 0.004
+	tag.pixel_size = 0.0009          # same size on screen near or far (no giant names up close)
+	tag.fixed_size = true
+	tag.font_size = 22
 	tag.outline_size = 8
 	node.add_child(tag)
-	return {"node": node, "anim": anim, "pos": Vector3.ZERO, "yaw": 0.0, "state": "offsite", "tag": tag, "bubble_until": 0.0}
+	# speech bubble over the name: who says what, while they say it
+	var bubble := Label3D.new()
+	bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	bubble.position.y = 2.55
+	bubble.pixel_size = 0.0009
+	bubble.fixed_size = true
+	bubble.font_size = 22
+	bubble.outline_size = 14
+	bubble.outline_modulate = Color(0.05, 0.05, 0.07, 0.95)
+	bubble.modulate = Color(1.0, 0.97, 0.82)
+	bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bubble.width = 420
+	bubble.no_depth_test = true          # readable even when someone stands in front
+	bubble.visible = false
+	node.add_child(bubble)
+	return {"node": node, "anim": anim, "pos": Vector3.ZERO, "yaw": 0.0, "state": "offsite", "tag": tag, "bubble": bubble, "bubble_until": 0.0}
 
 var anim_map := {}
 
@@ -604,8 +621,42 @@ func _speech(e: Dictionary) -> void:
 	if not people.has(e.from):
 		return
 	var p: Dictionary = people[e.from]
-	p.tag.text = "%s: %s" % [e.from, e.text]
-	p.bubble_until = Time.get_ticks_msec() / 1000.0 + clamp(e.text.length() * 0.06, 2.5, 8.0)
+	var who: String = NAMES.get(e.from, e.from)
+	p.bubble.text = "%s: %s" % [who, e.text]
+	p.bubble.visible = true
+	p.bubble_until = Time.get_ticks_msec() / 1000.0 + clamp(e.text.length() * 0.07, 3.0, 9.0)
+	_log_line(who, e.text)
+
+# ---------------------------------------------------------------- conversation log (bottom left, up to 1/4 of the screen)
+const NAMES := {"boss": "Boss", "manager": "Daniel", "guard": "Viktor", "ig_res": "Mia", "yt_res": "Jun", "facts": "Elena",
+	"writer": "Leo", "shorts": "Aziza", "longform": "Tom", "qa": "Sara", "publisher": "Rustam", "cleaner": "Min-ji"}
+const LOG_HOLD := 10.0   # seconds a line stays fully visible
+const LOG_FADE := 3.0    # then fades away over this long
+var log_box: VBoxContainer
+
+func _log_line(who: String, text: String) -> void:
+	var l := Label.new()
+	l.text = "%s: %s" % [who, text]
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_font_size_override("font_size", 17)
+	l.add_theme_color_override("font_color", Color(1, 1, 1))
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	l.add_theme_constant_override("outline_size", 6)
+	l.set_meta("born", Time.get_ticks_msec() / 1000.0)
+	log_box.add_child(l)
+
+func _update_log() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	log_box.size.x = vp.x * 0.25
+	var now := Time.get_ticks_msec() / 1000.0
+	for l in log_box.get_children():
+		var age: float = now - float(l.get_meta("born"))
+		l.modulate.a = clamp(1.0 - (age - LOG_HOLD) / LOG_FADE, 0.0, 1.0)
+		if age > LOG_HOLD + LOG_FADE: l.queue_free()
+	# never taller than a quarter of the screen: the oldest lines go first
+	while log_box.get_child_count() > 1 and log_box.get_combined_minimum_size().y > vp.y * 0.25:
+		var old := log_box.get_child(0); log_box.remove_child(old); old.queue_free()
+	log_box.position = Vector2(16, vp.y - 72 - log_box.get_combined_minimum_size().y)
 
 func _process(dt: float) -> void:
 	ws.poll()
@@ -638,11 +689,12 @@ func _process(dt: float) -> void:
 			(p.anim as AnimationPlayer).speed_scale = 1.0
 		n.rotation.y = lerp_angle(n.rotation.y, p.yaw, clamp(dt * 6.0, 0, 1))
 		if p.bubble_until > 0 and now > p.bubble_until:
-			p.tag.text = id
+			p.bubble.visible = false
 			p.bubble_until = 0.0
 		# names only for whoever is speaking or close by: twelve labels at once covered the whole view
-		p.tag.visible = p.bubble_until > 0 or cam.global_position.distance_to(n.position) < 5.0
+		p.tag.visible = p.bubble_until == 0.0 and cam.global_position.distance_to(n.position) < 5.0   # the bubble carries the name while they speak
 	_roll_chairs(dt)
+	_update_log()
 	for id in doors:
 		var want := 1.35 if door_open.get(id, false) else 0.0
 		for d in doors[id]:
@@ -749,3 +801,7 @@ func _hud() -> void:
 	hud.position = Vector2(16, 12)
 	hud.add_theme_font_size_override("font_size", 18)
 	layer.add_child(hud)
+	log_box = VBoxContainer.new()
+	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	log_box.add_theme_constant_override("separation", 4)
+	layer.add_child(log_box)
