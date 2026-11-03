@@ -109,13 +109,16 @@ put('kitchen.water', 'water_dispenser', 2.75, 3.40, 0);
 // WC
 put('wc.part1', 'wc_partition', 1.0, 0.79);
 put('wc.part2', 'wc_partition', 2.0, 0.79);
-put('wc.toilet1', 'toilet', 0.5, 0.34, 0);
-put('wc.toilet2', 'toilet', 1.5, 0.34, 0);
+// people wait in the WC lobby (by the sinks), never inside the cubicle doorway
+const wcLine = { x: 2.45, z: 2.15, yaw: Math.PI };
+put('wc.toilet1', 'toilet', 0.5, 0.34, 0, { group: 'wc', queueAt: wcLine });
+put('wc.toilet2', 'toilet', 1.5, 0.34, 0, { group: 'wc', queueAt: wcLine });
 put('wc.sink', 'sink_unit', 2.5, 0.30, 0);
 
-// meeting room: 8 chairs on the long sides (ends stay free as walkways; the Manager presents at the screen)
+// meeting room: 8 chairs on the long sides, 0.7 m per seat; both table ends keep a ≥0.95 m walkway
+// (the Manager presents standing at the screen; extra people stand or bring a chair)
 put('meeting.table', 'meeting_table', 10.6, 2.3);
-[9.475, 10.225, 10.975, 11.725].forEach((x, i) => {
+[9.55, 10.25, 10.95, 11.65].forEach((x, i) => {
   put(`meeting.chairN${i}`, 'office_chair', x, 1.35, 0);
   put(`meeting.chairS${i}`, 'office_chair', x, 3.25, PI);
 });
@@ -126,8 +129,9 @@ put('meeting.whiteboard', 'whiteboard', 8.25, 2.3, PI / 2, { wall: 'mt_W' });
 workstation('manager', 'desk_160', 15.8, 2.2, PI, { lampLeft: false });
 put('manager.guest1', 'side_chair', 15.3, 2.95, PI);
 put('manager.guest2', 'side_chair', 16.3, 2.95, PI);
-put('manager.shelf1', 'bookcase', 15.4, 0.225, 0);
-put('manager.shelf2', 'bookcase', 16.2, 0.225, 0);
+// shelves on the solid west wall: the space behind the Manager's chair stays a clear passage
+put('manager.shelf1', 'bookcase', 13.225, 1.0, PI / 2);
+put('manager.shelf2', 'bookcase', 13.225, 1.8, PI / 2);
 put('manager.plant', 'plant_floor', 17.5, 4.5);
 
 // open work area: two rows of four, colleagues back to back

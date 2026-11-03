@@ -42,9 +42,9 @@ export const ITEMS: ItemDef[] = [
     affordances: [{ verb: 'sit', at: 'seat', duration: [2, 3], capacity: 1, anim: 'sit_down' }],
   },
   {
-    id: 'meeting_table', name: 'Meeting table 300x120', kind: 'furniture', placement: 'floor',
-    dims: { w: 3.00, d: 1.20, h: 0.74 }, source: 'EN 527-1 height 0.74; 10-seat 3000x1200 top',
-    massKg: 90, nav: 'static', support: [top(3.0, 1.2, 0.74)],
+    id: 'meeting_table', name: 'Meeting table 280x120', kind: 'furniture', placement: 'floor',
+    dims: { w: 2.80, d: 1.20, h: 0.74 }, source: 'EN 527-1 height 0.74; 8-seat 2800x1200 top (0.7 m per seat); ≥0.95 m clear at both ends',
+    massKg: 85, nav: 'static', support: [top(2.8, 1.2, 0.74)],
   },
   {
     id: 'kitchen_table', name: 'Kitchen table 120x80', kind: 'furniture', placement: 'floor',
@@ -207,13 +207,13 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'kanban_board', name: 'NAVBAT kanban board', kind: 'fixture', placement: 'wall',
     dims: { w: 1.80, d: 0.03, h: 1.20 }, wallBottom: 0.90, source: 'magnetic whiteboard 1800x1200, bottom edge 0.90',
-    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.80 } },
+    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.50 } },
     affordances: [{ verb: 'move_card', at: 'front', duration: [5, 15], capacity: 2, anim: 'pin_card' }],
   },
   {
     id: 'whiteboard', name: 'Whiteboard', kind: 'fixture', placement: 'wall',
     dims: { w: 1.80, d: 0.03, h: 1.20 }, wallBottom: 0.90, source: 'whiteboard 1800x1200, bottom 0.90',
-    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.80 } },
+    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.50 } },
     affordances: [{ verb: 'write_board', at: 'front', duration: [20, 120], capacity: 1, anim: 'write_board' }],
   },
   {

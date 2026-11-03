@@ -101,6 +101,10 @@ export interface Instance {
   owner?: string;
   /** a chair tucked under its desk may overlap the desk footprint */
   tuckedUnder?: string;
+  /** interchangeable devices (e.g. two WC pans): a user is routed to the one with the shortest line */
+  group?: string;
+  /** where the line for this device starts (plan coordinates) and which way it extends */
+  queueAt?: { x: number; z: number; yaw: number };
 }
 
 export interface Layout {
