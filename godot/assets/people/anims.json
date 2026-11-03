@@ -25,9 +25,9 @@
  "talk": "gestic_talk_neutral_01",
  "drink": "drink_drinking",
  "smoke": "drink_drinking",
- "bow_15": "wave_01",
- "bow_30": "wave_01",
- "bow_45": "wave_01",
+ "bow_15": "idle_neutral_01",
+ "bow_30": "idle_neutral_01",
+ "bow_45": "idle_neutral_01",
  "wave": "wave_01",
  "clap": "claphands_01",
  "dance": "dancing_neutral"

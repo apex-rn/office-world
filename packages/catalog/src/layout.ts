@@ -93,12 +93,15 @@ const workstation = (owner: string, deskDef: string, x: number, z: number, yaw: 
   // every desk also has its owner's 14" laptop, to the left of the keyboard
   onTop(`laptop.${owner}`, 'laptop_14', deskId, -dd.w / 2 + 0.26, dd.d / 2 - 0.2, 0, { owner });
   const lampX = (opts.lampLeft ?? true) ? -dd.w / 2 + 0.15 : dd.w / 2 - 0.15;
-  onTop(`lamp.${owner}`, 'desk_lamp', deskId, lampX, -dd.d / 2 + 0.14, 0, { owner });
+  // the lamp's head (its front, +Z) leans over the work area in front of the keyboard, not off the desk edge
+  const lampZ = -dd.d / 2 + 0.14;
+  onTop(`lamp.${owner}`, 'desk_lamp', deskId, lampX, lampZ, Math.atan2(-lampX, 0.05 - lampZ), { owner });
   return deskId;
 };
 // kitchen / café: worktop along the north wall, two dining tables
 const counter = put('kitchen.counter', 'kitchen_counter', 6.2, 0.30);
 put('kitchen.sink', 'sink_unit', 7.8, 0.30);
+onTop('kitchen.tap', 'faucet', 'kitchen.sink', 0, -0.18);
 put('kitchen.fridge', 'fridge', 8.6, 0.325);
 put('kitchen.bin', 'trash_bin', 9.3, 0.20);
 onTop('kitchen.coffee', 'coffee_machine', counter, -0.8, -0.05);
@@ -125,7 +128,8 @@ const wcLine = { x: 2.1, z: 4.75, yaw: 0 };
 put('wc.toilet1', 'toilet', 0.55, 0.34, 0, { group: 'wc', queueAt: wcLine });
 put('wc.toilet2', 'toilet', 1.65, 0.34, 0, { group: 'wc', queueAt: wcLine });
 put('wc.toilet3', 'toilet', 2.75, 0.34, 0, { group: 'wc', queueAt: wcLine });
-put('wc.sink', 'sink_unit', 3.9, 0.30, 0);
+put('wc.sink', 'vanity_basin', 3.9, 0.23, 0);
+onTop('wc.tap', 'faucet', 'wc.sink', 0, -0.09);
 
 // meeting room: table runs north-south, 4 chairs a side (0.7 m per seat); ~1.9 m aisles; screen and whiteboard
 // on the solid north wall at the head of the table
@@ -168,7 +172,7 @@ put('reception.plant', 'plant_floor', 4.0, 16.5);
 // print & server corner
 const cab = put('print.cabinet', 'cabinet_low', 22.0, 6.84, 0);
 onTop('print.printer', 'printer', cab, 0, 0);
-put('print.rack', 'server_rack', 23.65, 8.3, 0);
+put('print.rack', 'server_rack', 23.48, 8.3, -PI / 2);   // front (server faces) toward the room
 put('print.bin', 'trash_bin', 21.0, 6.74);
 
 // lounge

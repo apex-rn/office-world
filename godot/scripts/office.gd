@@ -227,7 +227,10 @@ func _doors() -> void:
 			pivots.append({"pv": pv, "side": side})
 		doors[d.id] = pivots
 
-func _fitted(path: String, size: Vector3) -> Node3D:
+# models whose front is not +Z (the catalog's "user side"): extra turn in radians
+const MODEL_YAW := {"desk_lamp": PI}   # Poly Haven desk_lamp_arm_01 has its head toward -Z
+
+func _fitted(path: String, size: Vector3, def_id: String = "") -> Node3D:
 	var inst: Node3D = load(path).instantiate()
 	var aabb := _aabb(inst, Transform3D.IDENTITY)
 	if aabb.size.length() < 0.001:
@@ -243,7 +246,7 @@ func _fitted(path: String, size: Vector3) -> Node3D:
 	var c := aabb.get_center()
 	inst.position = -Vector3(c.x, aabb.position.y, c.z) * k   # centred on the spot, standing on its base
 	var pivot := Node3D.new()
-	pivot.rotation.y = PI / 2 if turn else 0.0
+	pivot.rotation.y = (PI / 2 if turn else 0.0) + float(MODEL_YAW.get(def_id, 0.0))
 	pivot.add_child(inst)
 	var holder := Node3D.new()
 	holder.add_child(pivot)
@@ -269,7 +272,7 @@ func _furniture() -> void:
 		var node: Node3D
 		var path := "res://assets/furniture/%s.glb" % i.def
 		if ResourceLoader.exists(path):
-			node = _fitted(path, size)
+			node = _fitted(path, size, String(i.def))
 		else:
 			node = _built(i.def, size)
 		if node == null:
@@ -424,6 +427,50 @@ func _apply_snap(s: Dictionary) -> void:
 	for id in s.doors:
 		door_open[id] = s.doors[id] > 0
 
+# ---- the live board on the kanban: one index card per task (real title + owner), in its column ----
+const CARD_COL := {"todo": 0, "blocked": 0, "doing": 1, "review": 2, "approved": 3, "done": 3, "rejected": 3}
+const CARD_TINT := [Color(1.0, 0.93, 0.55), Color(0.72, 0.88, 1.0), Color(1.0, 0.8, 0.85), Color(0.78, 0.95, 0.72)]
+
+func _pin_cards(cards: Array) -> void:
+	var board: Node3D = get_node_or_null("reception_board")
+	if board == null:
+		return
+	var old := board.get_node_or_null("cards")
+	if old: old.queue_free()
+	var root := Node3D.new(); root.name = "cards"; board.add_child(root)
+	var w := 2.4; var h := 1.2; var cw := (w - 0.04) / 4.0
+	var cols := [[], [], [], []]
+	for c in cards:
+		cols[int(CARD_COL.get(c.get("status", "todo"), 0))].append(c)
+	cols[3] = cols[3].slice(max(0, cols[3].size() - 10))        # DONE shows the latest ten
+	for ci in 4:
+		var list: Array = cols[ci]
+		var shown: int = min(list.size(), 10)
+		for k in shown:
+			var c: Dictionary = list[k]
+			var x := -w / 2 + 0.02 + ci * cw + (0.145 if k % 2 == 1 else -0.135) + cw / 2 - 0.005
+			var y := h - 0.27 - (k / 2) * 0.2
+			var card := MeshInstance3D.new()
+			var q := QuadMesh.new(); q.size = Vector2(0.26, 0.17); card.mesh = q
+			var m := StandardMaterial3D.new(); m.albedo_color = CARD_TINT[ci]; m.roughness = 0.85
+			card.material_override = m
+			card.position = Vector3(x, y, 0.017)
+			card.rotation.z = deg_to_rad((k * 37 % 5) - 2.0)          # pinned by hand, not machine-straight
+			root.add_child(card)
+			var t := Label3D.new()
+			var who := String(c.get("owner", ""))
+			t.text = "%s\n— %s" % [String(c.get("title", "")).left(70), who]
+			t.font_size = 44; t.pixel_size = 0.00042; t.outline_size = 0
+			t.modulate = Color(0.08, 0.08, 0.1)
+			t.width = 560; t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			t.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT; t.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+			t.position = Vector3(-0.12, 0.075, 0.002); t.shaded = true
+			card.add_child(t)
+		if list.size() > shown:
+			var more := Label3D.new(); more.text = "+%d" % (list.size() - shown)
+			more.font_size = 64; more.pixel_size = 0.0005; more.modulate = Color(0.1, 0.1, 0.12)
+			more.position = Vector3(-w / 2 + 0.02 + ci * cw + cw / 2, 0.08, 0.017); root.add_child(more)
+
 func _speech(e: Dictionary) -> void:
 	if not people.has(e.from):
 		return
@@ -439,6 +486,7 @@ func _process(dt: float) -> void:
 			if m == null: continue
 			if m.t == "snap": _apply_snap(m)
 			elif m.t == "event" and m.e.get("type", "") == "speech": _speech(m.e)
+			elif m.t == "board": _pin_cards(m.cards)
 	elif ws.get_ready_state() == WebSocketPeer.STATE_CLOSED:
 		ws.connect_to_url(url)
 	_boss_input(dt)

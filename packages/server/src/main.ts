@@ -70,7 +70,7 @@ setInterval(() => rt.step(0.05), 50);
 // ---- board polling ----
 const boardPath = home(env('BOARD_PATH', '~/office/board.json'));
 setInterval(() => {
-  try { if (existsSync(boardPath)) rt.applyBoard(parseBoard(JSON.parse(readFileSync(boardPath, 'utf8')))); } catch (e) { console.error('board read failed:', (e as Error).message); }
+  try { if (existsSync(boardPath)) { const ch = rt.applyBoard(parseBoard(JSON.parse(readFileSync(boardPath, 'utf8')))); if (ch.length) stream.broadcastBoard(); } } catch (e) { console.error('board read failed:', (e as Error).message); }
   try { if (existsSync(claudeDown)) router.claudeDownUntil = Date.parse(readFileSync(claudeDown, 'utf8').trim()) || 0; } catch { /* optional */ }
 }, 30_000);
 

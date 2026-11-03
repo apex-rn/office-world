@@ -40,7 +40,8 @@ export class OfficeRuntime {
   plan: DayPlan | null = null;
   private inFlightIds = new Set<string>();
   readonly errands = new ErrandRunner();
-  private cards: Card[] = [];
+  /** the live board (the renderer pins these on the kanban) */
+  cards: Card[] = [];
   readonly cardOf = new Map<string, Card>();
 
   constructor(readonly world: World, readonly router: Router, opts: RuntimeOpts = {}) {

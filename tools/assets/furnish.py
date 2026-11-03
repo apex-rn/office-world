@@ -257,6 +257,30 @@ def sink_unit():
     # the tap belongs to the wall/backsplash (a separate catalog item)
 
 
+def vanity_basin():
+    """Washroom vanity: white two-door cabinet, white ceramic top with a recessed oval basin (shaded inside) and drain."""
+    w, d, h = 0.6, 0.46, 0.85
+    ceramic = mat('ceramic', (0.95, 0.95, 0.94), 0.08)
+    box((w - 0.02, d - 0.04, h - 0.1), (0, 0.02, 0.1 + (h - 0.1) / 2 - 0.02), mat('vanity', (0.93, 0.93, 0.92), 0.4), 0.004)
+    box((w - 0.06, d - 0.08, 0.08), (0, 0.04, 0.04), BLACK_PLASTIC(), 0.002)                  # recessed plinth
+    for sx in (-1, 1):
+        box((w / 2 - 0.015, 0.018, h - 0.2), (sx * (w / 4), -d / 2 + 0.02, 0.1 + (h - 0.2) / 2), mat('vanity', (0.93, 0.93, 0.92), 0.4), 0.002)
+        handle_bar(sx * 0.04, -d / 2 + 0.011, h - 0.25, 0.12, vertical=True)
+    box((w, d, 0.06), (0, 0, h - 0.03), ceramic, 0.012)                                       # ceramic top
+    bm = mat('basin_in', (0.82, 0.83, 0.83), 0.1)
+    sphere((0.2, 0.15, 0.05), (0, -0.02, h - 0.012), bm, 32)                                  # shallow bowl read as a dip
+    cyl(0.018, 0.003, (0, -0.02, h - 0.001), STEEL(), verts=24)
+
+
+def faucet():
+    """Single-lever chrome mixer: round base, upright body, arched spout reaching forward (-Y), lever on top."""
+    cyl(0.026, 0.02, (0, 0.07, 0.01), CHROME(), verts=32)
+    cyl(0.017, 0.2, (0, 0.07, 0.12), CHROME(), verts=32)
+    cyl(0.011, 0.17, (0, -0.005, 0.22), CHROME(), rot=(math.radians(80), 0, 0), verts=24)    # spout
+    cyl(0.009, 0.05, (0, -0.085, 0.2), CHROME(), verts=24)                                    # outlet dropping down
+    box((0.012, 0.07, 0.01), (0, 0.095, 0.235), CHROME(), 0.003, rot=(math.radians(-15), 0, 0))   # lever
+
+
 def coffee_machine():
     """Espresso machine: steel body, black control front, group head, portafilter, drip tray, cup, steam wand."""
     w, d, h = 0.3, 0.45, 0.4
@@ -370,9 +394,9 @@ def whiteboard():
 
 
 def kanban_board():
-    import random
-    rnd = random.Random(7)
-    w, h = 1.8, 1.2
+    """2.4 x 1.2 magnetic whiteboard with TO DO / DOING / REVIEW / DONE columns. No painted notes: the Godot client
+    pins the live board's cards (real titles and owners) onto it."""
+    w, h = 2.4, 1.2
     _board(w, h)
     cols = ['TO DO', 'DOING', 'REVIEW', 'DONE']
     cw = (w - 0.04) / len(cols)
@@ -380,14 +404,8 @@ def kanban_board():
     for i in range(1, len(cols)):
         box((0.006, 0.001, h - 0.08), (-w / 2 + 0.02 + i * cw, -0.0005, h / 2), tape)
     box((w - 0.06, 0.001, 0.006), (0, -0.0005, h - 0.13), tape)
-    notes = [(1.0, 0.86, 0.3), (0.55, 0.85, 0.95), (0.98, 0.6, 0.7), (0.65, 0.9, 0.55)]
     for i, name in enumerate(cols):
-        text(name, (-w / 2 + 0.02 + i * cw + cw / 2, -0.001, h - 0.085), 0.045, tape, 0.0005)
-        for k in range(rnd.randint(2, 5)):
-            x = -w / 2 + 0.02 + i * cw + cw / 2 + rnd.uniform(-0.1, 0.1)
-            z = h - 0.24 - k * 0.19 + rnd.uniform(-0.02, 0.02)
-            box((0.12, 0.002, 0.12), (x, -0.0012, z), mat(f'note{i}{k}', rnd.choice(notes), 0.7), rot=(0, rnd.uniform(-0.06, 0.06), 0))
-            box((0.07, 0.0008, 0.004), (x - 0.01, -0.0025, z + 0.02), mat('pen', (0.1, 0.1, 0.12), 0.5))
+        text(name, (-w / 2 + 0.02 + i * cw + cw / 2, -0.001, h - 0.085), 0.05, tape, 0.0005)
 
 
 def reception_desk():
@@ -488,22 +506,33 @@ def coat_rack():
 
 
 def server_rack():
+    """42U GPU/server rack: black frame with an OPEN front bay — rows of server faces with vent grilles and status LEDs
+    behind a clear smoked-glass door — so it reads as a rack, not a cabinet or a fridge."""
     w, d, h = 0.6, 1.0, 2.0
-    box((w, d, h - 0.05), (0, 0, (h - 0.05) / 2 + 0.05), BLACK_STEEL(), 0.006)
+    recess = 0.08                                                   # the server faces sit 8 cm behind the door
+    box((w, d - recess, h - 0.05), (0, recess / 2, (h - 0.05) / 2 + 0.05), BLACK_STEEL(), 0.006)       # body behind the bay
+    for sx in (-1, 1):                                              # front frame: posts, top and bottom rails
+        box((0.04, recess, h - 0.05), (sx * (w / 2 - 0.02), -d / 2 + recess / 2, (h - 0.05) / 2 + 0.05), BLACK_STEEL(), 0.003)
+    box((w, recess, 0.1), (0, -d / 2 + recess / 2, h - 0.05), BLACK_STEEL(), 0.003)
+    box((w, recess, 0.1), (0, -d / 2 + recess / 2, 0.1), BLACK_STEEL(), 0.003)
     for sx in (-1, 1):
         for sy in (-1, 1):
             cyl(0.03, 0.05, (sx * (w / 2 - 0.06), sy * (d / 2 - 0.06), 0.025), BLACK_PLASTIC())
-    unit = mat('server', (0.05, 0.05, 0.055), 0.4, 0.6)
-    leds = [mat(f'led{i}', (0, 0, 0), 0.3, emit=(c, 4.0)) for i, c in enumerate(((0.2, 1.0, 0.3), (0.2, 0.5, 1.0), (1.0, 0.6, 0.1)))]
-    z, k = 0.15, 0
-    while z < h - 0.25:
-        uh = 0.044 * (2 if k % 3 == 0 else 1)
-        box((w - 0.08, 0.02, uh - 0.004), (0, -d / 2 + 0.04, z + uh / 2), unit, 0.002)
-        for j in range(4 if uh > 0.05 else 2):
-            box((0.006, 0.004, 0.006), (-w / 2 + 0.08 + j * 0.02, -d / 2 + 0.029, z + uh / 2), leds[(k + j) % 3])
-        z += uh + 0.002; k += 1
-    box((w - 0.02, 0.012, h - 0.12), (0, -d / 2 + 0.012, h / 2 + 0.02), mat('rack_door', (0.03, 0.03, 0.035), 0.4, 0.8, alpha=0.5), 0.003)
-    handle_bar(w / 2 - 0.06, -d / 2 + 0.025, h / 2, 0.2, vertical=True)
+    unit = mat('server', (0.11, 0.11, 0.12), 0.35, 0.8)
+    grille = mat('grille', (0.02, 0.02, 0.022), 0.6, 0.5)
+    leds = [mat(f'led{i}', (0, 0, 0), 0.3, emit=(c, 6.0)) for i, c in enumerate(((0.2, 1.0, 0.3), (0.2, 0.5, 1.0), (1.0, 0.6, 0.1)))]
+    fy = -d / 2 + recess                                            # front face of the servers
+    z, k = 0.17, 0
+    while z < h - 0.3:
+        uh = 0.044 * (4 if k % 4 == 0 else 2)                       # 4U GPU nodes between 2U servers
+        box((w - 0.09, 0.03, uh - 0.004), (0, fy - 0.015, z + uh / 2), unit, 0.002)
+        for g in range(int((w - 0.2) / 0.012)):                     # vertical vent slots across the face
+            box((0.005, 0.003, uh - 0.016), (-w / 2 + 0.1 + g * 0.012, fy - 0.031, z + uh / 2), grille)
+        for j in range(3):
+            box((0.007, 0.004, 0.007), (w / 2 - 0.08 + j * 0.016, fy - 0.032, z + uh / 2), leds[(k + j) % 3])
+        z += uh + 0.003; k += 1
+    box((w - 0.03, 0.006, h - 0.22), (0, -d / 2 + 0.004, h / 2 + 0.02), mat('rack_glass', (0.05, 0.06, 0.07), 0.05, 0.0, alpha=0.18), 0.002)
+    handle_bar(w / 2 - 0.05, -d / 2 + 0.0, h / 2, 0.2, vertical=True)
 
 
 def printer():
@@ -546,7 +575,7 @@ def wc_partition():
 BUILD = {
     'desk_140': lambda: desk(1.4, 0.7), 'desk_160': lambda: desk(1.6, 0.8),
     'monitor_24': monitor, 'keyboard': keyboard, 'mouse': mouse,
-    'kitchen_counter': kitchen_counter, 'sink_unit': sink_unit, 'coffee_machine': coffee_machine, 'fridge': fridge,
+    'kitchen_counter': kitchen_counter, 'sink_unit': sink_unit, 'vanity_basin': vanity_basin, 'faucet': faucet, 'coffee_machine': coffee_machine, 'fridge': fridge,
     'microwave': microwave, 'water_dispenser': water_dispenser, 'kitchen_table': kitchen_table, 'side_chair': side_chair,
     'meeting_table': meeting_table, 'tv_65': tv_65, 'whiteboard': whiteboard, 'kanban_board': kanban_board,
     'reception_desk': reception_desk, 'sofa_3': sofa_3, 'coffee_table': coffee_table, 'bookcase': bookcase,

@@ -71,6 +71,8 @@ export interface Body {
   stepAsideT?: number;
   /** standing still for a greeting until (ms) */
   greetUntil?: number;
+  /** a one-off gesture (bow, handshake) ends at this time and the previous pose returns */
+  gestureUntil?: number; animBefore?: string;
   /** waiting for a narrow doorway to clear */
   doorHold?: string;
 }
@@ -474,7 +476,9 @@ export class World {
     const A = this.bodies.get(a), B = this.bodies.get(b);
     if (!A || !B) return;
     if (A.state !== 'sitting') A.yaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
-    A.anim = anim;
+    // a bow is one gesture (~1.8 s), not a pose that repeats until the next action
+    if (!A.gestureUntil) A.animBefore = A.anim;
+    A.anim = anim; A.gestureUntil = this.now + 1800;
     if (A.agent && A.state === 'walking') { A.agent.requestMoveVelocity({ x: 0, y: 0, z: 0 }); A.greetUntil = this.now + 1500; if (A.active) A.active.lastProgressT = this.now + 1500; }
   }
 
@@ -572,6 +576,10 @@ export class World {
     this.arbitrateDoors();
     this.nav.crowd.update(dt);
     for (const b of this.bodies.values()) {
+      if (b.gestureUntil && this.now >= b.gestureUntil) {
+        if (b.anim.startsWith('bow')) b.anim = b.animBefore && !b.animBefore.startsWith('bow') ? b.animBefore : 'idle';
+        b.gestureUntil = undefined; b.animBefore = undefined;
+      }
       if (b.agent) {
         const p = b.agent.position(), v = b.agent.velocity();
         b.pos = { x: p.x, y: p.y, z: p.z };
@@ -633,7 +641,9 @@ export class World {
     // a place in line is a loose spot (people keep personal space); the use point itself must be reached exactly
     if (d <= (k === 0 ? ARRIVE_EPS : 0.4)) {
       b.agent?.resetMoveTarget();
-      if (a.goalYaw !== undefined) b.yaw = a.goalYaw;
+      // at the device: its facing; waiting in line: look toward the device (never at a wall beside the line)
+      if (k === 0) { if (a.goalYaw !== undefined) b.yaw = a.goalYaw; }
+      else if (a.goal) b.yaw = Math.atan2(a.goal.x - b.pos.x, a.goal.z - b.pos.z);
       if (k === 0) {
         this.queues.set(i.id, q.filter(x => x !== b.spec.id));
         this.reserve(i.id, b.spec.id);

@@ -23,13 +23,16 @@ export function layoutPayload(rt: OfficeRuntime) {
   };
 }
 
-export function startStream(rt: OfficeRuntime, o: StreamOpts): { close(): void; broadcastEvent(e: WorldEvent | object): void } {
+export function startStream(rt: OfficeRuntime, o: StreamOpts): { close(): void; broadcastEvent(e: WorldEvent | object): void; broadcastBoard(): void } {
   const wss = new WebSocketServer({ port: o.port });
   const clients = new Set<WebSocket>();
+  // the real board for the kanban on the wall: title, status, owner (no secrets live on the board)
+  const boardMsg = () => JSON.stringify({ t: 'board', cards: rt.cards.map(c => ({ id: c.id, title: c.title, status: c.status, owner: c.owner, kind: c.kind })) });
   const hello = JSON.stringify({ t: 'hello', v: 1, layout: layoutPayload(rt) });
   wss.on('connection', (ws, req) => {
     clients.add(ws);
     ws.send(hello);
+    ws.send(boardMsg());
     const isBoss = !!o.bossToken && new URL(req.url ?? '/', 'http://x').searchParams.get('token') === o.bossToken;
     ws.on('message', raw => {
       if (!isBoss) return;                               // viewers are read-only
@@ -53,5 +56,6 @@ export function startStream(rt: OfficeRuntime, o: StreamOpts): { close(): void; 
   return {
     close() { clearInterval(timer); wss.close(); },
     broadcastEvent(e) { send(JSON.stringify({ t: 'event', e })); },
+    broadcastBoard() { send(boardMsg()); },
   };
 }

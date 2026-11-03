@@ -60,8 +60,18 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'sink_unit', name: 'Sink unit 80', kind: 'device', placement: 'floor',
     dims: { w: 0.80, d: 0.60, h: 0.90 }, source: 'EN 1116 height 0.90; 800 sink base',
-    massKg: 40, nav: 'static', anchors: { front: { x: 0, z: 0.58 } },
+    massKg: 40, nav: 'static', support: [top(0.8, 0.6, 0.90)], anchors: { front: { x: 0, z: 0.58 } },
     affordances: [{ verb: 'wash', at: 'front', duration: [20, 60], capacity: 1, anim: 'wash_hands' }],
+  },
+  {
+    id: 'vanity_basin', name: 'Washroom vanity with ceramic basin', kind: 'device', placement: 'floor',
+    dims: { w: 0.60, d: 0.46, h: 0.85 }, source: 'washbasin rim height 0.85 (DIN 18040 / common 0.80-0.90); 600x460 vanity',
+    massKg: 30, nav: 'static', support: [top(0.6, 0.46, 0.85)], anchors: { front: { x: 0, z: 0.5 } },
+    affordances: [{ verb: 'wash', at: 'front', duration: [20, 60], capacity: 1, anim: 'wash_hands' }],
+  },
+  {
+    id: 'faucet', name: 'Single-lever mixer tap', kind: 'fixture', placement: 'surface',
+    dims: { w: 0.06, d: 0.2, h: 0.3 }, source: 'kitchen mixer: spout reach ~0.2, height ~0.3', massKg: 1.5, nav: 'none',
   },
   {
     id: 'sofa_3', name: 'Three-seat sofa', kind: 'furniture', placement: 'floor',
@@ -208,8 +218,8 @@ export const ITEMS: ItemDef[] = [
   // ---------------- wall items ----------------
   {
     id: 'kanban_board', name: 'NAVBAT kanban board', kind: 'fixture', placement: 'wall',
-    dims: { w: 1.80, d: 0.03, h: 1.20 }, wallBottom: 0.90, source: 'magnetic whiteboard 1800x1200, bottom edge 0.90',
-    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.50 }, left: { x: -0.45, z: 0.50 }, right: { x: 0.45, z: 0.50 } },
+    dims: { w: 2.40, d: 0.03, h: 1.20 }, wallBottom: 0.90, source: 'magnetic whiteboard 2400x1200 (largest standard), bottom edge 0.90',
+    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.50 }, left: { x: -0.6, z: 0.50 }, right: { x: 0.6, z: 0.50 } },
     affordances: [{ verb: 'move_card', at: 'front', slots: ['left', 'right'], duration: [5, 15], capacity: 2, anim: 'pin_card' }],
   },
   {
