@@ -306,11 +306,16 @@ func _furniture() -> void:
 func _roll_chairs(dt: float) -> void:
 	for c in chairs:
 		var want: Vector3 = c.home
+		var occupied := false   # someone sits on it: never roll it out from under them (they sat in the air)
+		var blocked := false    # someone stands where the chair is
 		for id in people:
 			var p: Dictionary = people[id]
-			if p.node.visible and p.state != "sitting" and Vector2(p.node.position.x - c.home.x, p.node.position.z - c.home.z).length() < 0.5:
-				want = c.home + c.back * 0.55
-				break
+			if not p.node.visible and id != "boss": continue
+			var dist := Vector2(p.pos.x - c.home.x, p.pos.z - c.home.z).length()
+			if p.state == "sitting" and dist < 0.6: occupied = true
+			elif p.state != "sitting" and p.state != "offsite" and dist < 0.5: blocked = true
+		if blocked and not occupied:
+			want = c.home + c.back * 0.55
 		c.node.position = c.node.position.lerp(want, clamp(dt * 3.0, 0, 1))
 
 # Small electronics built to their real geometry (a box the size of a monitor's bounding volume looks like a crate)
