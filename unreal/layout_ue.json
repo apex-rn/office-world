@@ -2,631 +2,659 @@
  "units": "cm",
  "axes": "X=east(x), Y=south(z), Z=up(y)",
  "room": {
-  "w": 1800,
-  "d": 1300,
-  "h": 300
+  "w": 2400,
+  "d": 1700,
+  "h": 320
  },
  "walls": [
   {
    "loc": [
-    170,
+    240,
     -10,
-    150
+    160
    ],
    "yaw": 90,
    "size": [
     20,
-    380,
-    300
+    520,
+    320
    ],
    "glass": false
   },
   {
    "loc": [
-    570,
+    800,
     -10,
     55
    ],
    "yaw": 90,
    "size": [
     20,
-    420,
+    600,
     110
    ],
    "glass": false
   },
   {
    "loc": [
-    570,
+    800,
     -10,
-    280
+    300
    ],
    "yaw": 90,
    "size": [
     20,
-    420,
+    600,
     40
    ],
    "glass": false
   },
   {
    "loc": [
-    1070,
+    1480,
     -10,
-    150
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    760,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    2100,
+    -10,
+    45
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    480,
+    90
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    2100,
+    -10,
+    300
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    480,
+    40
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    2380,
+    -10,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    80,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    40,
+    1710,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    120,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    400,
+    1710,
+    45
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    600,
+    90
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    400,
+    1710,
+    300
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    600,
+    40
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    760,
+    1710,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    120,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    900,
+    1710,
+    270
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    160,
+    100
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    1020,
+    1710,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    80,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    1350,
+    1710,
+    45
    ],
    "yaw": 90,
    "size": [
     20,
     580,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1550,
-    -10,
-    45
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    380,
     90
    ],
    "glass": false
   },
   {
    "loc": [
-    1550,
-    -10,
-    280
+    1350,
+    1710,
+    300
    ],
    "yaw": 90,
    "size": [
     20,
-    380,
+    580,
     40
    ],
    "glass": false
   },
   {
    "loc": [
-    1780,
-    -10,
-    150
+    1690,
+    1710,
+    160
    ],
    "yaw": 90,
    "size": [
     20,
-    80,
-    300
+    100,
+    320
    ],
    "glass": false
   },
   {
    "loc": [
-    20,
-    1310,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    80,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    310,
-    1310,
+    2040,
+    1710,
     45
    ],
    "yaw": 90,
    "size": [
     20,
-    500,
+    600,
     90
    ],
    "glass": false
   },
   {
    "loc": [
-    310,
-    1310,
-    280
+    2040,
+    1710,
+    300
    ],
    "yaw": 90,
    "size": [
     20,
-    500,
+    600,
     40
    ],
    "glass": false
   },
   {
    "loc": [
+    2380,
+    1710,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    80,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    -10,
     640,
-    1310,
-    255
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    160,
-    90
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    730,
-    1310,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    20,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1000,
-    1310,
-    45
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    520,
-    90
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1000,
-    1310,
-    280
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    520,
-    40
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1300,
-    1310,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    80,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1550,
-    1310,
-    45
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    420,
-    90
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1550,
-    1310,
-    280
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    420,
-    40
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1790,
-    1310,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    20,
-    60,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    -10,
-    497.5,
-    150
+    160
    ],
    "yaw": 180,
    "size": [
     20,
-    1035,
-    300
+    1320,
+    320
    ],
    "glass": false
   },
   {
    "loc": [
     -10,
-    1105,
-    255
+    1390,
+    270
    ],
    "yaw": 180,
    "size": [
     20,
     180,
-    90
+    100
    ],
    "glass": false
   },
   {
    "loc": [
     -10,
-    1257.5,
-    150
+    1600,
+    160
    ],
    "yaw": 180,
    "size": [
     20,
-    125,
-    300
+    240,
+    320
    ],
    "glass": false
   },
   {
    "loc": [
-    1810,
-    20,
-    150
-   ],
-   "yaw": 180,
-   "size": [
-    20,
-    80,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1810,
-    250,
-    45
-   ],
-   "yaw": 180,
-   "size": [
-    20,
-    380,
-    90
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1810,
-    250,
-    280
-   ],
-   "yaw": 180,
-   "size": [
-    20,
-    380,
-    40
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1810,
-    520,
-    150
-   ],
-   "yaw": 180,
-   "size": [
-    20,
-    160,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1810,
-    900,
-    45
-   ],
-   "yaw": 180,
-   "size": [
-    20,
-    600,
-    90
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1810,
-    900,
-    280
-   ],
-   "yaw": 180,
-   "size": [
-    20,
-    600,
-    40
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    1810,
-    1260,
-    150
+    2410,
+    40,
+    160
    ],
    "yaw": 180,
    "size": [
     20,
     120,
-    300
+    320
    ],
    "glass": false
   },
   {
    "loc": [
-    305,
-    155,
-    150
+    2410,
+    350,
+    45
    ],
    "yaw": 180,
    "size": [
-    10,
-    310,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    50,
-    305,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    10,
-    100,
-    300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    140,
-    305,
-    255
-   ],
-   "yaw": 90,
-   "size": [
-    10,
-    80,
+    20,
+    500,
     90
    ],
    "glass": false
   },
   {
    "loc": [
-    245,
-    305,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    10,
-    130,
+    2410,
+    350,
     300
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    7.5,
-    160,
-    100
-   ],
-   "yaw": 90,
-   "size": [
-    3,
-    15,
-    200
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    100,
-    160,
-    100
-   ],
-   "yaw": 90,
-   "size": [
-    3,
-    30,
-    200
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    192.5,
-    160,
-    100
-   ],
-   "yaw": 90,
-   "size": [
-    3,
-    15,
-    200
-   ],
-   "glass": false
-  },
-  {
-   "loc": [
-    820,
-    252.5,
-    150
    ],
    "yaw": 180,
    "size": [
-    10,
-    505,
-    300
+    20,
+    500,
+    40
    ],
    "glass": false
   },
   {
    "loc": [
-    1300,
-    252.5,
-    150
+    2410,
+    660,
+    160
    ],
    "yaw": 180,
    "size": [
-    10,
-    505,
-    300
+    20,
+    120,
+    320
    ],
    "glass": false
   },
   {
    "loc": [
+    2410,
+    1170,
+    45
+   ],
+   "yaw": 180,
+   "size": [
+    20,
     900,
-    500,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    8,
-    160,
-    300
-   ],
-   "glass": true
-  },
-  {
-   "loc": [
-    1060,
-    500,
-    255
-   ],
-   "yaw": 90,
-   "size": [
-    8,
-    160,
     90
    ],
-   "glass": true
+   "glass": false
   },
   {
    "loc": [
-    1220,
-    500,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    8,
-    160,
+    2410,
+    1170,
     300
    ],
-   "glass": true
+   "yaw": 180,
+   "size": [
+    20,
+    900,
+    40
+   ],
+   "glass": false
   },
   {
    "loc": [
-    1320,
-    500,
-    150
+    2410,
+    1670,
+    160
    ],
-   "yaw": 90,
+   "yaw": 180,
    "size": [
-    8,
-    40,
-    300
-   ],
-   "glass": true
-  },
-  {
-   "loc": [
-    1420,
-    500,
-    255
-   ],
-   "yaw": 90,
-   "size": [
-    8,
-    160,
-    90
-   ],
-   "glass": true
-  },
-  {
-   "loc": [
-    1650,
-    500,
-    150
-   ],
-   "yaw": 90,
-   "size": [
-    8,
-    300,
-    300
-   ],
-   "glass": true
-  },
-  {
-   "loc": [
-    700,
-    1520,
-    55
-   ],
-   "yaw": 90,
-   "size": [
-    5,
-    500,
-    110
+    20,
+    100,
+    320
    ],
    "glass": false
   },
   {
    "loc": [
     450,
-    1420,
+    202.5,
+    160
+   ],
+   "yaw": 180,
+   "size": [
+    10,
+    405,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    80,
+    400,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    10,
+    160,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    210,
+    400,
+    265
+   ],
+   "yaw": 90,
+   "size": [
+    10,
+    100,
+    110
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    357.5,
+    400,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    10,
+    195,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    10,
+    160,
+    100
+   ],
+   "yaw": 90,
+   "size": [
+    3,
+    20,
+    200
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    110,
+    160,
+    100
+   ],
+   "yaw": 90,
+   "size": [
+    3,
+    40,
+    200
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    220,
+    160,
+    100
+   ],
+   "yaw": 90,
+   "size": [
+    3,
+    40,
+    200
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    320,
+    160,
+    100
+   ],
+   "yaw": 90,
+   "size": [
+    3,
+    20,
+    200
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    1150,
+    302.5,
+    160
+   ],
+   "yaw": 180,
+   "size": [
+    10,
+    605,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    1800,
+    327.5,
+    160
+   ],
+   "yaw": 180,
+   "size": [
+    10,
+    655,
+    320
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    1272.5,
+    600,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    8,
+    245,
+    320
+   ],
+   "glass": true
+  },
+  {
+   "loc": [
+    1475,
+    600,
+    270
+   ],
+   "yaw": 90,
+   "size": [
+    8,
+    160,
+    100
+   ],
+   "glass": true
+  },
+  {
+   "loc": [
+    1677.5,
+    600,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    8,
+    245,
+    320
+   ],
+   "glass": true
+  },
+  {
+   "loc": [
+    1830,
+    650,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    8,
+    60,
+    320
+   ],
+   "glass": true
+  },
+  {
+   "loc": [
+    1950,
+    650,
+    270
+   ],
+   "yaw": 90,
+   "size": [
+    8,
+    180,
+    100
+   ],
+   "glass": true
+  },
+  {
+   "loc": [
+    2220,
+    650,
+    160
+   ],
+   "yaw": 90,
+   "size": [
+    8,
+    360,
+    320
+   ],
+   "glass": true
+  },
+  {
+   "loc": [
+    950,
+    1920,
+    55
+   ],
+   "yaw": 90,
+   "size": [
+    5,
+    600,
+    110
+   ],
+   "glass": false
+  },
+  {
+   "loc": [
+    650,
+    1820,
     55
    ],
    "yaw": 180,
@@ -639,8 +667,8 @@
   },
   {
    "loc": [
-    950,
-    1420,
+    1250,
+    1820,
     55
    ],
    "yaw": 180,
@@ -657,42 +685,42 @@
    "id": "door_entrance",
    "loc": [
     -10,
-    1105,
+    1390,
     0
    ],
    "yaw": 180,
    "width": 180,
-   "height": 210,
+   "height": 220,
    "exterior": true
   },
   {
    "id": "door_balcony",
    "loc": [
-    640,
-    1310,
+    900,
+    1710,
     0
    ],
    "yaw": 90,
    "width": 160,
-   "height": 210,
+   "height": 220,
    "exterior": true
   },
   {
    "id": "door_wc",
    "loc": [
-    140,
-    305,
+    210,
+    400,
     0
    ],
    "yaw": 90,
-   "width": 80,
+   "width": 100,
    "height": 210,
    "exterior": false
   },
   {
    "id": "door_cub1",
    "loc": [
-    50,
+    55,
     160,
     0
    ],
@@ -704,7 +732,19 @@
   {
    "id": "door_cub2",
    "loc": [
-    150,
+    165,
+    160,
+    0
+   ],
+   "yaw": 90,
+   "width": 70,
+   "height": 200,
+   "exterior": false
+  },
+  {
+   "id": "door_cub3",
+   "loc": [
+    275,
     160,
     0
    ],
@@ -716,25 +756,25 @@
   {
    "id": "door_meeting",
    "loc": [
-    1060,
-    500,
+    1475,
+    600,
     0
    ],
    "yaw": 90,
    "width": 160,
-   "height": 210,
+   "height": 220,
    "exterior": false
   },
   {
    "id": "door_manager",
    "loc": [
-    1420,
-    500,
+    1950,
+    650,
     0
    ],
    "yaw": 90,
-   "width": 160,
-   "height": 210,
+   "width": 180,
+   "height": 220,
    "exterior": false
   }
  ],
@@ -748,16 +788,16 @@
      0
     ],
     [
-     305,
+     450,
      0
     ],
     [
-     305,
-     305
+     450,
+     400
     ],
     [
      0,
-     305
+     400
     ]
    ],
    "outdoor": false
@@ -767,20 +807,20 @@
    "name": "Kitchen",
    "poly": [
     [
-     305,
+     450,
      0
     ],
     [
-     820,
+     1150,
      0
     ],
     [
-     820,
-     400
+     1150,
+     500
     ],
     [
-     305,
-     400
+     450,
+     500
     ]
    ],
    "outdoor": false
@@ -790,20 +830,20 @@
    "name": "Meeting room",
    "poly": [
     [
-     820,
+     1150,
      0
     ],
     [
-     1300,
+     1800,
      0
     ],
     [
-     1300,
-     500
+     1800,
+     600
     ],
     [
-     820,
-     500
+     1150,
+     600
     ]
    ],
    "outdoor": false
@@ -813,20 +853,20 @@
    "name": "Manager's office",
    "poly": [
     [
-     1300,
-     0
-    ],
-    [
      1800,
      0
     ],
     [
-     1800,
-     500
+     2400,
+     0
     ],
     [
-     1300,
-     500
+     2400,
+     650
+    ],
+    [
+     1800,
+     650
     ]
    ],
    "outdoor": false
@@ -837,19 +877,19 @@
    "poly": [
     [
      0,
-     305
+     400
     ],
     [
-     305,
-     305
+     450,
+     400
     ],
     [
-     305,
-     1300
+     450,
+     1700
     ],
     [
      0,
-     1300
+     1700
     ]
    ],
    "outdoor": false
@@ -859,28 +899,28 @@
    "name": "Open work area",
    "poly": [
     [
-     305,
-     400
-    ],
-    [
-     820,
-     400
-    ],
-    [
-     820,
+     450,
      500
     ],
     [
-     1300,
+     1150,
      500
     ],
     [
-     1300,
-     1300
+     1150,
+     600
     ],
     [
-     305,
-     1300
+     1700,
+     600
+    ],
+    [
+     1700,
+     1700
+    ],
+    [
+     450,
+     1700
     ]
    ],
    "outdoor": false
@@ -890,20 +930,28 @@
    "name": "Print & server corner",
    "poly": [
     [
-     1300,
-     500
+     1700,
+     600
     ],
     [
      1800,
-     500
+     600
     ],
     [
      1800,
-     900
+     650
     ],
     [
-     1300,
-     900
+     2400,
+     650
+    ],
+    [
+     2400,
+     1000
+    ],
+    [
+     1700,
+     1000
     ]
    ],
    "outdoor": false
@@ -913,20 +961,20 @@
    "name": "Lounge",
    "poly": [
     [
-     1300,
-     900
+     1700,
+     1000
     ],
     [
-     1800,
-     900
+     2400,
+     1000
     ],
     [
-     1800,
-     1300
+     2400,
+     1700
     ],
     [
-     1300,
-     1300
+     1700,
+     1700
     ]
    ],
    "outdoor": false
@@ -936,20 +984,20 @@
    "name": "Balcony (smoking)",
    "poly": [
     [
-     450,
-     1300
+     650,
+     1700
     ],
     [
-     950,
-     1300
+     1250,
+     1700
     ],
     [
-     950,
-     1520
+     1250,
+     1920
     ],
     [
-     450,
-     1520
+     650,
+     1920
     ]
    ],
    "outdoor": true
@@ -961,7 +1009,7 @@
    "def": "kitchen_counter",
    "kind": "furniture",
    "loc": [
-    440,
+    620,
     30,
     0
    ],
@@ -979,7 +1027,7 @@
    "def": "sink_unit",
    "kind": "device",
    "loc": [
-    600,
+    780,
     30,
     0
    ],
@@ -997,7 +1045,7 @@
    "def": "fridge",
    "kind": "device",
    "loc": [
-    685,
+    860,
     32.5,
     0
    ],
@@ -1015,7 +1063,7 @@
    "def": "trash_bin",
    "kind": "furniture",
    "loc": [
-    755,
+    930,
     20,
     0
    ],
@@ -1033,7 +1081,7 @@
    "def": "coffee_machine",
    "kind": "device",
    "loc": [
-    360,
+    540,
     25,
     90
    ],
@@ -1051,7 +1099,7 @@
    "def": "microwave",
    "kind": "device",
    "loc": [
-    470,
+    650,
     20,
     90
    ],
@@ -1069,8 +1117,8 @@
    "def": "kitchen_table",
    "kind": "furniture",
    "loc": [
-    540,
-    320,
+    630,
+    330,
     0
    ],
    "yaw": 90,
@@ -1087,8 +1135,8 @@
    "def": "side_chair",
    "kind": "furniture",
    "loc": [
-    510,
-    245,
+    600,
+    255,
     0
    ],
    "yaw": 90,
@@ -1105,8 +1153,8 @@
    "def": "side_chair",
    "kind": "furniture",
    "loc": [
-    570,
-    245,
+    660,
+    255,
     0
    ],
    "yaw": 90,
@@ -1123,8 +1171,8 @@
    "def": "side_chair",
    "kind": "furniture",
    "loc": [
-    510,
-    395,
+    600,
+    405,
     0
    ],
    "yaw": -90,
@@ -1141,8 +1189,98 @@
    "def": "side_chair",
    "kind": "furniture",
    "loc": [
-    570,
-    395,
+    660,
+    405,
+    0
+   ],
+   "yaw": -90,
+   "size": [
+    52,
+    46,
+    82
+   ],
+   "seat": 45,
+   "owner": null
+  },
+  {
+   "id": "kitchen.table2",
+   "def": "kitchen_table",
+   "kind": "furniture",
+   "loc": [
+    960,
+    330,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    80,
+    120,
+    74
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "kitchen.chair5",
+   "def": "side_chair",
+   "kind": "furniture",
+   "loc": [
+    930,
+    255,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    52,
+    46,
+    82
+   ],
+   "seat": 45,
+   "owner": null
+  },
+  {
+   "id": "kitchen.chair6",
+   "def": "side_chair",
+   "kind": "furniture",
+   "loc": [
+    990,
+    255,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    52,
+    46,
+    82
+   ],
+   "seat": 45,
+   "owner": null
+  },
+  {
+   "id": "kitchen.chair7",
+   "def": "side_chair",
+   "kind": "furniture",
+   "loc": [
+    930,
+    405,
+    0
+   ],
+   "yaw": -90,
+   "size": [
+    52,
+    46,
+    82
+   ],
+   "seat": 45,
+   "owner": null
+  },
+  {
+   "id": "kitchen.chair8",
+   "def": "side_chair",
+   "kind": "furniture",
+   "loc": [
+    990,
+    405,
     0
    ],
    "yaw": -90,
@@ -1159,8 +1297,8 @@
    "def": "water_dispenser",
    "kind": "device",
    "loc": [
-    275,
-    340,
+    1110,
+    40,
     0
    ],
    "yaw": 90,
@@ -1173,11 +1311,29 @@
    "owner": null
   },
   {
+   "id": "kitchen.plant",
+   "def": "plant_floor",
+   "kind": "furniture",
+   "loc": [
+    495,
+    450,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    45,
+    45,
+    120
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
    "id": "wc.part1",
    "def": "wc_partition",
    "kind": "fixture",
    "loc": [
-    100,
+    110,
     79,
     0
    ],
@@ -1195,7 +1351,25 @@
    "def": "wc_partition",
    "kind": "fixture",
    "loc": [
-    200,
+    220,
+    79,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    158,
+    3,
+    200
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "wc.part3",
+   "def": "wc_partition",
+   "kind": "fixture",
+   "loc": [
+    330,
     79,
     0
    ],
@@ -1213,7 +1387,7 @@
    "def": "toilet",
    "kind": "device",
    "loc": [
-    50,
+    55,
     34,
     0
    ],
@@ -1231,7 +1405,25 @@
    "def": "toilet",
    "kind": "device",
    "loc": [
-    150,
+    165,
+    34,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    68,
+    38,
+    40
+   ],
+   "seat": 40,
+   "owner": null
+  },
+  {
+   "id": "wc.toilet3",
+   "def": "toilet",
+   "kind": "device",
+   "loc": [
+    275,
     34,
     0
    ],
@@ -1249,7 +1441,7 @@
    "def": "sink_unit",
    "kind": "device",
    "loc": [
-    250,
+    390,
     30,
     0
    ],
@@ -1267,8 +1459,8 @@
    "def": "meeting_table",
    "kind": "furniture",
    "loc": [
-    1060,
-    250,
+    1475,
+    320,
     0
    ],
    "yaw": 0,
@@ -1285,8 +1477,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    965,
-    145,
+    1380,
+    215,
     0
    ],
    "yaw": 0,
@@ -1303,8 +1495,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1155,
-    145,
+    1570,
+    215,
     0
    ],
    "yaw": 180,
@@ -1321,8 +1513,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    965,
-    215,
+    1380,
+    285,
     0
    ],
    "yaw": 0,
@@ -1339,8 +1531,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1155,
-    215,
+    1570,
+    285,
     0
    ],
    "yaw": 180,
@@ -1357,8 +1549,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    965,
-    285,
+    1380,
+    355,
     0
    ],
    "yaw": 0,
@@ -1375,8 +1567,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1155,
-    285,
+    1570,
+    355,
     0
    ],
    "yaw": 180,
@@ -1393,8 +1585,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    965,
-    355,
+    1380,
+    425,
     0
    ],
    "yaw": 0,
@@ -1411,8 +1603,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1155,
-    355,
+    1570,
+    425,
     0
    ],
    "yaw": 180,
@@ -1429,7 +1621,7 @@
    "def": "tv_65",
    "kind": "device",
    "loc": [
-    945,
+    1360,
     3,
     100
    ],
@@ -1447,7 +1639,7 @@
    "def": "whiteboard",
    "kind": "fixture",
    "loc": [
-    1185,
+    1630,
     1.5,
     90
    ],
@@ -1461,12 +1653,30 @@
    "owner": null
   },
   {
+   "id": "meeting.plant",
+   "def": "plant_floor",
+   "kind": "furniture",
+   "loc": [
+    1195,
+    550,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    45,
+    45,
+    120
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
    "id": "desk.manager",
    "def": "desk_160",
    "kind": "furniture",
    "loc": [
-    1580,
-    220,
+    2130,
+    240,
     0
    ],
    "yaw": -90,
@@ -1483,8 +1693,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1580,
-    145,
+    2130,
+    165,
     0
    ],
    "yaw": -270,
@@ -1501,8 +1711,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    1580,
-    244,
+    2130,
+    264,
     74
    ],
    "yaw": -90,
@@ -1519,8 +1729,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    1580,
-    197,
+    2130,
+    217,
     74
    ],
    "yaw": -90,
@@ -1537,8 +1747,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    1547,
-    197,
+    2097,
+    217,
     74
    ],
    "yaw": -90,
@@ -1555,8 +1765,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    1515,
-    246,
+    2065,
+    266,
     74
    ],
    "yaw": -90,
@@ -1573,8 +1783,8 @@
    "def": "side_chair",
    "kind": "furniture",
    "loc": [
-    1530,
-    295,
+    2080,
+    315,
     0
    ],
    "yaw": -90,
@@ -1591,8 +1801,8 @@
    "def": "side_chair",
    "kind": "furniture",
    "loc": [
-    1630,
-    295,
+    2180,
+    315,
     0
    ],
    "yaw": -90,
@@ -1609,8 +1819,8 @@
    "def": "bookcase",
    "kind": "furniture",
    "loc": [
-    1322.5,
-    100,
+    1822.5,
+    120,
     0
    ],
    "yaw": 0,
@@ -1627,8 +1837,8 @@
    "def": "bookcase",
    "kind": "furniture",
    "loc": [
-    1322.5,
-    180,
+    1822.5,
+    200,
     0
    ],
    "yaw": 0,
@@ -1645,8 +1855,26 @@
    "def": "plant_floor",
    "kind": "furniture",
    "loc": [
-    1750,
-    450,
+    2350,
+    600,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    45,
+    45,
+    120
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "manager.plant2",
+   "def": "plant_floor",
+   "kind": "furniture",
+   "loc": [
+    2350,
+    50,
     0
    ],
    "yaw": 90,
@@ -1663,8 +1891,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    440,
-    660,
+    600,
+    840,
     0
    ],
    "yaw": 90,
@@ -1681,8 +1909,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    440,
-    730,
+    600,
+    910,
     0
    ],
    "yaw": -90,
@@ -1699,8 +1927,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    440,
-    641,
+    600,
+    821,
     74
    ],
    "yaw": 90,
@@ -1717,8 +1945,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    440,
-    678,
+    600,
+    858,
     74
    ],
    "yaw": 90,
@@ -1735,8 +1963,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    473,
-    678,
+    633,
+    858,
     74
    ],
    "yaw": 90,
@@ -1753,8 +1981,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    385,
-    639,
+    545,
+    819,
     74
    ],
    "yaw": 90,
@@ -1771,8 +1999,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    440,
-    960,
+    600,
+    1160,
     0
    ],
    "yaw": -90,
@@ -1789,8 +2017,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    440,
-    890,
+    600,
+    1090,
     0
    ],
    "yaw": -270,
@@ -1807,8 +2035,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    440,
-    979,
+    600,
+    1179,
     74
    ],
    "yaw": -90,
@@ -1825,8 +2053,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    440,
-    942,
+    600,
+    1142,
     74
    ],
    "yaw": -90,
@@ -1843,8 +2071,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    407,
-    942,
+    567,
+    1142,
     74
    ],
    "yaw": -90,
@@ -1861,8 +2089,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    385,
-    981,
+    545,
+    1181,
     74
    ],
    "yaw": -90,
@@ -1879,8 +2107,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    640,
-    660,
+    820,
+    840,
     0
    ],
    "yaw": 90,
@@ -1897,8 +2125,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    640,
-    730,
+    820,
+    910,
     0
    ],
    "yaw": -90,
@@ -1915,8 +2143,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    640,
-    641,
+    820,
+    821,
     74
    ],
    "yaw": 90,
@@ -1933,8 +2161,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    640,
-    678,
+    820,
+    858,
     74
    ],
    "yaw": 90,
@@ -1951,8 +2179,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    673,
-    678,
+    853,
+    858,
     74
    ],
    "yaw": 90,
@@ -1969,8 +2197,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    695,
-    639,
+    875,
+    819,
     74
    ],
    "yaw": 90,
@@ -1987,8 +2215,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    640,
-    960,
+    820,
+    1160,
     0
    ],
    "yaw": -90,
@@ -2005,8 +2233,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    640,
-    890,
+    820,
+    1090,
     0
    ],
    "yaw": -270,
@@ -2023,8 +2251,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    640,
-    979,
+    820,
+    1179,
     74
    ],
    "yaw": -90,
@@ -2041,8 +2269,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    640,
-    942,
+    820,
+    1142,
     74
    ],
    "yaw": -90,
@@ -2059,8 +2287,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    607,
-    942,
+    787,
+    1142,
     74
    ],
    "yaw": -90,
@@ -2077,8 +2305,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    695,
-    981,
+    875,
+    1181,
     74
    ],
    "yaw": -90,
@@ -2095,8 +2323,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
+    1040,
     840,
-    660,
     0
    ],
    "yaw": 90,
@@ -2113,8 +2341,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    840,
-    730,
+    1040,
+    910,
     0
    ],
    "yaw": -90,
@@ -2131,8 +2359,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    840,
-    641,
+    1040,
+    821,
     74
    ],
    "yaw": 90,
@@ -2149,8 +2377,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    840,
-    678,
+    1040,
+    858,
     74
    ],
    "yaw": 90,
@@ -2167,8 +2395,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    873,
-    678,
+    1073,
+    858,
     74
    ],
    "yaw": 90,
@@ -2185,8 +2413,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    785,
-    639,
+    985,
+    819,
     74
    ],
    "yaw": 90,
@@ -2203,8 +2431,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    840,
-    960,
+    1040,
+    1160,
     0
    ],
    "yaw": -90,
@@ -2221,8 +2449,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    840,
-    890,
+    1040,
+    1090,
     0
    ],
    "yaw": -270,
@@ -2239,8 +2467,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    840,
-    979,
+    1040,
+    1179,
     74
    ],
    "yaw": -90,
@@ -2257,8 +2485,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    840,
-    942,
+    1040,
+    1142,
     74
    ],
    "yaw": -90,
@@ -2275,8 +2503,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    807,
-    942,
+    1007,
+    1142,
     74
    ],
    "yaw": -90,
@@ -2293,8 +2521,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    785,
-    981,
+    985,
+    1181,
     74
    ],
    "yaw": -90,
@@ -2311,8 +2539,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    1040,
-    660,
+    1260,
+    840,
     0
    ],
    "yaw": 90,
@@ -2329,8 +2557,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1040,
-    730,
+    1260,
+    910,
     0
    ],
    "yaw": -90,
@@ -2347,8 +2575,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    1040,
-    641,
+    1260,
+    821,
     74
    ],
    "yaw": 90,
@@ -2365,8 +2593,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    1040,
-    678,
+    1260,
+    858,
     74
    ],
    "yaw": 90,
@@ -2383,8 +2611,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    1073,
-    678,
+    1293,
+    858,
     74
    ],
    "yaw": 90,
@@ -2401,8 +2629,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    1095,
-    639,
+    1315,
+    819,
     74
    ],
    "yaw": 90,
@@ -2419,8 +2647,8 @@
    "def": "desk_140",
    "kind": "furniture",
    "loc": [
-    1040,
-    960,
+    1260,
+    1160,
     0
    ],
    "yaw": -90,
@@ -2437,8 +2665,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    1040,
-    890,
+    1260,
+    1090,
     0
    ],
    "yaw": -270,
@@ -2455,8 +2683,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    1040,
-    979,
+    1260,
+    1179,
     74
    ],
    "yaw": -90,
@@ -2473,8 +2701,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    1040,
-    942,
+    1260,
+    1142,
     74
    ],
    "yaw": -90,
@@ -2491,8 +2719,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    1007,
-    942,
+    1227,
+    1142,
     74
    ],
    "yaw": -90,
@@ -2509,8 +2737,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    1095,
-    981,
+    1315,
+    1181,
     74
    ],
    "yaw": -90,
@@ -2523,12 +2751,264 @@
    "owner": "publisher"
   },
   {
+   "id": "desk.spare1",
+   "def": "desk_140",
+   "kind": "furniture",
+   "loc": [
+    1480,
+    840,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    70,
+    140,
+    74
+   ],
+   "seat": null,
+   "owner": "spare1"
+  },
+  {
+   "id": "chair.spare1",
+   "def": "office_chair",
+   "kind": "furniture",
+   "loc": [
+    1480,
+    910,
+    0
+   ],
+   "yaw": -90,
+   "size": [
+    65,
+    65,
+    105
+   ],
+   "seat": 46,
+   "owner": "spare1"
+  },
+  {
+   "id": "monitor.spare1",
+   "def": "monitor_24",
+   "kind": "device",
+   "loc": [
+    1480,
+    821,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    20,
+    54.3,
+    45
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "keyboard.spare1",
+   "def": "keyboard",
+   "kind": "item",
+   "loc": [
+    1480,
+    858,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    13,
+    44,
+    3
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "mouse.spare1",
+   "def": "mouse",
+   "kind": "item",
+   "loc": [
+    1513,
+    858,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    12,
+    6.5,
+    4
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "lamp.spare1",
+   "def": "desk_lamp",
+   "kind": "device",
+   "loc": [
+    1425,
+    819,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    16,
+    16,
+    45
+   ],
+   "seat": null,
+   "owner": "spare1"
+  },
+  {
+   "id": "desk.spare2",
+   "def": "desk_140",
+   "kind": "furniture",
+   "loc": [
+    1480,
+    1160,
+    0
+   ],
+   "yaw": -90,
+   "size": [
+    70,
+    140,
+    74
+   ],
+   "seat": null,
+   "owner": "spare2"
+  },
+  {
+   "id": "chair.spare2",
+   "def": "office_chair",
+   "kind": "furniture",
+   "loc": [
+    1480,
+    1090,
+    0
+   ],
+   "yaw": -270,
+   "size": [
+    65,
+    65,
+    105
+   ],
+   "seat": 46,
+   "owner": "spare2"
+  },
+  {
+   "id": "monitor.spare2",
+   "def": "monitor_24",
+   "kind": "device",
+   "loc": [
+    1480,
+    1179,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    20,
+    54.3,
+    45
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "keyboard.spare2",
+   "def": "keyboard",
+   "kind": "item",
+   "loc": [
+    1480,
+    1142,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    13,
+    44,
+    3
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "mouse.spare2",
+   "def": "mouse",
+   "kind": "item",
+   "loc": [
+    1447,
+    1142,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    12,
+    6.5,
+    4
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "lamp.spare2",
+   "def": "desk_lamp",
+   "kind": "device",
+   "loc": [
+    1425,
+    1181,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    16,
+    16,
+    45
+   ],
+   "seat": null,
+   "owner": "spare2"
+  },
+  {
+   "id": "work.plant1",
+   "def": "plant_floor",
+   "kind": "furniture",
+   "loc": [
+    1650,
+    700,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    45,
+    45,
+    120
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "work.plant2",
+   "def": "plant_floor",
+   "kind": "furniture",
+   "loc": [
+    500,
+    1360,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    45,
+    45,
+    120
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
    "id": "desk.guard",
    "def": "reception_desk",
    "kind": "furniture",
    "loc": [
-    160,
-    780,
+    230,
+    1040,
     0
    ],
    "yaw": -90,
@@ -2545,8 +3025,8 @@
    "def": "office_chair",
    "kind": "furniture",
    "loc": [
-    160,
-    708,
+    230,
+    968,
     0
    ],
    "yaw": -270,
@@ -2563,8 +3043,8 @@
    "def": "monitor_24",
    "kind": "device",
    "loc": [
-    160,
-    801.5,
+    230,
+    1061.5,
     74
    ],
    "yaw": -90,
@@ -2581,8 +3061,8 @@
    "def": "keyboard",
    "kind": "item",
    "loc": [
-    160,
-    759.5,
+    230,
+    1019.5,
     74
    ],
    "yaw": -90,
@@ -2599,8 +3079,8 @@
    "def": "mouse",
    "kind": "item",
    "loc": [
-    127,
-    759.5,
+    197,
+    1019.5,
     74
    ],
    "yaw": -90,
@@ -2617,8 +3097,8 @@
    "def": "desk_lamp",
    "kind": "device",
    "loc": [
-    225,
-    803.5,
+    295,
+    1063.5,
     74
    ],
    "yaw": -90,
@@ -2636,7 +3116,7 @@
    "kind": "fixture",
    "loc": [
     5,
-    500,
+    650,
     90
    ],
    "yaw": 0,
@@ -2654,7 +3134,7 @@
    "kind": "fixture",
    "loc": [
     5,
-    890,
+    1160,
     205
    ],
    "yaw": 0,
@@ -2672,7 +3152,7 @@
    "kind": "furniture",
    "loc": [
     45,
-    1250,
+    1650,
     0
    ],
    "yaw": 90,
@@ -2689,8 +3169,8 @@
    "def": "plant_floor",
    "kind": "furniture",
    "loc": [
-    260,
-    1260,
+    400,
+    1650,
     0
    ],
    "yaw": 90,
@@ -2707,8 +3187,8 @@
    "def": "cabinet_low",
    "kind": "furniture",
    "loc": [
-    1590,
-    534,
+    2200,
+    684,
     0
    ],
    "yaw": 90,
@@ -2725,8 +3205,8 @@
    "def": "printer",
    "kind": "device",
    "loc": [
-    1590,
-    534,
+    2200,
+    684,
     75
    ],
    "yaw": 90,
@@ -2743,8 +3223,8 @@
    "def": "server_rack",
    "kind": "device",
    "loc": [
-    1765,
-    660,
+    2365,
+    830,
     0
    ],
    "yaw": 90,
@@ -2761,8 +3241,8 @@
    "def": "trash_bin",
    "kind": "furniture",
    "loc": [
-    1490,
-    524,
+    2100,
+    674,
     0
    ],
    "yaw": 90,
@@ -2779,8 +3259,8 @@
    "def": "sofa_3",
    "kind": "furniture",
    "loc": [
-    1560,
-    1250,
+    2050,
+    1650,
     0
    ],
    "yaw": -90,
@@ -2797,8 +3277,8 @@
    "def": "coffee_table",
    "kind": "furniture",
    "loc": [
-    1560,
-    1100,
+    2050,
+    1500,
     0
    ],
    "yaw": 90,
@@ -2811,12 +3291,48 @@
    "owner": null
   },
   {
+   "id": "lounge.chair1",
+   "def": "side_chair",
+   "kind": "furniture",
+   "loc": [
+    1860,
+    1500,
+    0
+   ],
+   "yaw": 0,
+   "size": [
+    52,
+    46,
+    82
+   ],
+   "seat": 45,
+   "owner": null
+  },
+  {
+   "id": "lounge.chair2",
+   "def": "side_chair",
+   "kind": "furniture",
+   "loc": [
+    2240,
+    1500,
+    0
+   ],
+   "yaw": 180,
+   "size": [
+    52,
+    46,
+    82
+   ],
+   "seat": 45,
+   "owner": null
+  },
+  {
    "id": "lounge.plant1",
    "def": "plant_floor",
    "kind": "furniture",
    "loc": [
-    1370,
-    1260,
+    1760,
+    1660,
     0
    ],
    "yaw": 90,
@@ -2833,8 +3349,8 @@
    "def": "plant_floor",
    "kind": "furniture",
    "loc": [
-    1750,
-    1260,
+    2350,
+    1660,
     0
    ],
    "yaw": 90,
@@ -2851,8 +3367,8 @@
    "def": "bookcase",
    "kind": "furniture",
    "loc": [
-    1780,
-    1040,
+    2380,
+    1260,
     0
    ],
    "yaw": 180,
@@ -2869,8 +3385,8 @@
    "def": "ashtray_stand",
    "kind": "furniture",
    "loc": [
-    700,
-    1495,
+    900,
+    1895,
     0
    ],
    "yaw": -90,
@@ -2887,8 +3403,26 @@
    "def": "plant_floor",
    "kind": "furniture",
    "loc": [
-    500,
-    1490,
+    700,
+    1890,
+    0
+   ],
+   "yaw": 90,
+   "size": [
+    45,
+    45,
+    120
+   ],
+   "seat": null,
+   "owner": null
+  },
+  {
+   "id": "balcony.plant2",
+   "def": "plant_floor",
+   "kind": "furniture",
+   "loc": [
+    1200,
+    1890,
     0
    ],
    "yaw": 90,

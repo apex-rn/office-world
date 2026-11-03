@@ -2,7 +2,11 @@
 
 > Har sessiya: 1) shu faylni o'qi, 2) `docs/WORLD_PLAN.md`dan kerakli bo'limni o'qi, 3) bitta vazifa, 4) `npm test`, 5) shu faylni yangila, 6) commit.
 
-## Holat (2026-11-03, tun) — 30/30 test
+## Holat (2026-11-03) — 31/31 test, office_v2 (24×17 m)
+- **office_v2**: 24×17 m, shift 3.2 m; majlis 6.5×6 m, WC 4.5×4 m (3 kabina), Manager 6×6.5 m, oshxona-kafe 2 stol, 10 ish stoli (2 tasi bo'sh), keng lounge va balkon. Validator 0 xato. **Tiqilinch 0.54%** (maqsad <1% bajarildi), 0 to'qnashuv.
+- Miya tuzatishlari (PC jonli sinovi I asosida): JSON'ni nasr/fence ichidan topish, verb sinonimlari, 700 token, birinchi javob berish, jimlikdan keyin suhbat, sit/stand cooldown, bare `auto` emas — `claude-opus-4-5` bepul alias.
+
+## Avvalgi (tun) — 30/30 test
 **B (dunyo) + C (miya) + server xizmati tayyor; D (ko'rinish) Unreal yo'liga o'tdi.**
 
 ### Qo'shilganlar
