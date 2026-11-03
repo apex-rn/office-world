@@ -60,7 +60,9 @@ func _ready() -> void:
 	if not view_only:
 		for f in files:
 			if FileAccess.file_exists(f): tok = FileAccess.get_file_as_string(f).strip_edges(); break
-	url = SERVER_URL + ("?token=" + tok if tok != "" else "")
+	# Godot's WebSocketPeer rejects "ws://host:port?token=..." as an invalid URL: the query needs a path ("/?")
+	var base := SERVER_URL if SERVER_URL.count("/") > 2 else SERVER_URL + "/"
+	url = base + ("?token=" + tok if tok != "" else "")
 	ws.connect_to_url(url)
 	_chat_box()
 
