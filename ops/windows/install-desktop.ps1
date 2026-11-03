@@ -23,4 +23,7 @@ foreach ($m in @(@{ n = 'office.bat'; mode = 'view' }, @{ n = 'office-boss.bat';
   "@echo off`r`nstart `"`" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ps`" -Mode $($m.mode)`r`n" |
     Set-Content -Encoding ASCII (Join-Path $desk $m.n)
 }
-Write-Host "OK: $desk\office.bat (tomosha), $desk\office-boss.bat (Boss bo'lib kirish)"
+$stop = Join-Path $repo 'ops\windows\stop-office.ps1'
+"@echo off`r`nstart `"`" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$stop`"`r`n" |
+  Set-Content -Encoding ASCII (Join-Path $desk 'office-stop.bat')
+Write-Host "OK: $desk\office.bat (tomosha), $desk\office-boss.bat (Boss bo'lib kirish), $desk\office-stop.bat (to'xtatish)"
