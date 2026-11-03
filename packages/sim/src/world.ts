@@ -47,6 +47,8 @@ interface Active {
   until?: number; aff?: { verb: Verb; at: string; dur: [number, number]; yields?: string; anim: string; slots?: string[] };
   lastProgressT: number; bestDist: number; retries: number;
   started?: number; cur?: Vec3;
+  /** how close counts as arrived (default ARRIVE_EPS) */
+  eps?: number;
   /** seat or device slot index this action holds */
   slot?: number;
   lastRetarget?: number;
@@ -272,7 +274,10 @@ export class World {
       case 'go_to': {
         const g = this.resolveTarget(b, c.target);
         if (!g) return rej('UNKNOWN_TARGET', `unknown target ${c.target}`);
-        return this.walkTo(b, g.p, g.yaw, 'go_to', 'go', c.target);
+        const r = this.walkTo(b, g.p, g.yaw, 'go_to', 'go', c.target);
+        // walking up to a piece of furniture (to wipe it, to look at it): get really close, not "roughly there"
+        if (r.ok && b.active && this.inst(c.target)) b.active.eps = 0.08;
+        return r;
       }
       case 'sit': {
         const i = this.inst(c.target);
@@ -429,12 +434,18 @@ export class World {
       if (a) return { p: a.p, yaw: a.yaw + Math.PI };
       // no use point (a desk, a table, a shelf): stand at a free reachable spot along its edge, facing it —
       // never at its centre, which is inside the furniture and can't be reached
-      const r0 = Math.max(d.dims.w, d.dims.d) / 2;
+      // candidates all round its real footprint (rotated), 0.35 m out from the edge; a candidate the navmesh would
+      // move by more than 15 cm (a chair, a wall is there) is no good — that is how people ended up 2 m away
+      const reach = 0.3;   // body centre 0.3 m from the edge: within arm's reach (the navmesh keeps ~0.25 m clear of furniture)
+      const hw = d.dims.w / 2 + reach, hd = d.dims.d / 2 + reach;
+      const local: { x: number; z: number }[] = [];
+      for (let k = 0; k <= 8; k++) { const u = -hw + (2 * hw * k) / 8; local.push({ x: u, z: hd }, { x: u, z: -hd }); }
+      for (let k = 1; k < 6; k++) { const v = -hd + (2 * hd * k) / 6; local.push({ x: hw, z: v }, { x: -hw, z: v }); }
       let best: Vec3 | null = null, bestD = Infinity;
-      for (const r of [r0 * 0.55 + 0.45, r0 + 0.45, r0 * 0.8 + 0.5]) for (let k = 0; k < 16; k++) {
-        const ang = (k / 16) * Math.PI * 2;
-        const sp = snap(this.nav, { x: i.x + Math.sin(ang) * r, y: 0, z: i.z + Math.cos(ang) * r }, { x: 0.12, y: 1, z: 0.12 });
-        if (!sp || !this.freeSpot(sp, b.spec.id)) continue;
+      for (const l of local) {
+        const lw = localToWorld(i.x, i.z, i.yaw, l.x, l.z), c = { x: lw.x, y: 0, z: lw.z };
+        const sp = snap(this.nav, c, { x: 0.15, y: 1, z: 0.15 });
+        if (!sp || Math.hypot(sp.x - c.x, sp.z - c.z) > 0.15 || !this.freeSpot(sp, b.spec.id)) continue;
         const dist = Math.hypot(sp.x - b.pos.x, sp.z - b.pos.z);
         if (dist < bestD) { best = sp; bestD = dist; }
       }
@@ -806,7 +817,7 @@ export class World {
     if (a.phase === 'walk' && a.goal) {
       const d = Math.hypot(b.pos.x - a.goal.x, b.pos.z - a.goal.z);
       if (d < a.bestDist - 0.05) { a.bestDist = d; a.lastProgressT = this.now; }
-      if (d <= ARRIVE_EPS) {
+      if (d <= (a.eps ?? ARRIVE_EPS)) {
         b.agent?.resetMoveTarget();
         if (a.goalYaw !== undefined) b.faceYaw = a.goalYaw;
         b.state = 'standing'; b.anim = 'idle';
