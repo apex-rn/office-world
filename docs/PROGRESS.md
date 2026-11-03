@@ -85,3 +85,4 @@
 - Still to verify live (J): real reply latency with FreeLLM chains.
 - Coat rack in use: arrival = hang coat → own chair; leaving = take coat → go home.
 - Frictions: every failed action ("wanted X, but Y") is counted per day (`rt.topFrictions`), fed into the Manager's meetings and written to DATA/office_frictions.json — the staff's own list of what to improve in the office (a Claude work session fixes them; the Boss approves).
+- Speech fix: gpt-oss spends max_tokens on reasoning → meeting turns (120-160 tokens) came back empty and were dropped silently. Now: reasoning 'low', +700 token room, one retry, `clean()` keeps only spoken words; life thoughts 1200 tokens, reflection 1100.

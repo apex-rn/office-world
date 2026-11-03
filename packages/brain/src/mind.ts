@@ -145,7 +145,7 @@ export class Mind {
       raw = await r.llm.chat([
         { role: 'system', content: `You are ${this.me.name}, ${this.me.title}. ${this.me.character}` },
         { role: 'user', content: `Today, in my own words:\n${today.map(m => `- ${m.text}`).join('\n')}\n\nWrite 2-3 short first-person conclusions I will carry into tomorrow (about my work, people, how I feel). One per line, no numbering. Output only the lines.` },
-      ], { model: r.model, maxTokens: 400, temperature: 0.6 });
+      ], { model: r.model, maxTokens: 1100, temperature: 0.6, reasoning: 'low' });
     } catch (e) { this.onThinkError?.(`reflection: ${(e as Error).message}`); }
     const lines = raw.split('\n').map(s => s.replace(/^[-*\d.)\s]+/, '').trim()).filter(s => s.length > 12 && s.length < 240).slice(0, 3);
     for (const l of lines) await this.memory.add('reflection', l, 7, w.now);
@@ -172,11 +172,12 @@ export class Mind {
       const route = this.deps.router.pick('life', w.now);
       if ('deferred' in route) return null;
       let raw = '';
-      const reasoning = (process.env.LIFE_REASONING as 'low' | undefined) || undefined;
-      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 700, reasoning }); }
+      // reasoning models spend max_tokens on thinking first: keep it brief by default (LIFE_REASONING=off to disable)
+      const reasoning = process.env.LIFE_REASONING === 'off' ? undefined : ((process.env.LIFE_REASONING as 'low' | 'medium') || 'low');
+      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 1200, reasoning }); }
       catch (e1) {
         // some providers reject response_format: retry once in plain mode, then report the failure
-        try { raw = await route.llm.chat(messages, { model: route.model, maxTokens: 700 }); }
+        try { raw = await route.llm.chat(messages, { model: route.model, maxTokens: 1200 }); }
         catch (e2) { raw = ''; this.onThinkError?.(`${(e1 as Error).message} | retry: ${(e2 as Error).message}`); }
       }
       if (raw && !parseDecision(raw)) this.onThinkError?.(`unparseable reply: ${raw.slice(0, 160)}`);

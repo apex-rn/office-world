@@ -28,11 +28,30 @@ function persona(m: Mind): string {
   return [`You are ${p.name}, ${p.title}. ${p.character}`, `How you speak: ${p.speech.rules.join(' ')}`, ...SHARED_WORLDVIEW].join('\n');
 }
 
-async function say(router: Router, m: Mind, prompt: string, now: number, maxTokens = 160): Promise<string> {
+/** One spoken turn. Reasoning models (gpt-oss) spend part of max_tokens thinking before they answer: give room,
+ *  ask for brief thinking, and retry once if the answer came back empty (the meeting must never fall silent). */
+async function say(router: Router, m: Mind, prompt: string, now: number, maxTokens = 160, json = false): Promise<string> {
   const r = router.pick('dialogue', now);
   if ('deferred' in r) return '';
-  const msgs: ChatMessage[] = [{ role: 'system', content: persona(m) }, { role: 'user', content: prompt }];
-  try { return (await r.llm.chat(msgs, { model: r.model, maxTokens, temperature: 0.7 })).trim().replace(/^"|"$/g, ''); } catch { return ''; }
+  const msgs: ChatMessage[] = [{ role: 'system', content: persona(m) }, { role: 'user', content: json ? prompt : `${prompt}\nReply with only the words you say out loud.` }];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const raw = await r.llm.chat(msgs, { model: r.model, maxTokens: maxTokens + 700 + attempt * 600, temperature: 0.7, reasoning: 'low' });
+      const text = json ? raw.trim() : clean(raw, m.me.name);
+      if (text) return text;
+    } catch { /* retry once */ }
+  }
+  return '';
+}
+
+/** Spoken words only: no quotes, no "Name:" prefix, no stage directions, at most ~4 sentences. */
+export function clean(raw: string, name: string): string {
+  let t = raw.trim().replace(/^```[a-z]*|```$/g, '').trim().replace(/^"|"$/g, '').trim();
+  const first = name.split(' ')[0]!;
+  t = t.replace(new RegExp(`^(${name}|${first})\\s*:\\s*`, 'i'), '').replace(/^\*[^*]*\*\s*/, '').replace(/^"|"$/g, '').trim();
+  const sentences = t.match(/[^.!?]+[.!?]+/g);
+  if (sentences && sentences.length > 4) t = sentences.slice(0, 4).join('').trim();
+  return t.slice(0, 400);
 }
 
 export async function runMeeting(
@@ -58,14 +77,14 @@ export async function runMeeting(
     speak(m.me.id, await say(router, m, `${lang}\nYou are in the ${type.replace('_', ' ')} meeting. Your work: ${mine}.\nJust said:\n${heard}\nGive your update in 1-2 sentences (status, next step, any blocker or idea). Be yourself.`, w.now, 120));
   }
   const closing = await say(router, manager, `${lang}\nClose the meeting. Transcript:\n${out.transcript.map(t => `${t.who}: ${t.text}`).join('\n')}\n` +
-    'Reply as JSON only: {"speech": "<your closing words>", "decisions": [{"owner": "<id>", "title": "<task>"}], "praise": [{"who": "<id>", "reason": "<why>"}], "criticism": [{"who": "<id>", "reason": "<work-only, respectful>"}]}', w.now, 400);
+    'Reply as JSON only: {"speech": "<your closing words>", "decisions": [{"owner": "<id>", "title": "<task>"}], "praise": [{"who": "<id>", "reason": "<why>"}], "criticism": [{"who": "<id>", "reason": "<work-only, respectful>"}]}', w.now, 400, true);
   try {
     const j = JSON.parse(/\{[\s\S]*\}/.exec(closing)?.[0] ?? '{}') as Partial<MeetingOutcome> & { speech?: string };
-    speak('manager', j.speech ?? '');
+    speak('manager', clean(j.speech ?? '', manager.me.name));
     out.decisions = (j.decisions ?? []).filter(d => d && minds.has(d.owner) && d.title).slice(0, 6);
     out.praise = (j.praise ?? []).filter(p => p && minds.has(p.who)).slice(0, 4);
     out.criticism = (j.criticism ?? []).filter(c => c && minds.has(c.who)).slice(0, 3);
-  } catch { speak('manager', closing); }
+  } catch { speak('manager', clean(closing, manager.me.name)); }
   for (const p of out.praise) await minds.get(p.who)!.feel({ kind: 'praise', by: 'manager', reason: p.reason, publicly: true });
   for (const c of out.criticism) await minds.get(c.who)!.feel({ kind: 'reprimand', reason: c.reason, publicly: true });
   return out;

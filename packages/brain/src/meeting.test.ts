@@ -4,7 +4,7 @@ import { OFFICE_V1 } from '../../catalog/src/layout.js';
 import { World } from '../../sim/src/world.js';
 import { STAFF_BY_ID } from './identity.js';
 import { type ChatMessage, type LLM, Router } from './llm.js';
-import { runMeeting } from './meeting.js';
+import { clean, runMeeting } from './meeting.js';
 import { Mind } from './mind.js';
 
 class EchoLLM implements LLM {
@@ -31,4 +31,11 @@ test('a morning meeting: agenda, everyone reports, decisions, public praise and 
   const leo = minds.get('writer')!, elena = minds.get('facts')!;
   assert.ok(leo.feelings.sting > 0 && leo.feelings.drive > 0.7, 'Leo is stung and driven');
   assert.ok(elena.feelings.pride > 0.6, 'Elena is proud');
+});
+
+test('meeting speech is cleaned to spoken words', () => {
+  assert.equal(clean('"Daniel Park: Good morning, team."', 'Daniel Park'), 'Good morning, team.');
+  assert.equal(clean('Daniel: *stands up* Let us start.', 'Daniel Park'), 'Let us start.');
+  assert.equal(clean('One. Two. Three. Four. Five. Six.', 'X Y'), 'One. Two. Three. Four.');
+  assert.equal(clean('', 'X Y'), '');
 });
