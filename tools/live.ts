@@ -16,7 +16,9 @@ const key = process.env.FREELLM_KEY ?? readFileSync(keyFile, 'utf8').trim();
 const free = new OpenAICompatClient(process.env.FREELLM_URL ?? 'http://127.0.0.1:3001', key, process.env.FAST_MODEL ?? 'claude-opus-4-5');
 const router = new Router(free, null, { fast: process.env.FAST_MODEL ?? 'claude-opus-4-5', strong: process.env.STRONG_MODEL ?? 'claude-opus-4-5' });
 
-const w = await World.create(structuredClone(OFFICE_V1), Date.now(), Date.now() % 100000);
+// SIM_START_SEOUL=2026-11-04T09:00 starts the clock at that Seoul time (as the office service does), e.g. for night-time tests
+const t0 = process.env.SIM_START_SEOUL ? Date.parse(`${process.env.SIM_START_SEOUL}:00+09:00`) : Date.now();
+const w = await World.create(structuredClone(OFFICE_V1), t0, t0 % 100000);
 const rt = new OfficeRuntime(w, router, { maxConcurrentThoughts: Number(process.env.MAX_THOUGHTS ?? 3) });
 const write = (o: object) => appendFileSync(log, JSON.stringify(o) + '\n');
 const origDrain = w.drainEvents.bind(w);
