@@ -2,16 +2,26 @@
 
 > Har sessiya: 1) shu faylni o'qi, 2) `docs/WORLD_PLAN.md`dan kerakli bo'limni o'qi, 3) bitta vazifa, 4) `npm test`, 5) shu faylni yangila, 6) commit.
 
-## Holat (2026-11-03, kech)
-**Bosqich C — miya yadrosi: asosiy qismlar TAYYOR (17/17 test).**
-- `packages/brain`: identity (11 xodim + Boss), emotion (birinchi shaxs his, o'sish qoidasi), perception (faqat ko'rgan/eshitgani), memory (recency+importance+relevance, embedding ixtiyoriy), llm (OpenAI-mos klient, Router: life→free, critical→faqat Claude, limitda free), mind (hodisaga asoslangan qaror, qat'iy JSON, tana rad etsa xotiraga), runtime (09:00–21:00, kelganda o'z joyiga, bir vaqtda ≤3 o'ylash, koreyscha salom refleksi 15/30/45° + qo'l berish).
-- Kompyuterdagi sessiya (Auto): FreeLLM tekshiruvi (OpenAI + Anthropic /v1/messages + embeddings ishlaydi), run_agent.sh failover, guard/ig_res/yt_res doimiy FreeLLM, voice_samples (FreeLLM), Graphify'ni FreeLLM bilan yangilash.
+## Holat (2026-11-03, tun) — 29/29 test
+**B (dunyo) + C (miya) + server xizmati tayyor; D (ko'rinish) Unreal yo'liga o'tdi.**
 
-### Keyingi (C davomi)
-1. FREELLM_PROBE natijasidagi strong/fast model nomlarini Router'ga ulash; serverda haqiqiy FreeLLM bilan 1 soatlik 'jonli ofis' sinovi (headless).
-2. Ish integratsiyasi: board-adapter (board.json → dunyo voqealari: Viktor kartani olib NAVBAT'ga, tayyor ishni Manager'ga), `work(card)`.
-3. Majlislar (stand-up 09:10, juma, favqulodda), tug'ilgan kunlar va 31-sana bayramlari, payroll 25-sana (Viktor seyfdan).
-4. Tiqilinch < 1% (hozir 1.78% og'ir tasodifiy testda).
+### Qo'shilganlar
+- `packages/brain`: identity (11 xodim + Boss, katta orzular), emotion (birinchi shaxs, o'sish qoidasi), perception, memory (eksport/import), llm (Router, failover), mind (`think_failed` diagnostikasi, response_format'siz qayta urinish, FreeLLM ovoz namunalari), runtime (ish kuni, kelish refleksi, salom 15/30/45°, majlis/bazm yig'ilishi, doska topshiriqlari), board (board.json → Viktor kartani NAVBAT'ga), calendar (§29), economy (ledger, 25-sana oylik, bonus/jarima, sovg'alar), meeting (Manager majlislari → qarorlar, maqtov/tanqid → his).
+- `packages/server`: stream.ts (WebSocket: hello/snap 10 Hz/event, Boss token), scheduler.ts (vaqtida bir marta), **main.ts — 24/7 xizmat** (real vaqt, doska 30 s, claude_down fayli, kalendar, state.json saqlash/tiklash).
+- `tools/live.ts` (haqiqiy FreeLLM bilan jonli sinov), `tools/export-viewer.ts` + `client/viewer.html` (three.js maket — Boss: "multfilm", shuning uchun **Unreal Engine 5 + MetaHuman** tanlandi: docs/UNREAL_PLAN.md).
+
+### PC sessiyasi (session_01HP9LLq9Y9QqQt2wLyK8Ndk) natijalari
+- E: Graphify yangilash FreeLLM'ga o'tdi, majlislar grafda. Profillar `auto:office-strong/fast` — Boss dashboard'da yaratadi (cloud/FREELLM_PROFILLAR.md); ungacha bepul `claude-opus-4-5` aliasi.
+- F: jonli sinov 10 daq: 69 harakat, 0 xato, lekin **speech=0** → LLM xatosi jim yutilgan edi; tuzatildi (`think_failed`), qayta sinov (I vazifa) kutilmoqda.
+- G: PR apex-rn/office-world#2 (`pc/assets`): 9 PBR material, 2 HDRI, 16 mebel GLB, 168 MB, CC0 — main'ga birlashtirilmagan (hajm; Unreal'ga to'g'ridan import qilinadi).
+- H: UE5 va Epic Launcher YO'Q; VS Community 2026 bor (C++ game workload yo'q); C: 112 GB bo'sh; RTX 4060 Laptop 8 GB.
+
+### Keyingi
+1. I natijasi bo'yicha jonli ofisda gaplar paydo bo'lishini ta'minlash (model/format).
+2. Boss: Epic Launcher + UE 5.x + VS "Game development with C++" (UE 5.x VS 2026 ni qo'llashini tekshirish; bo'lmasa VS 2022 Build Tools).
+3. Unreal U1–U2: LevelBuilder (Editor Python) + CCBridge (C++ WebSocket) — kodi repo'ga `unreal/` ichida tayyorlanadi.
+4. Serverga o'rnatish: systemd unit (main.ts), Caddy/Cloudflare (Boss roziligi bilan), zaxira.
+5. Tiqilinch < 1% (hozir 1.78%).
 
 ## Avvalgi holat (2026-11-03, ertalab)
 **Bosqich B — Dunyo yadrosi: asosiy qismi TAYYOR, testlar yashil.**
