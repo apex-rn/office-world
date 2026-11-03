@@ -105,17 +105,30 @@ export class OfficeRuntime {
         continue;
       }
       // meetings and parties gather everyone (a body already busy finishes its step first)
-      if (!b.active && (meeting || party)) {
+      if (meeting || party) {
         const zone = meeting ? 'meeting' : 'lounge';
         const z = w.layout.zones.find(x => x.id === zone)!;
-        if (!pointInPolygon(b.pos, z.poly) && !(b.seat && b.seat.inst.startsWith(`${zone}.`))) {
+        const seatedHere = !!b.seat && b.seat.inst.startsWith(`${zone}.`);
+        const goingToSeat = b.active?.verb === 'sit' && !!b.active.target?.startsWith(`${zone}.`);
+        if (meeting && !seatedHere && !goingToSeat) {
+          // everyone sits at the table: the Manager at the head, the others in the nearest seat nobody has taken
+          // (slotTaken is set the moment someone heads for a chair, so two people never aim at the same seat)
+          if (b.active && b.active.verb !== 'go_to') continue;            // finishing something (standing up, a step) first
           if (b.state === 'sitting') { w.command(id, { verb: 'stand' }); continue; }
-          // the Manager chairs the meeting from the head of the table; everyone else takes a free side chair
-          const free = (i: { id: string }) => !w.occupancy.get(i.id)?.size;
-          const chair = !meeting ? undefined : id === 'manager'
-            ? w.layout.instances.find(i => i.id === 'meeting.chairHead' && free(i))
-            : w.layout.instances.find(i => i.id.startsWith('meeting.chair') && i.id !== 'meeting.chairHead' && free(i));
-          w.command(id, chair ? { verb: 'sit', target: chair.id } : { verb: 'go_to', target: zone });
+          const free = (i: { id: string }) => !w.slotTaken.has(`${i.id}#0`);
+          const chairs = w.layout.instances.filter(i => i.id.startsWith('meeting.chair') && free(i)
+            && (id === 'manager' ? i.id === 'meeting.chairHead' : i.id !== 'meeting.chairHead'));
+          chairs.sort((p, q) => Math.hypot(p.x - b.pos.x, p.z - b.pos.z) - Math.hypot(q.x - b.pos.x, q.z - b.pos.z));
+          const chair = chairs[0] ?? (id === 'manager' ? undefined : w.layout.instances.find(i => i.id === 'meeting.chairHead' && free(i)));
+          if (chair) { w.command(id, { verb: 'sit', target: chair.id }); continue; }
+          // no seat left: stand along the wall inside the room, not in the middle of it
+          if (!pointInPolygon(b.pos, z.poly) && !b.active) w.command(id, { verb: 'go_to', target: zone });
+          continue;
+        }
+        if (b.active) continue;                                            // on the way / sitting down: let it finish
+        if (!meeting && !pointInPolygon(b.pos, z.poly) && !seatedHere) {
+          if (b.state === 'sitting') { w.command(id, { verb: 'stand' }); continue; }
+          if (!b.active) w.command(id, { verb: 'go_to', target: zone });
           continue;
         }
         b.anim = party ? (party.kind === 'birthday' ? 'clap' : 'dance') : b.anim;
