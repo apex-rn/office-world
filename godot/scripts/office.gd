@@ -518,7 +518,9 @@ const APP := {"shorts": "Premiere Pro — Shorts edit", "writer": "Google Docs �
 	"manager": "Team board — overview", "guard": "CCTV — entrance · hall · balcony · server"}
 
 func _add_screen(i: Dictionary, node: Node3D) -> void:
-	var box := _aabb(node, Transform3D.IDENTITY)
+	# the box in the node's own frame: _aabb applies the node's transform, and the node is already placed in the
+	# room, so without the inverse a monitor's screen landed metres away (its room z added to its front face)
+	var box := _aabb(node, node.transform.affine_inverse())
 	var sz: Vector2; var cy: float
 	match String(i.def):
 		"monitor_24": sz = Vector2(i.w - 0.03, 0.29); cy = i.h - 0.159
