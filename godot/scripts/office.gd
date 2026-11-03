@@ -248,9 +248,9 @@ func _furniture() -> void:
 		var path := "res://assets/furniture/%s.glb" % i.def
 		if ResourceLoader.exists(path):
 			node = _fitted(path, size)
-		elif _built(i.def, size) != null:
-			node = _built(i.def, size)
 		else:
+			node = _built(i.def, size)
+		if node == null:
 			node = Node3D.new()
 			_box(size, Vector3(0, i.h / 2, 0), 0, _placeholder_mat(i.def), node)
 		node.position = Vector3(i.x, i.y, i.z)
