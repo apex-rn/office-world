@@ -388,9 +388,7 @@ def whiteboard():
     box((w * 0.5, 0.03, 0.012), (0, -0.0, 0.026), ALU(), 0.003)
     for i, c in enumerate(((0.05, 0.05, 0.05), (0.75, 0.05, 0.05), (0.05, 0.2, 0.8))):
         cyl(0.006, 0.13, (-0.15 + i * 0.05, -0.006, 0.038), mat(f'marker{i}', c, 0.4), rot=(0, math.pi / 2, 0), verts=16)
-    ink = mat('ink', (0.06, 0.1, 0.45), 0.4)
-    for x, z, l in ((-0.6, 0.95, 0.5), (-0.6, 0.86, 0.7), (-0.6, 0.77, 0.55), (0.2, 0.92, 0.45), (0.2, 0.64, 0.6)):
-        box((l, 0.001, 0.006), (x + l / 2, -0.0005, z), ink)
+    # no painted scribbles: the Godot client writes the last meeting's real decisions on it
 
 
 def kanban_board():

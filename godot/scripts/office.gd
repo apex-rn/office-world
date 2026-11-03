@@ -282,6 +282,8 @@ func _furniture() -> void:
 		node.rotation.y = i.yaw
 		node.name = String(i.id).replace(".", "_")
 		add_child(node)
+		if i.def in ["monitor_24", "tv_65", "whiteboard"]:
+			_add_screen(i, node)
 		if i.def == "office_chair":
 			chairs.append({"node": node, "home": node.position, "back": -Vector3(sin(i.yaw), 0, cos(i.yaw))})
 
@@ -431,6 +433,87 @@ func _apply_snap(s: Dictionary) -> void:
 const CARD_COL := {"todo": 0, "blocked": 0, "doing": 1, "review": 2, "approved": 3, "done": 3, "rejected": 3}
 const CARD_TINT := [Color(1.0, 0.93, 0.55), Color(0.72, 0.88, 1.0), Color(1.0, 0.8, 0.85), Color(0.78, 0.95, 0.72)]
 
+# ---- screens that show real things: each monitor its owner's current task, the meeting TV the agenda ----
+var screens := {}          # instance id -> {label, panel_mat, owner, def}
+var board_cards := []
+const APP := {"shorts": "Premiere Pro — Shorts edit", "writer": "Google Docs — script", "facts": "Fact-check sheet",
+	"qa": "QA checklist", "ig_res": "Instagram Insights", "yt_res": "YouTube Studio — Analytics",
+	"longform": "DaVinci Resolve — long-form edit", "publisher": "YouTube Studio — upload queue",
+	"manager": "Team board — overview", "guard": "CCTV — entrance · hall · balcony · server"}
+
+func _add_screen(i: Dictionary, node: Node3D) -> void:
+	var box := _aabb(node, Transform3D.IDENTITY)
+	var sz: Vector2; var cy: float
+	match String(i.def):
+		"monitor_24": sz = Vector2(i.w - 0.03, 0.29); cy = i.h - 0.159
+		"tv_65": sz = Vector2(i.w - 0.03, i.h - 0.03); cy = i.h / 2
+		_: sz = Vector2(i.w - 0.08, i.h - 0.12); cy = i.h / 2 + 0.03
+	var panel := MeshInstance3D.new()
+	var q := QuadMesh.new(); q.size = sz; panel.mesh = q
+	var m := StandardMaterial3D.new()
+	var lit: bool = i.def != "whiteboard"
+	m.albedo_color = Color(0.02, 0.025, 0.03) if lit else Color(1, 1, 1, 0)
+	if not lit: m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.emission_enabled = lit; m.emission = Color(0.0, 0.0, 0.0); m.roughness = 0.15
+	panel.material_override = m
+	panel.position = Vector3(0, cy, box.end.z + 0.0015)
+	node.add_child(panel)
+	var t := Label3D.new()
+	t.font_size = 40 if i.def == "monitor_24" else 64
+	t.pixel_size = 0.00045 if i.def == "monitor_24" else 0.0011
+	t.width = sz.x / t.pixel_size * 0.92; t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT; t.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	t.modulate = Color(0.9, 0.94, 1.0) if lit else Color(0.1, 0.2, 0.55)
+	t.outline_size = 0; t.shaded = not lit
+	t.position = Vector3(-sz.x / 2 * 0.92, sz.y / 2 * 0.88, 0.001)
+	panel.add_child(t)
+	var owner := String(i.id).get_slice(".", 1) if String(i.id).begins_with("monitor.") else ""
+	screens[i.id] = {"label": t, "mat": m, "owner": owner, "def": String(i.def), "last": ""}
+
+func _card_of(owner: String) -> Dictionary:
+	for c in board_cards:
+		if c.get("owner", "") == owner and c.get("status", "") in ["doing", "review", "todo", "blocked"]:
+			return c
+	return {}
+
+func _update_screens(snap: Dictionary) -> void:
+	var seated := {}
+	for b in snap.bodies:
+		if b.get("seat") != null: seated[b.id] = String(b.seat)
+	var act := String(snap.get("activity", "work"))
+	for id in screens:
+		var sc: Dictionary = screens[id]
+		var text := ""; var on := false
+		if sc.def == "monitor_24":
+			# a monitor wakes when its owner sits at the desk, and shows what they are actually working on
+			on = seated.get(sc.owner, "") == "chair." + sc.owner
+			if on:
+				var c := _card_of(sc.owner)
+				text = "%s\n\n%s" % [APP.get(sc.owner, "Workspace"), ("▶ " + String(c.title) + "  [" + String(c.status) + "]") if not c.is_empty() else "Inbox — no open card"]
+		elif sc.def == "tv_65":
+			on = true
+			if act.begins_with("meeting:"):
+				var lines := ["%s" % act.get_slice(":", 1).replace("_", " ").to_upper(), ""]
+				for c in board_cards:
+					if c.get("status", "") in ["doing", "review", "blocked"]: lines.append("• %s — %s (%s)" % [String(c.title).left(48), String(c.owner), String(c.status)])
+				text = "\n".join(lines.slice(0, 12))
+			else:
+				text = "COMPOUND CHRONICLE\n\nGoal by 31 Jan 2027\nYouTube: monetization (YPP)\nInstagram: 5k+ followers · 5 × 1M views"
+		else:
+			continue
+		if text == sc.last: continue
+		sc.last = text
+		sc.label.text = text
+		sc.mat.emission = Color(0.1, 0.13, 0.2) if on else Color(0, 0, 0)
+		sc.mat.emission_energy_multiplier = 0.6 if on else 0.0
+
+func _write_whiteboard(e: Dictionary) -> void:
+	# after a meeting the Manager's decisions stay written on the meeting-room whiteboard
+	if not screens.has("meeting.whiteboard"): return
+	var lines := ["%s — decisions" % String(e.get("meeting", "")).replace("_", " ")]
+	for d in e.get("decisions", []): lines.append("– %s → %s" % [String(d.get("title", "")).left(70), String(d.get("owner", ""))] if d is Dictionary else "– " + String(d).left(80))
+	screens["meeting.whiteboard"].label.text = "\n".join(lines.slice(0, 9))
+
 func _pin_cards(cards: Array) -> void:
 	var board: Node3D = get_node_or_null("reception_board")
 	if board == null:
@@ -484,9 +567,10 @@ func _process(dt: float) -> void:
 		while ws.get_available_packet_count() > 0:
 			var m = JSON.parse_string(ws.get_packet().get_string_from_utf8())
 			if m == null: continue
-			if m.t == "snap": _apply_snap(m)
+			if m.t == "snap": _apply_snap(m); _update_screens(m)
 			elif m.t == "event" and m.e.get("type", "") == "speech": _speech(m.e)
-			elif m.t == "board": _pin_cards(m.cards)
+			elif m.t == "board": _pin_cards(m.cards); board_cards = m.cards
+			elif m.t == "event" and m.e.get("type", "") == "meeting_done": _write_whiteboard(m.e)
 	elif ws.get_ready_state() == WebSocketPeer.STATE_CLOSED:
 		ws.connect_to_url(url)
 	_boss_input(dt)
