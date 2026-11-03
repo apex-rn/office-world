@@ -239,7 +239,7 @@ func _doors() -> void:
 		doors[d.id] = pivots
 
 # models whose front is not +Z (the catalog's "user side"): extra turn in radians
-const MODEL_YAW := {"desk_lamp": PI}   # Poly Haven desk_lamp_arm_01 has its head toward -Z
+const MODEL_YAW := {}   # extra turns for models whose front is not +Z (desk lamp checked in the Boss's screenshot: none needed)
 
 func _fitted(path: String, size: Vector3, def_id: String = "") -> Node3D:
 	var inst: Node3D = load(path).instantiate()
@@ -318,7 +318,22 @@ func _built(def_id: String, s: Vector3) -> Node3D:
 	var screen := StandardMaterial3D.new()
 	screen.albedo_color = Color(0.05, 0.08, 0.12); screen.emission_enabled = true
 	screen.emission = Color(0.35, 0.55, 0.85); screen.emission_energy_multiplier = 0.8; screen.roughness = 0.1
+	var chrome := _mat("chrome", Color(0.85, 0.86, 0.88), 0.08, 1.0)
+	var ceramic := _mat("ceramic", Color(0.95, 0.95, 0.94), 0.1, 0.0)
 	match def_id:
+		"faucet":   # chrome single-lever mixer: base, upright body, spout reaching forward (+Z), lever
+			_box(Vector3(0.05, 0.02, 0.05), Vector3(0, 0.01, -0.07), 0, chrome, n)
+			_box(Vector3(0.032, 0.2, 0.032), Vector3(0, 0.12, -0.07), 0, chrome, n)
+			_box(Vector3(0.022, 0.022, 0.17), Vector3(0, 0.215, 0.0), 0, chrome, n)
+			_box(Vector3(0.018, 0.05, 0.018), Vector3(0, 0.19, 0.08), 0, chrome, n)
+			_box(Vector3(0.012, 0.01, 0.07), Vector3(0, 0.235, -0.1), 0, chrome, n)
+		"vanity_basin":   # white vanity, ceramic top with a shaded basin
+			_box(Vector3(s.x - 0.02, s.y - 0.1, s.z - 0.04), Vector3(0, 0.1 + (s.y - 0.16) / 2, -0.02), 0, _mat("vanity", Color(0.93, 0.93, 0.92), 0.4), n)
+			_box(Vector3(s.x - 0.06, 0.08, s.z - 0.08), Vector3(0, 0.04, -0.04), 0, dark, n)
+			_box(Vector3(s.x, 0.06, s.z), Vector3(0, s.y - 0.03, 0), 0, ceramic, n)
+			_box(Vector3(0.4, 0.004, 0.28), Vector3(0, s.y + 0.001, 0.02), 0, _mat("basin_in", Color(0.78, 0.79, 0.8), 0.1), n)
+			_box(Vector3(0.008, 0.12, 0.008), Vector3(-0.04, s.y - 0.25, s.z / 2 + 0.005), 0, chrome, n)
+			_box(Vector3(0.008, 0.12, 0.008), Vector3(0.04, s.y - 0.25, s.z / 2 + 0.005), 0, chrome, n)
 		"monitor_24":
 			_box(Vector3(0.22, 0.012, 0.17), Vector3(0, 0.006, 0), 0, alu, n)                      # foot
 			_box(Vector3(0.035, 0.24, 0.025), Vector3(0, 0.13, -0.05), 0, alu, n)                   # neck
