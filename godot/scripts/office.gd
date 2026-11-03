@@ -446,7 +446,7 @@ func _process(dt: float) -> void:
 		n.position = n.position.lerp(p.pos, clamp(dt * 10.0, 0, 1))
 		# stride matches the real ground speed (clip authored at ~1.3 m/s): feet do not skate
 		if p.anim and p.get("walk_clip", "") != "" and (p.anim as AnimationPlayer).current_animation == p.walk_clip:
-			var spd := Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
+			var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 			(p.anim as AnimationPlayer).speed_scale = clamp(spd / 1.3, 0.6, 1.5)
 		elif p.anim:
 			(p.anim as AnimationPlayer).speed_scale = 1.0
