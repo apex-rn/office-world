@@ -448,3 +448,13 @@ Taxmin: 20–30 Pro limit oynasi (bonus va tejash vositalari bilan kamroq). Har 
 - Xavfsizlik chegaralari o'zgarmaydi (§0.8): pul sarflanmaydi, platforma qoidalari buziladi, AI-kontent belgisi qo'yiladi.
 
 **Qurilish byudjeti:** tejamkor rejim. Har bosqich oldindan rejalashtiriladi, uzun o'lchov sikllari qilinmaydi.
+
+## 26. Boss qarorlari v1.2 (2026-11-03)
+- **Ish vaqti:** har kuni 12 soat, 09:00–21:00 KST, dam olish kunisiz. Ofis 24/7 ochiq, lekin xodimlar 21:00 dan keyin uyga ketadi.
+- **Til:** xodimlar o'zaro inglizcha gaplashadi. Boss'ga murojaat qilganda va Boss eshitadigan joyda o'zbekcha gapiradi.
+- **Xodimlar soni moslashuvchan:** rollar ishga qarab qo'shiladi. Manager yangi xodim olishni taklif qiladi, Boss tasdiqlaydi.
+- **His-tuyg'u birinchi shaxsda:** AI o'z holatini "men" nuqtai nazaridan boshdan kechiradi. Bu holat xotiraga yoziladi va fikr, gap, tana harakati va ish sifatini boshqaradi. Oldindan yozilgan bot javoblari yo'q (§11.4 kengaytiriladi: appraisal → emotion → memory → behaviour).
+- **Yaqinlik** faqat ofisdan tashqarida bo'ladi (dunyo — faqat ofis); ofisda emas, xodimning xotirasida aks etadi.
+- **FreeLLM:** Contabo hozircha olinmaydi. Miya provayderdan mustaqil yoziladi (OpenAI-mos endpoint). Real sinov Vultr serverida, egasining kompyuteridagi sessiya orqali o'tkaziladi.
+- **Boss personaji:** erkak, bo'yi 2.00 m, vazni 100 kg, endomorf tana tuzilishi, juda keng yelkalar, juda kuchli va chiniqqan mushaklar, massiv gavda. Yuzida chandiqlar bor, "sigma" yuz ifodasi, oqish teri, juda chiroyli. Sochi orqaga taralgan, kaltaroq. Hamma uni "Boss" deb ataydi va 45° egilib salomlashadi.
+
