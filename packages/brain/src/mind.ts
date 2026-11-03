@@ -250,21 +250,22 @@ export class Mind {
       // no sit/stand ping-pong: having just sat down, a person stays at least 90 s unless someone needs them
       if (parsed.command.verb === 'stand' && w.now - this.satAt < 90_000 && !wasAddressed) parsed.command = { verb: 'wait', seconds: 60 };
       let res = w.command(this.me.id, parsed.command);
+      let issued: Command = parsed.command;   // what the body actually started (may be a natural first step)
       // a person does the obvious step by themselves: stand up before walking off, sit down at the desk before working
       if (!res.ok && /stand up first/.test(res.msg ?? '')) {
         const up = w.command(this.me.id, { verb: 'stand' });
-        if (up.ok) { res = up; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
+        if (up.ok) { res = up; issued = { verb: 'x' } as never; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
       } else if (!res.ok && /hands full/.test(res.msg ?? '')) {
         // finish what is in your hand first (the drink, the snack), then do what you wanted
         const drink = w.command(this.me.id, { verb: 'consume' });
-        if (drink.ok) { res = drink; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
+        if (drink.ok) { res = drink; issued = { verb: 'x' } as never; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
       } else if (!res.ok && /sit at (chair\.[\w-]+) first/.test(res.msg ?? '')) {
         const chair = /sit at (chair\.[\w-]+) first/.exec(res.msg ?? '')![1]!;
         const sit = w.command(this.me.id, { verb: 'sit', target: chair });
-        if (sit.ok) { res = sit; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
+        if (sit.ok) { res = sit; issued = { verb: 'x' } as never; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
       }
       // what a person obviously does next when the model did not say: drink the coffee you made, then back to your desk
-      if (res.ok && parsed.command.verb === 'use' && /brew_coffee|take_food|take_drink|fill_water|heat_food/.test(String(parsed.command.action))) {
+      if (res.ok && issued.verb === 'use' && /brew_coffee|take_food|take_drink|fill_water|heat_food/.test(String(issued.action))) {
         if (!parsed.then.length && w.inst(`chair.${this.me.id}`)) parsed.then = [{ verb: 'sit', target: `chair.${this.me.id}` }];
         // drink it where you are going to sit (or right away), so the hands are free again
         if (!parsed.then.some(c => c.verb === 'consume')) { const k = parsed.then.findIndex(c => c.verb === 'sit'); parsed.then.splice(k >= 0 ? k + 1 : 0, 0, { verb: 'consume' }); }

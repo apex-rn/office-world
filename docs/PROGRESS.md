@@ -93,3 +93,4 @@
 - Morning plan: one background call per person per day ("HH:MM – what"), shown in every later thought and stored as memory.
 - Conversations: per-partner dialogue (last 6 lines) in the prompt, closed naturally.
 - Headless 4 h check (scripted model): 10/10 staff typing at 13:00, coffee/toilet trips happen, 0 frictions (was: 2/10 typing, 179 rejections).
+- Month simulator `tools/month.ts [days] [start]` (scripted model, real everything else; ~20 s per office day). 30-day run: ~226 speech/day, ~78 % desk work, all meetings/payday/birthday fired. Bugs found and fixed: typing while standing, hands stuck full (staff starved), errand double-consume blocking thoughts, cleaner blocked dusting desks (furniture approach), urgent needs while idle. Open: guard sometimes still in at 23:00 (door/exit after everyone left), rare 10-min stall at the coat rack, 8-10 of 11 seated in some meetings.

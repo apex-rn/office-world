@@ -78,7 +78,8 @@ export class ErrandRunner {
     if (step.verb === 'sit' && cur.i > 0) { /* fine */ }
     const r = issue(step);
     if (r.ok) { cur.i++; if (cur.i >= cur.e.steps.length) q!.shift(); }
-    else if (++cur.tries > 3) q!.shift();
+    // a self-made plan step that fails is simply dropped (the mind re-thinks); board errands get a few retries
+    else if (cur.e.why === 'plan' || ++cur.tries > 3) q!.shift();
     else cur.busyUntil = now + 15_000;
     return step;
   }
