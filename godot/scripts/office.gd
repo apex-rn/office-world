@@ -20,6 +20,8 @@ func _server_url() -> String:
 	if FileAccess.file_exists("user://server.txt"): return FileAccess.get_file_as_string("user://server.txt").strip_edges()
 	return "ws://127.0.0.1:8765"
 var L: Dictionary
+var view_only := false
+var boss_auto := false
 var ws := WebSocketPeer.new()
 var people := {}            # id -> {node, anim, target_pos, target_yaw, state}
 var doors := {}             # id -> [pivots]
@@ -46,9 +48,18 @@ func _ready() -> void:
 	_lightmap()
 	_camera()
 	_hud()
+	# --view: watch only (never sends the Boss token); --boss: walk in as the Boss right after connecting
+	# --token-file=<path>: where the Boss token lives (the desktop launcher passes it)
+	var args := OS.get_cmdline_user_args() + OS.get_cmdline_args()
+	view_only = "--view" in args
+	boss_auto = "--boss" in args
 	var tok := ""
-	for f in ["user://boss.token", "res://boss.token"]:
-		if FileAccess.file_exists(f): tok = FileAccess.get_file_as_string(f).strip_edges(); break
+	var files := ["user://boss.token", "res://boss.token"]
+	for a in args:
+		if a.begins_with("--token-file="): files.push_front(a.substr(13))
+	if not view_only:
+		for f in files:
+			if FileAccess.file_exists(f): tok = FileAccess.get_file_as_string(f).strip_edges(); break
 	url = SERVER_URL + ("?token=" + tok if tok != "" else "")
 	ws.connect_to_url(url)
 	_chat_box()
@@ -567,7 +578,11 @@ func _process(dt: float) -> void:
 		while ws.get_available_packet_count() > 0:
 			var m = JSON.parse_string(ws.get_packet().get_string_from_utf8())
 			if m == null: continue
-			if m.t == "snap": _apply_snap(m); _update_screens(m)
+			if m.t == "snap":
+				_apply_snap(m); _update_screens(m)
+				if boss_auto:
+					boss_auto = false
+					if not (people.has("boss") and people["boss"].state != "offsite"): _send_boss({"verb": "arrive"})
 			elif m.t == "event" and m.e.get("type", "") == "speech": _speech(m.e)
 			elif m.t == "board": _pin_cards(m.cards); board_cards = m.cards
 			elif m.t == "event" and m.e.get("type", "") == "meeting_done": _write_whiteboard(m.e)

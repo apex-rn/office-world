@@ -1,0 +1,20 @@
+# One-time setup: writes %USERPROFILE%\.config\office\launch.json and puts office.bat + office-boss.bat on the Desktop.
+#   powershell -ExecutionPolicy Bypass -File ops\windows\install-desktop.ps1 -Godot "C:\...\Godot_v4.x.exe" `
+#     -FreeLLMDir "C:\Users\msi\freellmapi" -FreeLLMStart "npm start" -FreeLLMKeyFile "C:\...\unified_key"
+param(
+  [Parameter(Mandatory)][string]$Godot,
+  [string]$FreeLLMDir = '', [string]$FreeLLMStart = '', [string]$FreeLLMKeyFile = '',
+  [string]$FastModel = 'auto:office-fast', [string]$StrongModel = 'auto:office-strong'
+)
+$repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$dir = Join-Path $env:USERPROFILE '.config\office'
+New-Item -ItemType Directory -Force -Path $dir | Out-Null
+@{ repo = $repo; godot = $Godot; freellm_dir = $FreeLLMDir; freellm_start = $FreeLLMStart; freellm_key_file = $FreeLLMKeyFile;
+   fast_model = $FastModel; strong_model = $StrongModel } | ConvertTo-Json | Set-Content (Join-Path $dir 'launch.json')
+$desk = [Environment]::GetFolderPath('Desktop')        # also right when the Desktop lives in OneDrive
+$ps = Join-Path $repo 'ops\windows\start-office.ps1'
+foreach ($m in @(@{ n = 'office.bat'; mode = 'view' }, @{ n = 'office-boss.bat'; mode = 'boss' })) {
+  "@echo off`r`nstart `"`" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ps`" -Mode $($m.mode)`r`n" |
+    Set-Content -Encoding ASCII (Join-Path $desk $m.n)
+}
+Write-Host "OK: $desk\office.bat (tomosha), $desk\office-boss.bat (Boss bo'lib kirish)"
