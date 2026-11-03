@@ -418,3 +418,33 @@ Taxmin: 20–30 Pro limit oynasi (bonus va tejash vositalari bilan kamroq). Har 
 | QA | Sara Holm | a | qattiqqo'l, mehribon |
 | Publisher | Rustam Aliyev | e | aniq vaqtli, tartibli |
 | **Boss** (ofis egasi, eng katta) | egasi | | hamma uni "Boss" deb ataydi; Manager unga hisobot beradi |
+
+## 25. Boss qarorlari v1.1 (2026-11-03)
+**Ofis va dunyo**
+- Asosiy eshiklar ikki tavaqali, ikkala tomonga ochiladi (1.6–1.8 m): kirish, balkon, majlis, Manager. WC eshigi 0.9 m.
+- Maydonni kattalashtirish mumkin. `office_v2` rejasi: **luxury, juda qulay ofis**: keng yo'laklar, dam olish zonasi, oshxona-kafe, tug'ilgan kun va bayramlar uchun joy. Xodimlar shu yerda ishlashdan faxrlanadi.
+- **Hech narsa eskirmaydi va buzilmaydi**: personajlar qarimaydi, kasal bo'lmaydi; kiyim, mebel, texnika abadiy yangi. Faqat chang bo'ladi va uni **tozalovchi** artadi. Tozalovchi alohida (11-) personaj, u ham qarimaydi.
+
+**Xodimlar hayoti**
+- Har 10 xodimning tasodifiy tug'ilgan kuni bor. Shu kuni ofisda tort bilan bazm bo'ladi; bazm qachon tugab ishga qaytilishini Manager aytadi.
+- Ofis ochilgan kun **31-oktyabr**: har yili 31-oktyabr va 31 kuni bor har oyning 31-sanasi nishonlanadi.
+- Salomlashish koreyscha uslubda: holatga qarab 15° (tanish), 30° (oddiy), 45° (Manager va Boss oldida) egilish. Ba'zilar qo'l berib ham salomlashadi.
+- **Romantika yoqilgan**: tanishuv, yoqtirish, juft bo'lish, mehr ko'rsatish. Yaqinlik sahna ortida, ishora bilan beriladi (ochiq jinsiy sahna yo'q).
+- **Janjal bo'lmaydi.** Kelishmovchilik paydo bo'lsa, Manager darhol aralashadi va vaziyatni yaxshi tomonga hal qiladi.
+- Telefon orqali yozishmalar yo'q: kerakli odamning oldiga borib, og'zaki gaplashiladi.
+- Xodimlar ish uchun o'z sohasiga oid YouTube Shorts va Instagram Reels'ni tomosha qilishi mumkin (tadqiqot).
+- Xodimlarga singdiriladi: ular o'z sohasida o'z dunyosidagi eng yuqori maosh oluvchi xodimlar. Ofis hashamatli, ular shu ish uchun minnatdor.
+- His-tuyg'u modeli (§11.4) kengaytiriladi:
+  - oylik, bonus, romantika va yaqinlikdan quvonch;
+  - shu quvonch kasbni qadrlash va yaxshiroq ishlash istagini oshiradi;
+  - bu kayfiyat ish sifatiga ulanadi.
+
+**Biznes maqsadlari (ofisning bosh vazifasi)**
+- Ofis Compound Chronicle'ning **YouTube va Instagram** hisoblarini to'liq boshqaradi (avvalgi versiya faqat YouTube uchun qurilgan edi).
+- **31-yanvar 2027 gacha:**
+  - YouTube: monetizatsiya (YPP shartlari: 1 000 obunachi + 12 oyda 4 000 soat ko'rish YOKI 90 kunda 10M Shorts ko'rishi);
+  - Instagram: 5 000+ obunachi va kamida 5 ta 1M+ ko'rishli kontent.
+- Har bir xodim o'z ishida eng zo'ri bo'lishga intiladi va tajriba to'playdi (§11.2 saboqlar).
+- Xavfsizlik chegaralari o'zgarmaydi (§0.8): pul sarflanmaydi, platforma qoidalari buziladi, AI-kontent belgisi qo'yiladi.
+
+**Qurilish byudjeti:** tejamkor rejim. Har bosqich oldindan rejalashtiriladi, uzun o'lchov sikllari qilinmaydi.

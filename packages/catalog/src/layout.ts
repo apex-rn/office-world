@@ -19,12 +19,13 @@ const open = (id: string, wallId: string, p0: number, p1: number, kind: 'door' |
 };
 
 // ---- exterior walls (interior faces on the room boundary) ----
+// Main doors are double-leaf, double-swing (open both ways): 1.6-1.8 m clear, two people pass each other.
 wall('N', -0.2, -0.1, W + 0.2, -0.1, 0.2);
 wall('S', -0.2, D + 0.1, W + 0.2, D + 0.1, 0.2);
 wall('Wst', -0.1, -0.2, -0.1, D + 0.2, 0.2);
 wall('E', W + 0.1, -0.2, W + 0.1, D + 0.2, 0.2);
-open('door_entrance', 'Wst', 10.6, 11.5, 'door', { top: 2.1, exterior: true, autoClose: true });
-open('door_balcony', 'S', 6.0, 6.9, 'door', { top: 2.1, exterior: true, autoClose: true });
+open('door_entrance', 'Wst', 10.15, 11.95, 'door', { top: 2.1, exterior: true, autoClose: true });
+open('door_balcony', 'S', 5.6, 7.2, 'door', { top: 2.1, exterior: true, autoClose: true });
 // the meeting room's north wall is solid: it carries the screen and the whiteboard (the room is lit through its glass front)
 for (const [a, b] of [[3.6, 7.8], [13.6, 17.4]] as const) open(`win_N_${a}`, 'N', a, b, 'window', { sill: a === 3.6 ? 1.1 : 0.9, top: 2.6 });
 for (const [a, b] of [[0.6, 5.6], [7.4, 12.6], [13.4, 17.6]] as const) open(`win_S_${a}`, 'S', a, b, 'window', { sill: 0.9, top: 2.6 });
@@ -42,11 +43,11 @@ open('door_cub2', 'wc_cub_front', 1.15, 1.85, 'door', { top: 2.0, autoClose: tru
 wall('mt_W', 8.2, 0, 8.2, 5.05, 0.1);
 wall('mt_E', 13.0, 0, 13.0, 5.05, 0.1);
 wall('mt_S', 8.2, 5.0, 13.0, 5.0, 0.08, 'glass');
-open('door_meeting', 'mt_S', 10.0, 10.9, 'door', { top: 2.1, autoClose: true });
+open('door_meeting', 'mt_S', 9.8, 11.4, 'door', { top: 2.1, autoClose: true });
 
 // ---- manager office (x 13.0-18.0, z 0-5.0), glass front ----
 wall('mg_S', 13.0, 5.0, W, 5.0, 0.08, 'glass');
-open('door_manager', 'mg_S', 13.6, 14.5, 'door', { top: 2.1, autoClose: true });
+open('door_manager', 'mg_S', 13.4, 15.0, 'door', { top: 2.1, autoClose: true });
 
 // ---- balcony (outdoor smoking area) railings, 1.1 m ----
 wall('bal_S', 4.5, 15.2, 9.5, 15.2, 0.05, 'solid', 1.1);
