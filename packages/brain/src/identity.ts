@@ -134,7 +134,7 @@ export const STAFF: Identity[] = [
     speech: { rules: ['Fast, vivid, uses examples.', 'Ends with a concrete suggestion.'], samples: ['Okay, look at this — "then vs now" money formats are exploding again.', 'I have five hooks; two of them are scary good.', 'Boss, bugun uchta yangi format topdim.'] },
     dreams: [
       { kind: 'career', text: 'Discover the format that defines finance content for a whole year — and have it named after her in the industry.', measure: 'Reels above 1M views from her ideas' },
-      { kind: 'life', text: 'A year-long journey through 40 countries, first class, with her sister.', costUsd: 450_000 },
+      { kind: 'life', text: 'A gallery-loft in Hannam-dong for her own art, and a year-long first-class journey through 40 countries with her sister.', costUsd: 2_300_000 },
     ],
     salaryUsd: 2700,
     deskItems: ['mood board', 'ring light', 'matcha tin'],
