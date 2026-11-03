@@ -23,6 +23,8 @@ export class OfficeRuntime {
   readonly minds = new Map<string, Mind>();
   readonly society: Society;
   private eveningDone = '';
+  private nextHabit = new Map<string, number>();
+  private lastRoute = '';
   readonly social: SocialEvent[] = [];
   /** failed thoughts (model errors, unusable replies) for logs */
   thoughts = 0;
@@ -120,11 +122,36 @@ export class OfficeRuntime {
       }
     }
     this.greetings();
+    if (!meeting && !party && now < plan.workEnds) this.habits();
     if (now >= plan.leaveFrom + 30 && this.eveningDone !== t.date && [...w.bodies.values()].every(b => b.state === 'offsite' || b.spec.id === BOSS.id)) {
       this.eveningDone = t.date;
       for (const f of this.society.evening(w.now)) void this.minds.get(f.who)?.feel(f.appraisal);
       // evening reflection, one person after another (free model, small and rare)
       void (async () => { for (const m of this.minds.values()) await m.reflect().catch(() => []); })();
+    }
+  }
+
+  /** Habit errands (no model call): the housekeeper dusts desks whose owners are away; Viktor walks his rounds. */
+  private habits(): void {
+    const w = this.world;
+    for (const id of ['cleaner', 'guard']) {
+      const b = w.bodies.get(id);
+      if (!b || b.state === 'offsite' || b.active || this.errands.has(id)) continue;
+      const due = this.nextHabit.get(id) ?? w.now + (id === 'cleaner' ? 5 : 20) * 60_000;
+      if (!this.nextHabit.has(id)) { this.nextHabit.set(id, due); continue; }
+      if (w.now < due) continue;
+      if (id === 'cleaner') {
+        const away = w.layout.instances.filter(i => i.id.startsWith('desk.') && i.owner && w.bodies.get(i.owner)?.state !== 'sitting');
+        const desk = away[Math.floor(this.rand() * away.length)];
+        if (desk) this.errands.add({ who: id, why: `dust ${desk.id}`, steps: [{ verb: 'go_to', target: desk.id }, { verb: 'wait', seconds: 35 + this.rand() * 30 }] });
+        this.nextHabit.set(id, w.now + (15 + this.rand() * 10) * 60_000);
+      } else {
+        const zones = ['kitchen', 'work', 'lounge', 'print', 'reception', 'balcony'].sort(() => this.rand() - 0.5).slice(0, 3);
+        if (zones.join() === this.lastRoute) zones.reverse();
+        this.lastRoute = zones.join();
+        this.errands.add({ who: id, why: 'rounds', steps: [...zones.map(z => ({ verb: 'go_to', target: z }) as const), { verb: 'sit', target: 'chair.guard' }] });
+        this.nextHabit.set(id, w.now + (40 + this.rand() * 20) * 60_000);
+      }
     }
   }
 
