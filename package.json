@@ -18,6 +18,7 @@
   },
   "devDependencies": {
     "@types/node": "22.18.12",
+    "three": "0.170.0",
     "tsx": "4.20.6",
     "typescript": "6.0.3"
   }

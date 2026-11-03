@@ -1,0 +1,361 @@
+<title>Compound Chronicle HQ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one full-screen architectural model; a quiet HUD floats over it (clock + staff left, transport bottom). */
+:root {
+  --ink: #f3efe7;        /* HUD text */
+  --muted: #b9b2a6;
+  --panel: rgba(24, 26, 30, 0.78);
+  --line: rgba(243, 239, 231, 0.14);
+  --brass: #c9a46a;      /* single accent */
+  --stage: #15171a;      /* scene backdrop */
+  --ok: #7fc8a0; --walk: #e7c27d; --use: #8fb4e3; --off: #6b6862;
+  --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--stage); color: var(--ink); font-family: var(--display); overflow: hidden; }
+#app { position: relative; height: 100%; }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.hud { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 10px; width: min(300px, calc(100% - 32px)); pointer-events: none; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; backdrop-filter: blur(8px); pointer-events: auto; }
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.brand h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; }
+.brand h1 span { color: var(--brass); }
+.clock { font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.people { display: grid; gap: 2px; max-height: 46vh; overflow: auto; }
+.people button { all: unset; display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.people button:hover, .people button[aria-pressed="true"] { background: rgba(201, 164, 106, 0.14); }
+.people button:focus-visible { outline: 2px solid var(--brass); }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.who small { display: block; color: var(--muted); font-size: 11px; }
+.state { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.legend-title { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.transport { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.transport .card { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; }
+.transport .grow { flex: 1 1 260px; min-width: 0; }
+.btn { all: unset; font-size: 12px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); cursor: pointer; color: var(--ink); }
+.btn[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); }
+.btn:focus-visible { outline: 2px solid var(--brass); }
+input[type="range"] { width: 100%; accent-color: var(--brass); }
+.note { color: var(--muted); font-size: 11px; margin: 0; }
+@media (max-width: 640px) { .people { max-height: 22vh; } .clock { font-size: 18px; } }
+@media (prefers-reduced-motion: reduce) { .card { backdrop-filter: none; } }
+</style>
+
+<div id="app">
+  <canvas id="scene" aria-label="Compound Chronicle ofisining 3D maketi"></canvas>
+  <div class="hud">
+    <div class="card">
+      <div class="brand"><h1>Compound <span>Chronicle</span> HQ</h1><div class="clock" id="clock">09:05</div></div>
+      <p class="sub" id="activity">Seul vaqti · ofis 18 × 13 m, shift 3.0 m · barcha jihozlar real o'lchamda</p>
+    </div>
+    <div class="card">
+      <p class="legend-title">Xodimlar</p>
+      <div class="people" id="people"></div>
+    </div>
+  </div>
+  <div class="transport">
+    <div class="card">
+      <button class="btn" id="play" aria-pressed="true">Pauza</button>
+      <button class="btn" data-speed="1">1×</button>
+      <button class="btn" data-speed="4" aria-pressed="true">4×</button>
+      <button class="btn" data-speed="16">16×</button>
+    </div>
+    <div class="card">
+      <button class="btn" id="view-iso" aria-pressed="true">Maket</button>
+      <button class="btn" id="view-top">Yuqoridan</button>
+      <button class="btn" id="walls">Devorlar: to'liq</button>
+    </div>
+    <div class="card grow">
+      <label for="timeline" class="note" style="white-space:nowrap">Vaqt</label>
+      <input type="range" id="timeline" min="0" max="1000" value="0">
+    </div>
+    <p class="note" style="flex-basis:100%">Namoyish: 20 daqiqalik harakat yozuvi (navmesh, navbatlar, eshiklar). AI miya hali ulanmagan; tayyor CC0 modellar keyingi bosqichda.</p>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script id="data" type="application/json">/*DATA*/</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const D = JSON.parse(document.getElementById('data').textContent);
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x15171a);
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 3; controls.maxDistance = 60;
+const W = D.room.w, Dd = D.room.d;
+function viewIso() { camera.position.set(W / 2 + 13, 15, Dd / 2 + 15); controls.target.set(W / 2, 0, Dd / 2 + 0.5); follow = null; }
+function viewTop() { camera.position.set(W / 2, 26, Dd / 2 + 0.01); controls.target.set(W / 2, 0, Dd / 2); follow = null; }
+
+// ---- light: late-afternoon sun through the south windows + soft sky ----
+scene.add(new THREE.HemisphereLight(0xfff1de, 0x2a2622, 0.75));
+const sun = new THREE.DirectionalLight(0xffe2bd, 2.2);
+sun.position.set(-4, 16, 24); sun.target.position.set(W / 2, 0, Dd / 2);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 60 });
+sun.shadow.bias = -0.0004;
+scene.add(sun, sun.target);
+const fill = new THREE.DirectionalLight(0xbcd2ff, 0.35); fill.position.set(30, 10, -10); scene.add(fill);
+
+// ---- materials (luxury palette) ----
+const M = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: o.r ?? 0.6, metalness: o.m ?? 0, ...(o.e ? { emissive: o.e, emissiveIntensity: o.ei ?? 1 } : {}), ...(o.t ? { transparent: true, opacity: o.t, depthWrite: false } : {}) });
+const mat = {
+  walnut: M(0x5d3f2a, { r: 0.45 }), black: M(0x1f2125, { r: 0.5, m: 0.3 }), brass: M(0xb8935a, { r: 0.3, m: 0.85 }),
+  wall: M(0xece7df, { r: 0.9 }), wallCut: M(0xd9d2c6, { r: 0.9 }), glass: M(0xa9c9dc, { r: 0.05, m: 0.1, t: 0.18 }),
+  fabric: M(0x34383f, { r: 0.95 }), leather: M(0x8a5636, { r: 0.55 }), marble: M(0xeeeae4, { r: 0.25 }), stone: M(0x8d8b86, { r: 0.85 }),
+  steel: M(0xc5c8cc, { r: 0.3, m: 0.75 }), white: M(0xf2f1ee, { r: 0.5 }), oak: M(0xb08a5e, { r: 0.6 }), green: M(0x3f6b45, { r: 0.8 }),
+  pot: M(0x2c2a28, { r: 0.7 }), screen: M(0x0d1b2a, { r: 0.2, e: 0x2f6aa8, ei: 0.55 }), lampGlow: M(0xfff1d0, { e: 0xffd79a, ei: 1.4 }),
+  led: M(0x0a0a0a, { e: 0x46d39a, ei: 1.5 }), board: M(0xf7f6f2, { r: 0.4 }), carpet: M(0x3c4049, { r: 1 }), rug: M(0x7a6650, { r: 1 }),
+  laminate: M(0xd6d1c8, { r: 0.6 }), door: M(0x4a3426, { r: 0.5 }),
+};
+const box = (w, h, d, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; };
+const cyl = (r, h, m, x = 0, y = 0, z = 0, seg = 20) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; };
+
+// ---- floor: walnut planks (procedural), carpet in the closed rooms, stone on the balcony ----
+function plankTexture() {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 512; const g = c.getContext('2d');
+  for (let row = 0; row < 16; row++) for (let k = 0; k < 6; k++) {
+    const off = (row % 2) * 64, l = 50 + Math.random() * 18;
+    g.fillStyle = `hsl(26, 32%, ${l * 0.62}%)`; g.fillRect(k * 128 + off - 128, row * 32, 128, 32);
+    g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(k * 128 + off - 128, row * 32, 1, 32);
+  }
+  g.fillStyle = 'rgba(0,0,0,0.18)'; for (let row = 0; row < 16; row++) g.fillRect(0, row * 32, 512, 1);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(W / 4, Dd / 4); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 0.4, Dd + 0.4), new THREE.MeshStandardMaterial({ map: plankTexture(), roughness: 0.55 }));
+floor.rotation.x = -Math.PI / 2; floor.position.set(W / 2, 0, Dd / 2); floor.receiveShadow = true; scene.add(floor);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), M(0x1b1d20, { r: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(W / 2, -0.02, Dd / 2); ground.receiveShadow = true; scene.add(ground);
+for (const z of D.zones) {
+  const m = z.id === 'meeting' || z.id === 'manager' ? mat.carpet : z.id === 'balcony' ? mat.stone : z.id === 'wc' ? mat.laminate : null;
+  if (!m) continue;
+  const s = new THREE.Shape(z.poly.map(([x, zz]) => new THREE.Vector2(x, -zz)));
+  const g = new THREE.Mesh(new THREE.ShapeGeometry(s), m); g.rotation.x = -Math.PI / 2; g.position.y = 0.003; g.receiveShadow = true; scene.add(g);
+}
+{ const rug = box(3.2, 0.006, 2.2, mat.rug, 15.6, 0.004, 11.4); rug.castShadow = false; scene.add(rug); }
+
+// ---- walls with openings; "model" mode cuts them at 1.15 m so the interior reads ----
+const wallGroup = new THREE.Group(); scene.add(wallGroup);
+let fullWalls = false;
+function buildWalls() {
+  wallGroup.clear();
+  const cut = fullWalls ? 99 : 1.15;
+  for (const p of D.walls) {
+    const y0 = p.y0, y1 = Math.min(p.y1, p.glass ? p.y1 : cut);
+    if (y0 >= y1) continue;
+    const m = p.glass ? mat.glass : (y1 < p.y1 ? mat.wallCut : mat.wall);
+    const o = box(p.hx * 2, y1 - y0, p.hz * 2, m, p.cx, (y0 + y1) / 2, p.cz); o.rotation.y = p.yaw;
+    if (p.glass) { o.castShadow = false; const top = box(p.hx * 2, 0.05, p.hz * 2 + 0.01, mat.black, p.cx, y1 - 0.025, p.cz); top.rotation.y = p.yaw; wallGroup.add(top); }
+    wallGroup.add(o);
+  }
+  for (const o of D.openings) if (o.kind === 'window' && fullWalls) {
+    const g = box(o.width, o.top - o.sill, 0.02, mat.glass, o.cx, (o.sill + o.top) / 2, o.cz); g.rotation.y = o.yaw; g.castShadow = false; wallGroup.add(g);
+  }
+}
+buildWalls();
+
+// ---- doors: double-leaf (≥1.5 m) or single, swing both ways; open while someone passes ----
+const doors = new Map();
+for (const o of D.openings.filter(o => o.kind === 'door')) {
+  const g = new THREE.Group(); g.position.set(o.cx, 0, o.cz); g.rotation.y = o.yaw; scene.add(g);
+  const leaves = o.width >= 1.5 ? 2 : 1, lw = o.width / leaves - 0.01, h = o.top - 0.01;
+  const pivots = [];
+  for (let k = 0; k < leaves; k++) {
+    const side = leaves === 2 ? (k === 0 ? -1 : 1) : -1;
+    const pv = new THREE.Group(); pv.position.set(side * o.width / 2, 0, 0); g.add(pv);
+    const leaf = box(lw, h, 0.045, o.exterior ? mat.door : mat.glass, -side * lw / 2, h / 2, 0); pv.add(leaf);
+    const handle = box(0.02, 0.3, 0.06, mat.brass, -side * (lw - 0.08), 1.05, 0); pv.add(handle);
+    pivots.push({ pv, side });
+  }
+  doors.set(o.id, { pivots, open: 0 });
+}
+
+// ---- furniture builders: local frame, origin at the footprint centre on its base, +z = front ----
+function build(id, d) {
+  const g = new THREE.Group(), { w, h } = d, dd = d.d;
+  const add = (...o) => o.forEach(x => g.add(x));
+  switch (id) {
+    case 'desk_140': case 'desk_160': case 'reception_desk': {
+      add(box(w, 0.035, dd, mat.walnut, 0, h - 0.0175, 0));
+      for (const s of [-1, 1]) add(box(0.04, h - 0.035, dd - 0.06, mat.black, s * (w / 2 - 0.06), (h - 0.035) / 2, 0));
+      add(box(w - 0.16, 0.32, 0.018, mat.black, 0, h - 0.27, -dd / 2 + 0.06));
+      if (id === 'reception_desk') { add(box(w, 1.06, 0.05, mat.walnut, 0, 0.53, -dd / 2 - 0.025), box(w, 0.025, 0.06, mat.brass, 0, 1.07, -dd / 2 - 0.025)); }
+      break;
+    }
+    case 'office_chair': {
+      const s = d.seatH;
+      for (let k = 0; k < 5; k++) { const sp = box(0.3, 0.025, 0.04, mat.black, 0, 0.06, 0); sp.geometry.translate(0.15, 0, 0); sp.rotation.y = k * Math.PI * 2 / 5; add(sp); }
+      add(cyl(0.025, s - 0.12, mat.steel, 0, (s - 0.12) / 2 + 0.07, 0), box(0.48, 0.07, 0.46, mat.fabric, 0, s, 0.02));
+      const back = box(0.46, 0.56, 0.05, mat.fabric, 0, s + 0.34, -0.22); back.rotation.x = -0.12; add(back);
+      for (const sx of [-1, 1]) add(box(0.04, 0.03, 0.26, mat.black, sx * 0.25, s + 0.2, 0.02), box(0.025, 0.2, 0.025, mat.black, sx * 0.25, s + 0.1, -0.06));
+      break;
+    }
+    case 'side_chair': {
+      const s = d.seatH;
+      for (const [x, z] of [[-0.19, -0.21], [0.19, -0.21], [-0.19, 0.21], [0.19, 0.21]]) add(box(0.03, s, 0.03, mat.black, x, s / 2, z));
+      add(box(0.44, 0.04, 0.46, mat.leather, 0, s, 0), box(0.42, 0.36, 0.03, mat.leather, 0, s + 0.22, -0.22));
+      break;
+    }
+    case 'meeting_table': case 'kitchen_table': case 'coffee_table': {
+      add(box(w, 0.04, dd, id === 'kitchen_table' ? mat.marble : mat.walnut, 0, h - 0.02, 0));
+      if (id === 'meeting_table') for (const s of [-1, 1]) add(box(0.08, h - 0.04, dd * 0.6, mat.brass, s * (w / 2 - 0.4), (h - 0.04) / 2, 0));
+      else for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) add(box(0.04, h - 0.04, 0.04, mat.black, x * (w / 2 - 0.06), (h - 0.04) / 2, z * (dd / 2 - 0.06)));
+      break;
+    }
+    case 'kitchen_counter': case 'cabinet_low': add(box(w, h - 0.04, dd, mat.black, 0, (h - 0.04) / 2, 0), box(w + 0.02, 0.04, dd + 0.02, mat.marble, 0, h - 0.02, 0)); break;
+    case 'sink_unit': add(box(w, h - 0.04, dd, mat.black, 0, (h - 0.04) / 2, 0), box(w + 0.02, 0.04, dd + 0.02, mat.marble, 0, h - 0.02, 0), box(w * 0.6, 0.02, dd * 0.5, mat.steel, 0, h + 0.002, 0), cyl(0.015, 0.28, mat.steel, 0, h + 0.14, -dd / 2 + 0.08)); break;
+    case 'sofa_3': {
+      add(box(w, 0.22, dd, mat.leather, 0, 0.15, 0), box(w - 0.3, 0.12, dd - 0.25, mat.leather, 0, 0.32, 0.08), box(w, 0.5, 0.2, mat.leather, 0, 0.5, -dd / 2 + 0.1));
+      for (const s of [-1, 1]) add(box(0.15, 0.6, dd, mat.leather, s * (w / 2 - 0.075), 0.3, 0));
+      for (let k = -1; k <= 1; k++) add(box(0.6, 0.06, dd - 0.3, mat.leather, k * 0.62, 0.41, 0.1));
+      break;
+    }
+    case 'bookcase': {
+      for (const s of [-1, 1]) add(box(0.03, h, dd, mat.walnut, s * (w / 2 - 0.015), h / 2, 0));
+      for (let k = 0; k <= 5; k++) add(box(w - 0.06, 0.025, dd, mat.walnut, 0, 0.05 + k * (h - 0.08) / 5, 0));
+      const books = [0x7d2b2b, 0x2b4a7d, 0xc9a46a, 0x335c45, 0x2d2d2d, 0x8a7a63];
+      for (let k = 0; k < 5; k++) for (let b = 0; b < 9; b++) { const bh = 0.2 + ((b * 7 + k * 3) % 5) * 0.02; add(box(0.06, bh, dd - 0.08, M(books[(b + k) % 6]), -w / 2 + 0.08 + b * 0.07, 0.065 + k * (h - 0.08) / 5 + bh / 2, 0)); }
+      break;
+    }
+    case 'plant_floor': add(cyl(0.2, 0.42, mat.pot, 0, 0.21, 0), new THREE.Mesh(new THREE.IcosahedronGeometry(0.36, 1), mat.green)); g.children.at(-1).position.y = 0.86; g.children.at(-1).castShadow = true; break;
+    case 'trash_bin': add(cyl(0.15, h, mat.black, 0, h / 2, 0)); break;
+    case 'coat_rack': add(cyl(0.18, 0.03, mat.black, 0, 0.015, 0), cyl(0.02, h, mat.brass, 0, h / 2, 0)); for (let k = 0; k < 4; k++) { const hk = box(0.18, 0.02, 0.02, mat.brass, 0, h - 0.12, 0); hk.geometry.translate(0.09, 0, 0); hk.rotation.y = k * Math.PI / 2; add(hk); } break;
+    case 'ashtray_stand': add(cyl(0.15, h, mat.steel, 0, h / 2, 0)); break;
+    case 'toilet': add(box(0.36, 0.38, 0.5, mat.white, 0, 0.19, 0.05), box(0.36, 0.4, 0.16, mat.white, 0, 0.6, -0.26)); break;
+    case 'fridge': add(box(w, h, dd, mat.steel, 0, h / 2, 0), box(0.02, 0.6, 0.03, mat.black, w / 2 - 0.06, 1.1, dd / 2 + 0.015)); break;
+    case 'water_dispenser': add(box(w, h - 0.3, dd, mat.white, 0, (h - 0.3) / 2, 0), cyl(0.13, 0.32, M(0x6aa7d8, { t: 0.55 }), 0, h - 0.16, 0)); break;
+    case 'server_rack': add(box(w, h, dd, mat.black, 0, h / 2, 0)); for (let k = 0; k < 8; k++) add(box(w - 0.1, 0.012, 0.01, mat.led, 0, 0.3 + k * 0.2, dd / 2 + 0.005)); break;
+    case 'wc_partition': add(box(w, h - 0.15, dd, mat.laminate, 0, 0.15 + (h - 0.15) / 2, 0)); break;
+    case 'monitor_24': {
+      add(box(0.22, 0.012, 0.17, mat.black, 0, 0.006, 0), box(0.04, 0.22, 0.025, mat.black, 0, 0.12, -0.05));
+      const ph = 0.3 + 0.012, py = h - ph / 2;
+      add(box(w, ph, 0.025, mat.black, 0, py, -0.02), box(w - 0.012, ph - 0.012, 0.002, mat.screen, 0, py, -0.006));
+      break;
+    }
+    case 'keyboard': add(box(w, h, dd, mat.black, 0, h / 2, 0)); break;
+    case 'mouse': add(box(w, h, dd, mat.black, 0, h / 2, 0)); break;
+    case 'desk_lamp': { add(cyl(0.08, 0.02, mat.brass, 0, 0.01, 0), cyl(0.01, 0.38, mat.brass, 0, 0.2, -0.02)); const head = box(0.16, 0.03, 0.08, mat.brass, 0, h - 0.03, 0.04); head.rotation.x = 0.35; add(head, box(0.13, 0.004, 0.06, mat.lampGlow, 0, h - 0.05, 0.05)); break; }
+    case 'mug': add(cyl(0.042, h, mat.white, 0, h / 2, 0)); break;
+    case 'laptop': case 'laptop_14': add(box(w, 0.012, dd, mat.steel, 0, 0.006, 0)); break;
+    case 'coffee_machine': add(box(w, h, dd, mat.black, 0, h / 2, 0), box(w * 0.7, 0.03, 0.03, mat.brass, 0, h * 0.55, dd / 2 + 0.015)); break;
+    case 'microwave': add(box(w, h, dd, mat.steel, 0, h / 2, 0), box(w * 0.6, h * 0.6, 0.005, mat.black, -0.05, h / 2, dd / 2 + 0.003)); break;
+    case 'printer': add(box(w, h, dd, M(0xd8d8d4), 0, h / 2, 0)); break;
+    case 'kanban_board': case 'whiteboard': {
+      add(box(w, h, dd, mat.board, 0, h / 2, 0), box(w + 0.03, 0.025, dd + 0.02, mat.brass, 0, h + 0.012, 0), box(w + 0.03, 0.025, dd + 0.02, mat.brass, 0, -0.012, 0));
+      if (id === 'kanban_board') { const cols = [0xf2d36b, 0x8fd1a8, 0x9ec3f0, 0xf0a4a0]; for (let c = 0; c < 4; c++) for (let r = 0; r < 3 + (c % 2); r++) add(box(0.12, 0.09, 0.004, M(cols[c]), -w / 2 + 0.25 + c * 0.43, h - 0.2 - r * 0.15, dd / 2 + 0.003)); }
+      break;
+    }
+    case 'tv_65': add(box(w, h, dd, mat.black, 0, h / 2, 0), box(w - 0.02, h - 0.02, 0.003, M(0x0e2238, { e: 0x2c5f94, ei: 0.7 }), 0, h / 2, dd / 2 + 0.002)); break;
+    case 'wall_clock': { const c = cyl(w / 2, dd, mat.white, 0, h / 2, 0, 32); c.rotation.x = Math.PI / 2; const rim = cyl(w / 2 + 0.01, dd * 0.6, mat.brass, 0, h / 2, -0.005, 32); rim.rotation.x = Math.PI / 2; add(rim, c); break; }
+    default: add(box(w, h, dd, mat.oak, 0, h / 2, 0));
+  }
+  return g;
+}
+for (const i of D.instances) {
+  const d = D.defs[i.def]; if (!d) continue;
+  const g = build(i.def, d); g.position.set(i.x, i.y, i.z); g.rotation.y = i.yaw; scene.add(g);
+}
+
+// ---- people: legs, torso, head; walk cycle; sit pose on the seat anchor ----
+const palette = [0x2c3e64, 0x6b2737, 0x1f5c4d, 0x7a5a2e, 0x3e3e46, 0x5b3d6e, 0x245b7a, 0x6d4a3a, 0x40514a, 0x2f2f33, 0x7fa3c9];
+const skin = [0xe8c4a2, 0xf0d0b4, 0xd9a882, 0xf3d8c2, 0xc98f6a];
+const STATE = ['ofisda emas', 'turibdi', 'yuryapti', "o'tiribdi", 'band'];
+const STATE_COL = ['var(--off)', 'var(--ok)', 'var(--walk)', 'var(--ok)', 'var(--use)'];
+function label(text) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d');
+  g.font = '600 26px "Familjen Grotesk", Arial'; const tw = g.measureText(text).width;
+  g.fillStyle = 'rgba(20,22,26,0.78)'; g.beginPath(); g.roundRect((256 - tw) / 2 - 12, 10, tw + 24, 40, 20); g.fill();
+  g.fillStyle = '#f3efe7'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 128, 31);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false })); s.scale.set(1.2, 0.3, 1); s.renderOrder = 10; return s;
+}
+const people = D.people.map((p, k) => {
+  const h = p.heightM, cloth = M(palette[k % palette.length], { r: 0.8 }), trousers = M(0x22252b, { r: 0.85 }), sk = M(skin[k % skin.length], { r: 0.7 });
+  const root = new THREE.Group(), hips = new THREE.Group(); root.add(hips);
+  const legL = 0.47 * h, torso = 0.3 * h, headR = 0.065 * h;
+  const mkLeg = sx => { const pv = new THREE.Group(); pv.position.set(sx * 0.09, legL, 0); const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, legL - 0.12, 4, 8), trousers); m.position.y = -legL / 2; m.castShadow = true; pv.add(m); hips.add(pv); return pv; };
+  const lL = mkLeg(-1), lR = mkLeg(1);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.15 * (p.gender === 'f' ? 0.9 : 1), torso - 0.1, 4, 10), cloth); body.position.y = legL + torso / 2; body.castShadow = true; hips.add(body);
+  const mkArm = sx => { const pv = new THREE.Group(); pv.position.set(sx * 0.2, legL + torso - 0.05, 0); const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.5, 4, 8), cloth); m.position.y = -0.27; m.castShadow = true; pv.add(m); hips.add(pv); return pv; };
+  const aL = mkArm(-1), aR = mkArm(1);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(headR, 16, 12), sk); head.position.y = legL + torso + headR + 0.02; head.castShadow = true; hips.add(head);
+  const cup = cyl(0.04, 0.09, mat.white, 0, -0.55, 0.06); cup.visible = false; aR.add(cup);
+  const tag = label(p.name.split(' ')[0]); tag.position.y = h + 0.35; root.add(tag);
+  scene.add(root);
+  return { p, root, hips, lL, lR, aL, aR, cup, legL, h, phase: Math.random() * 6 };
+});
+
+// ---- HUD ----
+const list = document.getElementById('people');
+const rows = people.map((o, k) => {
+  const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = `<span class="dot"></span><span class="who">${o.p.name}<small>${o.p.title}</small></span><span class="state"></span>`;
+  b.addEventListener('click', () => { follow = follow === k ? null : k; rows.forEach((r, j) => r.setAttribute('aria-pressed', String(follow === j))); });
+  list.appendChild(b); return b;
+});
+
+// ---- playback ----
+const frames = D.track[D.people[0].id].length / D.stride, dur = (frames - 1) / D.hz;
+let t = 0, speed = 4, playing = true, follow = null, last = performance.now();
+const tl = document.getElementById('timeline');
+tl.addEventListener('input', () => { t = tl.value / 1000 * dur; });
+document.getElementById('play').addEventListener('click', e => { playing = !playing; e.target.textContent = playing ? 'Pauza' : 'Davom'; e.target.setAttribute('aria-pressed', String(playing)); });
+document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => { speed = +b.dataset.speed; document.querySelectorAll('[data-speed]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+document.getElementById('view-iso').addEventListener('click', viewIso);
+document.getElementById('view-top').addEventListener('click', viewTop);
+document.getElementById('walls').addEventListener('click', e => { fullWalls = !fullWalls; buildWalls(); e.target.textContent = fullWalls ? 'Devorlar: maket' : "Devorlar: to'liq"; });
+const lerpAng = (a, b, f) => { let d = ((b - a + Math.PI) % (2 * Math.PI)) - Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return a + d * f; };
+const clock = document.getElementById('clock');
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (playing) { t += dt * speed; if (t > dur) t = 0; tl.value = Math.round(t / dur * 1000); }
+  const fi = Math.min(frames - 2, Math.floor(t * D.hz)), f = t * D.hz - fi;
+  const sec = Math.floor(D.start / 1000 + t + 9 * 3600) % 86400;
+  clock.textContent = `${String(Math.floor(sec / 3600)).padStart(2, '0')}:${String(Math.floor(sec / 60) % 60).padStart(2, '0')}`;
+  people.forEach((o, k) => {
+    const a = D.track[o.p.id], i0 = fi * D.stride, i1 = i0 + D.stride;
+    const x = a[i0] + (a[i1] - a[i0]) * f, z = a[i0 + 1] + (a[i1 + 1] - a[i0 + 1]) * f, yaw = lerpAng(a[i0 + 2], a[i1 + 2], f);
+    const st = a[f < 0.5 ? i0 + 3 : i1 + 3], holding = a[i0 + 4], y = a[i0 + 5];
+    o.root.visible = st !== 0;
+    o.root.position.set(x, 0, z); o.root.rotation.y = yaw;
+    o.cup.visible = !!holding;
+    const moving = st === 2;
+    o.phase += dt * speed * (moving ? 7.5 : 0);
+    const swing = moving ? Math.sin(o.phase) * 0.5 : 0;
+    if (st === 3) {               // seated: hips on the seat, thighs forward, shins down
+      o.hips.position.y = y - o.legL; o.lL.rotation.x = o.lR.rotation.x = -Math.PI / 2 + 0.05; o.aL.rotation.x = o.aR.rotation.x = -0.6;
+    } else {
+      o.hips.position.y = moving ? Math.abs(Math.cos(o.phase)) * 0.025 : 0;
+      o.lL.rotation.x = swing; o.lR.rotation.x = -swing; o.aL.rotation.x = -swing * 0.7; o.aR.rotation.x = holding ? -0.9 : swing * 0.7;
+      if (st === 4) { o.aL.rotation.x = o.aR.rotation.x = -0.9; }
+    }
+    const row = rows[k]; row.querySelector('.state').textContent = STATE[st]; row.querySelector('.dot').style.background = STATE_COL[st];
+  });
+  for (const [k, id] of D.doors.entries()) {
+    const d = doors.get(id); if (!d) continue;
+    const want = (D.doorTrack[fi] >> k) & 1; d.open += ((want ? 1 : 0) - d.open) * Math.min(1, dt * 6);
+    for (const { pv, side } of d.pivots) pv.rotation.y = side * d.open * 1.35;
+  }
+  if (follow !== null) { const o = people[follow].root; controls.target.lerp(o.position, 0.1); }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+function resize() { const r = canvas.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize(); viewIso();
+requestAnimationFrame(frame);
+</script>
