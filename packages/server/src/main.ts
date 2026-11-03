@@ -49,7 +49,8 @@ if (existsSync(STATE)) {
     const s = JSON.parse(readFileSync(STATE, 'utf8'));
     ledger.load(s.ledger);
     if (s.society) rt.society.load(s.society);
-    for (const k of s.done ?? []) done.add(k);
+    // a demo clock (SIM_START_SEOUL) replays the same day: what "ran" in an earlier demo must run again
+    if (!process.env.SIM_START_SEOUL) for (const k of s.done ?? []) done.add(k);
     const minds = (s.minds ?? {}) as Record<string, { memory: ReturnType<MemoryStream['toJSON']>; feelings: Feelings }>;
     for (const [id, m] of Object.entries(minds)) {
       const mind = rt.minds.get(id); if (!mind) continue;
@@ -81,17 +82,23 @@ setInterval(() => {
 
 // ---- calendar: meetings, birthdays, anniversaries, payday ----
 let busy = false;
+const lastTry = new Map<string, number>();
 setInterval(async () => {
   if (busy || !rt.plan) return;
   busy = true;
   try {
     const t = seoulTime(world.now);
     for (const d of dueNow(rt.plan, t.minuteOfDay, done)) {
-      done.add(d.key);
+      // a meeting counts as held only once somebody actually spoke; otherwise it is retried (at most once a minute)
+      if (d.kind === 'meeting' && Date.now() - (lastTry.get(d.key) ?? 0) < 60_000) continue;
+      if (d.kind === 'meeting') lastTry.set(d.key, Date.now()); else done.add(d.key);
       stream.broadcastEvent({ type: 'calendar', ...d });
       if (d.kind === 'meeting') {
         // wait until people have gathered (runtime walks them in from start-5 min)
+        console.log(`meeting ${d.type} starts (${[...rt.minds.keys()].filter(id => world.present(id)).length} present)`);
         const out = await runMeeting(d.type, world, router, rt.minds, { cards: [...rt.cardOf.values()], metrics: `${env('METRICS_LINE', 'see analytics')}. Office frictions today (fix or propose improvements to the Boss): ${rt.topFrictions(5).map(f => `${f.what} -> ${f.why} (x${f.n})`).join('; ') || 'none'}`, bossPresent: world.present('boss') });
+        console.log(`meeting ${d.type}: ${out.transcript.length} lines`);
+        if (out.transcript.length) done.add(d.key);
         stream.broadcastEvent({ type: 'meeting_done', meeting: d.type, decisions: out.decisions, praise: out.praise, criticism: out.criticism });
         writeFileSync(join(DATA, `meeting-${t.date}-${d.type}.json`), JSON.stringify(out, null, 1));
       } else if (d.kind === 'birthday') {

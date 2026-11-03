@@ -92,6 +92,8 @@ export class OfficeRuntime {
     const now = t.minuteOfDay;
     const leave = plan.leaveFrom;
     const meeting = plan.events.find(e => e.kind === 'meeting' && now >= e.start - 5 && now < e.end);
+    // people set off for a gathering a little apart (0-3 min, by person), like a real office, not all at the same second
+    const setOff = (id: string, start: number) => now >= start - 5 + ([...id].reduce((h, c) => h + c.charCodeAt(0), 0) % 4);
     const party = plan.events.find(e =>
       (e.kind === 'birthday' && now >= e.surpriseAt && now < e.partyEnd) ||
       ((e.kind === 'anniversary' || e.kind === 'new_year') && now >= e.partyStart && now < e.partyEnd));
@@ -105,7 +107,7 @@ export class OfficeRuntime {
         continue;
       }
       // meetings and parties gather everyone (a body already busy finishes its step first)
-      if (meeting || party) {
+      if ((meeting && meeting.kind === 'meeting' && setOff(id, meeting.start)) || party) {
         const zone = meeting ? 'meeting' : 'lounge';
         const z = w.layout.zones.find(x => x.id === zone)!;
         const seatedHere = !!b.seat && b.seat.inst.startsWith(`${zone}.`);
