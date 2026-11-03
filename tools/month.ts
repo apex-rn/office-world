@@ -84,8 +84,12 @@ while (w.now < end) {
     await new Promise(r => setImmediate(r));       // let the minds' promises run
     const present = [...w.bodies.values()].filter(b => b.state !== 'offsite' && b.spec.id !== 'boss');
     if (present.length) { day!.samples += present.length; day!.typingSamples += present.filter(b => b.anim === 'typing').length; }
-    if (rt.activity.startsWith('meeting:')) day!.seatedAtMeeting.push(present.filter(b => b.seat?.inst.startsWith('meeting.')).length);
+    if (rt.activity.startsWith('meeting:')) {
+      day!.seatedAtMeeting.push(present.filter(b => b.seat?.inst.startsWith('meeting.')).length);
+      if (t.minuteOfDay % 60 === 18 || t.minuteOfDay % 60 === 28) for (const b of present) if (!b.seat?.inst.startsWith('meeting.')) flag(`not seated 8 min into a meeting: ${b.spec.id} ${b.state} ${b.active?.verb ?? '-'}:${b.active?.target ?? ''} (${b.pos.x.toFixed(0)},${b.pos.z.toFixed(0)})`);
+    }
     // stuck: walking/standing with an active action but no movement for 10 sim minutes
+    for (const b of w.bodies.values()) if (b.state === 'offsite') lastMove.delete(b.spec.id);
     for (const b of present) {
       const lm = lastMove.get(b.spec.id);
       if (!lm || Math.hypot(lm.x - b.pos.x, lm.z - b.pos.z) > 0.3 || b.state === 'sitting' || !b.active || b.active.verb === 'wait') lastMove.set(b.spec.id, { x: b.pos.x, z: b.pos.z, t: w.now });
@@ -96,7 +100,7 @@ while (w.now < end) {
       if (b.state !== 'offsite' && m.needs.bladder >= 1) flag(`bladder at 100%: ${id} (${b.state} ${b.active?.verb ?? '-'}:${b.active?.target ?? ''} ${rt.activity}) thinking=${m.thinking} sinceThought=${Math.round((w.now - ((m as unknown as { lastThought: number }).lastThought)) / 60000)}min errands=${JSON.stringify((rt as unknown as { errands: { queue: Map<string, unknown> } }).errands.queue.get(id))?.slice(0, 300)}`);
       if (b.state !== 'offsite' && m.needs.hunger >= 1) flag(`hunger at 100%: ${id}`);
     }
-    if (t.minuteOfDay > 23 * 60 && present.length) flag(`still in the office after 23:00: ${present.map(b => b.spec.id).join(',')}`);
+    if (t.minuteOfDay > 23 * 60 && present.length) flag(`still in the office after 23:00: ${present.map(b => `${b.spec.id} ${b.state} ${b.active?.verb ?? '-'}:${b.active?.phase ?? ''} at (${b.pos.x.toFixed(1)},${b.pos.z.toFixed(1)}) lastFail=${(w as unknown as { lastFail: Map<string, string> }).lastFail.get(b.spec.id) ?? ''}`).join(',')}`);
   }
   // the service's calendar (meetings, birthdays, anniversaries, payday), as in packages/server/src/main.ts
   if (tick % 200 === 0 && !busy && rt.plan) {

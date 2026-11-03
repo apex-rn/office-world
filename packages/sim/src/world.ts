@@ -71,6 +71,8 @@ export interface Body {
   stepAsideT?: number;
   /** standing still for a greeting until (ms) */
   greetUntil?: number;
+  /** where the person is turning to face (turned at a human rate, never snapped) */
+  faceYaw?: number;
   /** a one-off gesture (bow, handshake) ends at this time and the previous pose returns */
   gestureUntil?: number; animBefore?: string;
   /** waiting for a narrow doorway to clear */
@@ -494,13 +496,13 @@ export class World {
   faceToward(a: string, b: string): void {
     const A = this.bodies.get(a), B = this.bodies.get(b);
     if (!A || !B || A.state === 'sitting' || A.state === 'walking') return;
-    A.yaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
+    A.faceYaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
   }
 
   pauseToGreet(a: string, b: string, anim: string): void {
     const A = this.bodies.get(a), B = this.bodies.get(b);
     if (!A || !B) return;
-    if (A.state !== 'sitting') A.yaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
+    if (A.state !== 'sitting') A.faceYaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
     // a bow is one gesture (~1.8 s), not a pose that repeats until the next action
     if (!A.gestureUntil) A.animBefore = A.anim;
     A.anim = anim; A.gestureUntil = this.now + 1800;
@@ -614,7 +616,14 @@ export class World {
           // turn at a human rate (~4 rad/s), not instantly
           const want = Math.atan2(v.x, v.z), d = ((want - b.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           b.yaw += Math.max(-0.2, Math.min(0.2, d));
+          b.faceYaw = undefined;
         }
+      }
+      // standing still and turning to something (a machine, a colleague, the line): a smooth turn, ~3.5 rad/s
+      if (b.faceYaw !== undefined && b.state !== 'sitting' && b.state !== 'offsite') {
+        const d = ((b.faceYaw - b.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        const lim = 3.5 * dt;
+        if (Math.abs(d) <= lim) { b.yaw = b.faceYaw; b.faceYaw = undefined; } else b.yaw += Math.sign(d) * lim;
       }
       this.advance(b);
     }
@@ -667,8 +676,8 @@ export class World {
     if (d <= (k === 0 ? ARRIVE_EPS : 0.4)) {
       b.agent?.resetMoveTarget();
       // at the device: its facing; waiting in line: look toward the device (never at a wall beside the line)
-      if (k === 0) { if (a.goalYaw !== undefined) b.yaw = a.goalYaw; }
-      else if (a.goal) b.yaw = Math.atan2(a.goal.x - b.pos.x, a.goal.z - b.pos.z);
+      if (k === 0) { if (a.goalYaw !== undefined) b.faceYaw = a.goalYaw; }
+      else if (a.goal) b.faceYaw = Math.atan2(a.goal.x - b.pos.x, a.goal.z - b.pos.z);
       if (k === 0) {
         this.queues.set(i.id, q.filter(x => x !== b.spec.id));
         this.reserve(i.id, b.spec.id);
@@ -799,7 +808,7 @@ export class World {
       if (d < a.bestDist - 0.05) { a.bestDist = d; a.lastProgressT = this.now; }
       if (d <= ARRIVE_EPS) {
         b.agent?.resetMoveTarget();
-        if (a.goalYaw !== undefined) b.yaw = a.goalYaw;
+        if (a.goalYaw !== undefined) b.faceYaw = a.goalYaw;
         b.state = 'standing'; b.anim = 'idle';
         if (a.after === 'home') {
           this.despawnAgent(b); b.state = 'offsite'; b.anim = 'none';
