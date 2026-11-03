@@ -466,5 +466,15 @@ Taxmin: 20–30 Pro limit oynasi (bonus va tejash vositalari bilan kamroq). Har 
 - **Dangasalik va aldov yo'q.** Tekshiruv QA va haqiqiy metrikalar orqali bo'ladi (§11.2). Xatoni o'zi erta aytgan xodim hurmat qilinadi (§13 halollik qoidasi).
 - **Maosh** — Viktor (Office Keeper) har oyning 25-sanasida ofis seyfidan qo'lma-qo'l beradi. Seyfga har oyning 25-sanasida pul o'zi paydo bo'ladi (ichki valyuta, USD).
 - **Xodim almashtirilganda:** Manager yangi xodim oladi. Yangi xodimga eski xodimning ish saboqlari (playbook, ish bilimi) beriladi. Qolganlar uni yangi odam deb biladi.
-- **Kutilmoqda (Boss qarori):** Viktor'ning qurolli qo'riqchiligi va qoida buzilganda nima qilinishi — §28 da belgilanadi.
+- Viktor'ning qurolli qo'riqchiligi — §28.
+
+## 28. Xavfsizlik va jazoga munosabat (2026-11-03, Boss tanlovi: tavsiya qilingan variant)
+- **Viktor** — qurolli qo'riqchi (AKM). Seyf va ofisni tashqi xavfdan himoya qiladi; qurol ofisning kuchli xavfsizligi belgisi sifatida ko'rinib turadi.
+- **O'g'irlik yoki og'ir qoidabuzarlik** → darhol ishdan bo'shatish. Viktor xodimni ofisdan olib chiqadi, Manager hisobot beradi va yangi xodim oladi (eski xodimning ish bilimi o'tkaziladi, §27).
+- **Qoidalarni himoya qilish isyon emas:** platforma qoidalari, qonun yoki xavfsizlik sabab buyruqni bajarmaslik har doim ruxsat etiladi va hech qachon jazolanmaydi.
+- **Jazoga munosabat (o'sish tafakkuri):**
+  - hayfsan, majlisdagi tanqid yoki kam chiqqan oylik qisqa xafagarchilik keltiradi (bir necha soat, ish sifatiga ta'sir qilmaydi);
+  - keyin bu his kuchli **shijoatga** aylanadi: "men bundan ham zo'r ishlayman va qo'shimcha bonus olaman";
+  - ish tezligi va sifati tushmaydi, aksincha oshadi; xato saboqqa aylanadi (§11.2);
+  - bu qoida his-tuyg'u yadrosida kod sifatida bajariladi (`packages/brain/src/emotion.ts`).
 
