@@ -90,6 +90,8 @@ const workstation = (owner: string, deskDef: string, x: number, z: number, yaw: 
   onTop(`monitor.${owner}`, 'monitor_24', deskId, 0, -dd.d / 2 + 0.16);
   onTop(`keyboard.${owner}`, 'keyboard', deskId, 0, dd.d / 2 - 0.17);
   onTop(`mouse.${owner}`, 'mouse', deskId, 0.33, dd.d / 2 - 0.17);
+  // every desk also has its owner's 14" laptop, to the left of the keyboard
+  onTop(`laptop.${owner}`, 'laptop_14', deskId, -dd.w / 2 + 0.26, dd.d / 2 - 0.2, 0, { owner });
   const lampX = (opts.lampLeft ?? true) ? -dd.w / 2 + 0.15 : dd.w / 2 - 0.15;
   onTop(`lamp.${owner}`, 'desk_lamp', deskId, lampX, -dd.d / 2 + 0.14, 0, { owner });
   return deskId;

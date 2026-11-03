@@ -247,7 +247,10 @@ func _furniture() -> void:
 		add_child(node)
 
 func _placeholder_mat(def_id: String) -> Material:
-	if def_id.begins_with("desk") or def_id.ends_with("table") or def_id == "bookcase": return _mat("walnut", Color(0.36, 0.25, 0.17), 0.45, 0, 0.5)
+	if def_id in ["desk_140", "reception_desk"]: return _mat("desk_white", Color(0.94, 0.93, 0.91), 0.42)   # white matte top, black steel frame in the GLB
+	if def_id == "desk_160" or def_id.ends_with("table") or def_id == "bookcase": return _mat("walnut", Color(0.36, 0.25, 0.17), 0.45, 0, 0.5)
+	if def_id in ["keyboard", "mouse"]: return _mat("metal_black", Color(0.23, 0.24, 0.26), 0.5, 0.3)
+	if def_id == "laptop_14": return _mat("aluminium", Color(0.79, 0.8, 0.82), 0.22, 0.9)
 	if def_id.ends_with("chair"): return _mat("leather", Color(0.2, 0.2, 0.22), 0.6)
 	if def_id == "sofa_3": return _mat("leather", Color(0.54, 0.34, 0.21), 0.55)
 	if def_id in ["kitchen_counter", "sink_unit", "cabinet_low"]: return _mat("marble", Color(0.93, 0.92, 0.9), 0.25)

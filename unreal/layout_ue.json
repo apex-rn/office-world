@@ -1761,6 +1761,24 @@
    "owner": null
   },
   {
+   "id": "laptop.manager",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    2184,
+    220,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "manager"
+  },
+  {
    "id": "lamp.manager",
    "def": "desk_lamp",
    "kind": "device",
@@ -1977,6 +1995,24 @@
    "owner": null
   },
   {
+   "id": "laptop.shorts",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    556,
+    855,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "shorts"
+  },
+  {
    "id": "lamp.shorts",
    "def": "desk_lamp",
    "kind": "device",
@@ -2083,6 +2119,24 @@
    ],
    "seat": null,
    "owner": null
+  },
+  {
+   "id": "laptop.ig_res",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    644,
+    1145,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "ig_res"
   },
   {
    "id": "lamp.ig_res",
@@ -2193,6 +2247,24 @@
    "owner": null
   },
   {
+   "id": "laptop.writer",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    776,
+    855,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "writer"
+  },
+  {
    "id": "lamp.writer",
    "def": "desk_lamp",
    "kind": "device",
@@ -2299,6 +2371,24 @@
    ],
    "seat": null,
    "owner": null
+  },
+  {
+   "id": "laptop.yt_res",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    864,
+    1145,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "yt_res"
   },
   {
    "id": "lamp.yt_res",
@@ -2409,6 +2499,24 @@
    "owner": null
   },
   {
+   "id": "laptop.facts",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    996,
+    855,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "facts"
+  },
+  {
    "id": "lamp.facts",
    "def": "desk_lamp",
    "kind": "device",
@@ -2515,6 +2623,24 @@
    ],
    "seat": null,
    "owner": null
+  },
+  {
+   "id": "laptop.longform",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    1084,
+    1145,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "longform"
   },
   {
    "id": "lamp.longform",
@@ -2625,6 +2751,24 @@
    "owner": null
   },
   {
+   "id": "laptop.qa",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    1216,
+    855,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "qa"
+  },
+  {
    "id": "lamp.qa",
    "def": "desk_lamp",
    "kind": "device",
@@ -2731,6 +2875,24 @@
    ],
    "seat": null,
    "owner": null
+  },
+  {
+   "id": "laptop.publisher",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    1304,
+    1145,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "publisher"
   },
   {
    "id": "lamp.publisher",
@@ -2841,6 +3003,24 @@
    "owner": null
   },
   {
+   "id": "laptop.spare1",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    1436,
+    855,
+    74
+   ],
+   "yaw": 90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "spare1"
+  },
+  {
    "id": "lamp.spare1",
    "def": "desk_lamp",
    "kind": "device",
@@ -2947,6 +3127,24 @@
    ],
    "seat": null,
    "owner": null
+  },
+  {
+   "id": "laptop.spare2",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    1524,
+    1145,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "spare2"
   },
   {
    "id": "lamp.spare2",
@@ -3091,6 +3289,24 @@
    ],
    "seat": null,
    "owner": null
+  },
+  {
+   "id": "laptop.guard",
+   "def": "laptop_14",
+   "kind": "device",
+   "loc": [
+    284,
+    1022.5,
+    74
+   ],
+   "yaw": -90,
+   "size": [
+    22,
+    32,
+    1.8
+   ],
+   "seat": null,
+   "owner": "guard"
   },
   {
    "id": "lamp.guard",

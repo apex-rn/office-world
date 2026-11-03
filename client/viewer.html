@@ -122,6 +122,8 @@ const mat = {
   pot: M(0x2c2a28, { r: 0.7 }), screen: M(0x0d1b2a, { r: 0.2, e: 0x2f6aa8, ei: 0.55 }), lampGlow: M(0xfff1d0, { e: 0xffd79a, ei: 1.4 }),
   led: M(0x0a0a0a, { e: 0x46d39a, ei: 1.5 }), board: M(0xf7f6f2, { r: 0.4 }), carpet: M(0x3c4049, { r: 1 }), rug: M(0x7a6650, { r: 1 }),
   laminate: M(0xd6d1c8, { r: 0.6 }), door: M(0x4a3426, { r: 0.5 }),
+  deskTop: M(0xf1efea, { r: 0.42 }), frame: M(0x16171a, { r: 0.28, m: 0.85 }), alu: M(0xc9ccd1, { r: 0.22, m: 0.9 }),
+  keys: M(0x3a3d43, { r: 0.55, m: 0.2 }), keyCap: M(0xe6e6e4, { r: 0.5 }),
 };
 const box = (w, h, d, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; };
 const cyl = (r, h, m, x = 0, y = 0, z = 0, seg = 20) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; };
@@ -190,9 +192,11 @@ function build(id, d) {
   const add = (...o) => o.forEach(x => g.add(x));
   switch (id) {
     case 'desk_140': case 'desk_160': case 'reception_desk': {
-      add(box(w, 0.035, dd, mat.walnut, 0, h - 0.0175, 0));
-      for (const s of [-1, 1]) add(box(0.04, h - 0.035, dd - 0.06, mat.black, s * (w / 2 - 0.06), (h - 0.035) / 2, 0));
-      add(box(w - 0.16, 0.32, 0.018, mat.black, 0, h - 0.27, -dd / 2 + 0.06));
+      // modern luxury desk: white matte top on a black steel frame (the Manager keeps walnut)
+      const topM = id === 'desk_160' ? mat.walnut : mat.deskTop;
+      add(box(w, 0.025, dd, topM, 0, h - 0.0125, 0));
+      for (const s of [-1, 1]) { add(box(0.05, h - 0.025, 0.05, mat.frame, s * (w / 2 - 0.08), (h - 0.025) / 2, 0), box(0.05, 0.03, dd - 0.08, mat.frame, s * (w / 2 - 0.08), 0.015, 0)); }
+      add(box(w - 0.16, 0.04, 0.05, mat.frame, 0, h - 0.06, 0), box(w - 0.3, 0.08, 0.12, mat.frame, 0, h - 0.12, -dd / 2 + 0.12));
       if (id === 'reception_desk') { add(box(w, 1.06, 0.05, mat.walnut, 0, 0.53, -dd / 2 - 0.025), box(w, 0.025, 0.06, mat.brass, 0, 1.07, -dd / 2 - 0.025)); }
       break;
     }
@@ -240,17 +244,22 @@ function build(id, d) {
     case 'water_dispenser': add(box(w, h - 0.3, dd, mat.white, 0, (h - 0.3) / 2, 0), cyl(0.13, 0.32, M(0x6aa7d8, { t: 0.55 }), 0, h - 0.16, 0)); break;
     case 'server_rack': add(box(w, h, dd, mat.black, 0, h / 2, 0)); for (let k = 0; k < 8; k++) add(box(w - 0.1, 0.012, 0.01, mat.led, 0, 0.3 + k * 0.2, dd / 2 + 0.005)); break;
     case 'wc_partition': add(box(w, h - 0.15, dd, mat.laminate, 0, 0.15 + (h - 0.15) / 2, 0)); break;
-    case 'monitor_24': {
+    case 'monitor_24': { // thin-bezel 24" panel on an aluminium stand
       add(box(0.22, 0.012, 0.17, mat.black, 0, 0.006, 0), box(0.04, 0.22, 0.025, mat.black, 0, 0.12, -0.05));
       const ph = 0.3 + 0.012, py = h - ph / 2;
       add(box(w, ph, 0.025, mat.black, 0, py, -0.02), box(w - 0.012, ph - 0.012, 0.002, mat.screen, 0, py, -0.006));
       break;
     }
-    case 'keyboard': add(box(w, h, dd, mat.black, 0, h / 2, 0)); break;
-    case 'mouse': add(box(w, h, dd, mat.black, 0, h / 2, 0)); break;
+    case 'keyboard': { add(box(w, 0.012, dd, mat.alu, 0, 0.006, 0)); for (let r = 0; r < 5; r++) for (let c = 0; c < 15; c++) add(box(0.024, 0.008, 0.019, mat.keyCap, -w / 2 + 0.03 + c * 0.0273, 0.016, -dd / 2 + 0.018 + r * 0.023)); break; }
+    case 'mouse': { const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 10), mat.keys); m.scale.set(w, h * 1.6, dd); m.position.y = 0.0; m.castShadow = true; add(m); break; }
     case 'desk_lamp': { add(cyl(0.08, 0.02, mat.brass, 0, 0.01, 0), cyl(0.01, 0.38, mat.brass, 0, 0.2, -0.02)); const head = box(0.16, 0.03, 0.08, mat.brass, 0, h - 0.03, 0.04); head.rotation.x = 0.35; add(head, box(0.13, 0.004, 0.06, mat.lampGlow, 0, h - 0.05, 0.05)); break; }
     case 'mug': add(cyl(0.042, h, mat.white, 0, h / 2, 0)); break;
-    case 'laptop': case 'laptop_14': add(box(w, 0.012, dd, mat.steel, 0, 0.006, 0)); break;
+    case 'laptop': case 'laptop_14': {
+      add(box(w, 0.009, dd, mat.alu, 0, 0.0045, 0), box(w - 0.03, 0.002, dd * 0.45, mat.keys, 0, 0.0095, 0.02));
+      const lid = new THREE.Group(); lid.position.set(0, 0.009, -dd / 2); lid.rotation.x = -1.85; add(lid);
+      const back = box(w, 0.006, dd, mat.alu, 0, 0, dd / 2); const scr = box(w - 0.02, 0.001, dd - 0.03, mat.screen, 0, -0.0035, dd / 2);
+      lid.add(back, scr); break;
+    }
     case 'coffee_machine': add(box(w, h, dd, mat.black, 0, h / 2, 0), box(w * 0.7, 0.03, 0.03, mat.brass, 0, h * 0.55, dd / 2 + 0.015)); break;
     case 'microwave': add(box(w, h, dd, mat.steel, 0, h / 2, 0), box(w * 0.6, h * 0.6, 0.005, mat.black, -0.05, h / 2, dd / 2 + 0.003)); break;
     case 'printer': add(box(w, h, dd, M(0xd8d8d4), 0, h / 2, 0)); break;
