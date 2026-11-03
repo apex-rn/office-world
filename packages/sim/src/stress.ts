@@ -60,7 +60,8 @@ export async function runStress(o: { bodies: number; minutes: number; seed: numb
         if (process.env.STRESS_DEBUG && e.code === 'NO_PATH') {
           const b = w.bodies.get(e.agent)!;
           const near = [...w.bodies.values()].filter(o => o !== b && o.state !== 'offsite' && Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) < 2).map(o => `${o.spec.id}:${o.state}:${o.active?.verb ?? '-'}@${o.pos.x.toFixed(2)},${o.pos.z.toFixed(2)}`);
-          console.log(`FAIL ${k} at ${b.pos.x.toFixed(2)},${b.pos.z.toFixed(2)} near=[${near.join(' ')}]`);
+          const ag = (w as any).lastFail?.get?.(e.agent);
+          console.log(`FAIL ${k} at ${b.pos.x.toFixed(2)},${b.pos.z.toFixed(2)} crowd=${ag ?? '?'} near=[${near.join(' ')}]`);
         }
       }
     }

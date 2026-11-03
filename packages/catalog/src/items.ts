@@ -142,8 +142,8 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'ashtray_stand', name: 'Outdoor ashtray', kind: 'furniture', placement: 'floor',
     dims: { w: 0.30, d: 0.30, h: 0.95 }, source: 'VERIFY: standing ashtray bin',
-    massKg: 8, nav: 'static', anchors: { front: { x: 0, z: 0.55 } },
-    affordances: [{ verb: 'smoke', at: 'front', duration: [300, 480], capacity: 2, anim: 'smoke' }],
+    massKg: 8, nav: 'static', anchors: { front: { x: 0, z: 0.55 }, left: { x: -0.45, z: 0.40 }, right: { x: 0.45, z: 0.40 } },
+    affordances: [{ verb: 'smoke', at: 'front', slots: ['left', 'right'], duration: [300, 480], capacity: 2, anim: 'smoke' }],
   },
 
   // ---------------- devices / items on surfaces ----------------
@@ -207,8 +207,8 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'kanban_board', name: 'NAVBAT kanban board', kind: 'fixture', placement: 'wall',
     dims: { w: 1.80, d: 0.03, h: 1.20 }, wallBottom: 0.90, source: 'magnetic whiteboard 1800x1200, bottom edge 0.90',
-    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.50 } },
-    affordances: [{ verb: 'move_card', at: 'front', duration: [5, 15], capacity: 2, anim: 'pin_card' }],
+    massKg: 18, nav: 'none', anchors: { front: { x: 0, z: 0.50 }, left: { x: -0.45, z: 0.50 }, right: { x: 0.45, z: 0.50 } },
+    affordances: [{ verb: 'move_card', at: 'front', slots: ['left', 'right'], duration: [5, 15], capacity: 2, anim: 'pin_card' }],
   },
   {
     id: 'whiteboard', name: 'Whiteboard', kind: 'fixture', placement: 'wall',

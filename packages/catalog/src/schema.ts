@@ -23,6 +23,8 @@ export interface Affordance {
   verb: Verb;
   /** where the user must stand/sit (anchor name) */
   at: string;
+  /** for capacity > 1: one anchor per simultaneous user (each person gets their own spot) */
+  slots?: string[];
   /** seconds [min, max] */
   duration: [number, number];
   /** concurrent users */

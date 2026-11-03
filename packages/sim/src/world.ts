@@ -42,9 +42,12 @@ interface Active {
   id: number; verb: Command['verb'];
   phase: 'walk' | 'queue' | 'turn' | 'transition' | 'perform' | 'timer';
   target?: string; goal?: Vec3; goalYaw?: number;
-  until?: number; aff?: { verb: Verb; at: string; dur: [number, number]; yields?: string; anim: string };
+  until?: number; aff?: { verb: Verb; at: string; dur: [number, number]; yields?: string; anim: string; slots?: string[] };
   lastProgressT: number; bestDist: number; retries: number;
   started?: number; cur?: Vec3;
+  /** seat or device slot index this action holds */
+  slot?: number;
+  lastRetarget?: number;
   after?: 'sit' | 'use' | 'home' | 'go';
 }
 
@@ -59,6 +62,9 @@ export interface Body {
   anim: string;
   /** passive reflex target (stepping out of the way); cleared by the next command */
   stepAside?: Vec3;
+  stepAsideT?: number;
+  /** waiting for a narrow doorway to clear */
+  doorHold?: string;
 }
 
 export interface DynItem { id: string; def: string; at: { on: string; x: number; z: number } | { heldBy: string }; fill: number }
@@ -74,10 +80,16 @@ export class World {
   readonly occupancy = new Map<string, Set<string>>();
   /** device instance id -> FIFO queue of waiting agents */
   readonly queues = new Map<string, string[]>();
+  /** "inst#slot" -> agent holding that seat / standing spot */
+  readonly slotTaken = new Map<string, string>();
+  /** cached bent queue lines per device */
+  private lines = new Map<string, Vec3[]>();
   readonly events: WorldEvent[] = [];
   readonly acoustics: Acoustics;
   /** reachable representative standing spot per zone (closest free navmesh point to the zone centre) */
   readonly zoneSpot = new Map<string, Vec3>();
+  /** narrow doorways (one person at a time): centre, along-wall unit, normal unit, half width */
+  private doors: { id: string; c: Vec2; u: Vec2; n: Vec2; hw: number }[] = [];
   private nextAction = 1;
   private nextItem = 1;
   private rand: () => number;
@@ -86,6 +98,12 @@ export class World {
     this.acoustics = new Acoustics(layout);
     this.rand = rng(seed);
     this.computeZoneSpots();
+    for (const o of layout.openings.filter(o => o.kind === 'door' && o.to - o.from < 1.3)) {
+      const w = layout.walls.find(x => x.id === o.wall)!;
+      const L = Math.hypot(w.b.x - w.a.x, w.b.z - w.a.z), u = { x: (w.b.x - w.a.x) / L, z: (w.b.z - w.a.z) / L };
+      const m = (o.from + o.to) / 2;
+      this.doors.push({ id: o.id, c: { x: w.a.x + u.x * m, z: w.a.z + u.z * m }, u, n: { x: -u.z, z: u.x }, hw: (o.to - o.from) / 2 });
+    }
     for (const i of layout.instances) {
       const d = def(i.def);
       if (d.kind === 'item') this.items.set(i.id, { id: i.id, def: i.def, at: { on: i.on!, x: i.x, z: i.z }, fill: 0 });
@@ -233,12 +251,14 @@ export class World {
         const i = this.inst(c.target);
         const d = i && def(i.def);
         if (!i || !d?.seatH) return rej('UNKNOWN_TARGET', 'not a seat');
-        const cap = d.affordances?.find(a => a.verb === 'sit')?.capacity ?? 1;
-        if ((this.occupancy.get(i.id)?.size ?? 0) >= cap) return rej('OCCUPIED', `${i.id} is taken`);
-        const ap = this.seatApproach(i);
+        const n = this.seatCount(i);
+        let slot = -1;
+        for (let k = 0; k < n; k++) if (!this.slotTaken.has(`${i.id}#${k}`)) { slot = k; break; }
+        if (slot < 0) return rej('OCCUPIED', `${i.id} is taken`);
+        const ap = this.seatApproach(i, slot);
         if (!ap) return rej('NO_PATH', 'seat cannot be approached');
         const res = this.walkTo(b, ap.p, ap.yaw, 'sit', 'sit', i.id);
-        if (res.ok) this.reserve(i.id, b.spec.id);
+        if (res.ok) { this.reserve(i.id, b.spec.id); this.slotTaken.set(`${i.id}#${slot}`, b.spec.id); b.active!.slot = slot; }
         return res;
       }
       case 'use': {
@@ -254,7 +274,7 @@ export class World {
         if (!at) return rej('UNKNOWN_TARGET', 'device has no use point');
         const res = this.walkTo(b, at.p, at.yaw + Math.PI, 'use', 'use', i.id);
         if (res.ok) {
-          b.active!.aff = { verb: aff.verb, at: aff.at, dur: aff.duration, yields: aff.yields, anim: aff.anim };
+          b.active!.aff = { verb: aff.verb, at: aff.at, dur: aff.duration, yields: aff.yields, anim: aff.anim, slots: aff.slots };
           b.active!.started = this.now;
           const q = this.queues.get(i.id) ?? []; q.push(b.spec.id); this.queues.set(i.id, q);
         }
@@ -282,7 +302,10 @@ export class World {
   cancel(b: Body): void {
     const a = b.active;
     if (!a) return;
-    if (a.target && (a.verb === 'sit' || a.verb === 'use') && !(b.seat && b.seat.inst === a.target)) this.release(a.target, b.spec.id);
+    if (a.target && (a.verb === 'sit' || a.verb === 'use') && !(b.seat && b.seat.inst === a.target)) {
+      this.release(a.target, b.spec.id);
+      if (a.slot !== undefined && this.slotTaken.get(`${a.target}#${a.slot}`) === b.spec.id) this.freeSlot(`${a.target}#${a.slot}`);
+    }
     if (a.target) { const q = this.queues.get(a.target); if (q) this.queues.set(a.target, q.filter(x => x !== b.spec.id)); }
     b.active = null;
   }
@@ -293,15 +316,39 @@ export class World {
   }
   private release(inst: string, agent: string): void { this.occupancy.get(inst)?.delete(agent); }
 
-  private seatApproach(i: Instance): { p: Vec3; yaw: number } | null {
-    const d = def(i.def);
-    // sofas: pick the approach of the first free seat
-    if (d.anchors?.approach) return this.anchorWorld(i, 'approach');
-    for (let k = 0; k < 3; k++) {
-      const a = this.anchorWorld(i, `approach${k}`);
-      if (a) return a;
+  private seatCount(i: Instance): number {
+    const an = def(i.def).anchors ?? {};
+    return an.seat ? 1 : Object.keys(an).filter(k => /^seat\d+$/.test(k)).length;
+  }
+  private seatName(i: Instance, slot: number): string { return def(i.def).anchors?.seat ? 'seat' : `seat${slot}`; }
+  private seatApproach(i: Instance, slot: number): { p: Vec3; yaw: number } | null {
+    return def(i.def).anchors?.approach ? this.anchorWorld(i, 'approach') : this.anchorWorld(i, `approach${slot}`);
+  }
+  private freeSlot(key: string): void { this.slotTaken.delete(key); }
+
+  /** Queue spots for a device: people line up back along the route they came by (the walking path from the line's
+   *  start towards the office entrance), one every 0.9 m, so the next in line is always in front of the others. */
+  private lineSpots(i: Instance, start: Vec3, _yaw: number, n: number): Vec3[] {
+    const key = `${i.id}@${start.x.toFixed(2)},${start.z.toFixed(2)}`;
+    let line = this.lines.get(key);
+    if (!line) {
+      line = [];
+      const e = snap(this.nav, { x: this.layout.entrance.x, y: 0, z: this.layout.entrance.z })!;
+      const pth = path(this.nav, start, e) ?? [];
+      let acc = 0, want = 0.9;
+      for (let k = 1; k < pth.length && line.length < 12; k++) {
+        const a = pth[k - 1]!, b = pth[k]!, L = Math.hypot(b.x - a.x, b.z - a.z);
+        while (acc + L >= want && line.length < 12) {
+          const t = (want - acc) / L;
+          const sp = snap(this.nav, { x: a.x + (b.x - a.x) * t, y: 0, z: a.z + (b.z - a.z) * t }, { x: 0.1, y: 0.5, z: 0.1 });
+          if (sp) line.push(sp);
+          want += 0.9;
+        }
+        acc += L;
+      }
+      this.lines.set(key, line);
     }
-    return null;
+    return line.slice(0, n);
   }
 
   private resolveTarget(b: Body, t: string): { p: Vec3; yaw?: number } | null {
@@ -337,9 +384,11 @@ export class World {
   private standUp(b: Body): Result {
     if (b.state !== 'sitting' || !b.seat) return { ok: false, code: 'NOT_ALLOWED', msg: 'not sitting' };
     const i = this.inst(b.seat.inst)!;
-    const ap = this.seatApproach(i)!;
+    const slot = b.seat.anchor === 'seat' ? 0 : Number(b.seat.anchor.slice(4));
+    const ap = this.seatApproach(i, slot)!;
     if (!this.freeSpot(ap.p, b.spec.id)) return { ok: false, code: 'BUSY', msg: 'someone is standing right behind the seat' };
     this.release(i.id, b.spec.id);
+    this.freeSlot(`${i.id}#${slot}`);
     b.seat = null;
     this.spawnAgent(b, ap.p);
     b.state = 'standing'; b.anim = 'stand_up'; b.yaw = ap.yaw;
@@ -365,8 +414,71 @@ export class World {
   }
 
   // ------------------------------------------------------------------ tick
+  /** The body's current walking target (line spot, goal or a side step). */
+  private goalOf(b: Body): Vec3 | undefined { return b.stepAside ?? b.active?.cur ?? b.active?.goal; }
+
+  /** One-at-a-time doorways: whoever is in the doorway (or nearest to it) goes first; people coming the other way wait. */
+  private arbitrateDoors(): void {
+    const held = new Set<string>();
+    for (const d of this.doors) {
+      const rel = (p: Vec2) => ({ a: (p.x - d.c.x) * d.u.x + (p.z - d.c.z) * d.u.z, n: (p.x - d.c.x) * d.n.x + (p.z - d.c.z) * d.n.z });
+      const users: { b: Body; side: number; dist: number; inside: boolean }[] = [];
+      for (const b of this.bodies.values()) {
+        if (!b.agent || b.state !== 'walking') continue;
+        const r = rel(b.pos);
+        if (Math.abs(r.a) > d.hw + 0.6 || Math.abs(r.n) > 1.8) continue;
+        const nx = b.agent.nextTargetInPath(), rn = rel(nx);
+        const inside = Math.abs(r.a) < d.hw + 0.15 && Math.abs(r.n) < 0.45;
+        const crossing = inside || (Math.sign(rn.n) !== Math.sign(r.n) && Math.abs(rn.a) < d.hw + 0.6);
+        if (!crossing) continue;
+        users.push({ b, side: Math.sign(r.n) || 1, dist: Math.hypot(r.a, r.n), inside });
+      }
+      if (users.length < 2) continue;
+      // the first through (inside, else closest) sets the direction of flow; people coming the other way wait
+      users.sort((x, y) => (Number(y.inside) - Number(x.inside)) || x.dist - y.dist);
+      const flowSide = users[0]!.side;
+      for (const u of users.slice(1)) if (u.side !== flowSide && !u.inside && u.dist < 1.6) held.add(u.b.spec.id);
+    }
+    for (const b of this.bodies.values()) {
+      if (!b.agent) continue;
+      if (held.has(b.spec.id)) {
+        if (!b.doorHold) { b.doorHold = 'door'; b.agent.requestMoveVelocity({ x: 0, y: 0, z: 0 }); }
+        if (b.active) b.active.lastProgressT = this.now;   // waiting politely is not being stuck
+      } else if (b.doorHold) {
+        b.doorHold = undefined;
+        const g = this.goalOf(b); if (g) b.agent.requestMoveTarget(g);
+      }
+    }
+  }
+
+  /** Two people blocking each other face to face: the one with lower priority steps aside for 2.5 s. */
+  private breakDeadlock(b: Body): void {
+    if (!b.agent || b.stepAside) return;
+    const v = b.agent.velocity();
+    if (Math.hypot(v.x, v.z) > 0.15) return;
+    for (const o of this.bodies.values()) {
+      if (o === b || !o.agent || o.state !== 'walking') continue;
+      if (Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) > 0.9) continue;
+      const ov = o.agent.velocity();
+      if (Math.hypot(ov.x, ov.z) > 0.15) continue;
+      const slot = Math.floor(this.now / 10000);
+      const pri = (id: string) => [...(id + slot)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+      if (pri(b.spec.id) > pri(o.spec.id)) return;          // the other one yields
+      const dx = o.pos.x - b.pos.x, dz = o.pos.z - b.pos.z, L = Math.hypot(dx, dz) || 1;
+      for (const side of [1, -1]) {
+        const p = snap(this.nav, { x: b.pos.x - (dz / L) * side * 0.7 - (dx / L) * 0.3, y: 0, z: b.pos.z + (dx / L) * side * 0.7 - (dz / L) * 0.3 }, { x: 0.2, y: 1, z: 0.2 });
+        if (!p) continue;
+        b.stepAside = p; b.stepAsideT = this.now; b.agent.requestMoveTarget(p);
+        this.emit({ t: this.now, type: 'yield', agent: b.spec.id, for: o.spec.id });
+        if (b.active) b.active.lastProgressT = this.now;
+        return;
+      }
+    }
+  }
+
   step(dt: number): void {
     this.now += dt * 1000;
+    this.arbitrateDoors();
     this.nav.crowd.update(dt);
     for (const b of this.bodies.values()) {
       if (b.agent) {
@@ -380,7 +492,8 @@ export class World {
     this.acoustics.updateDoors([...this.bodies.values()].filter(b => b.state !== 'offsite').map(b => b.pos));
   }
 
-  /** Device use with a real line: whoever is k-th waits 0.9 m behind the (k-1)-th, facing the device. */
+  /** Device use with a real line. Front of the line takes a free use spot (one per simultaneous user);
+   *  the rest wait on bent line spots that avoid furniture; anyone in line steps aside for passers-by and returns. */
   private advanceUse(b: Body, a: Active, fail: (c: RejectCode, m: string) => void): void {
     const i = this.inst(a.target!)!;
     const cap = def(i.def).affordances?.find(x => x.verb === a.aff!.verb)?.capacity ?? 1;
@@ -390,13 +503,28 @@ export class World {
     const free = Math.max(0, cap - users);
     const k = pos < free ? 0 : pos - free + 1;
     let want = a.goal!;
-    if (k > 0) {
-      // the line starts at the device's queue spot (if it has one) or just behind the use point
-      const start = i.queueAt ? { x: i.queueAt.x, z: i.queueAt.z, yaw: i.queueAt.yaw, n: k - 1 } : a.goalYaw !== undefined ? { x: a.goal!.x, z: a.goal!.z, yaw: a.goalYaw, n: k } : null;
-      if (start) {
-        const back = { x: -Math.sin(start.yaw), z: -Math.cos(start.yaw) };
-        want = snap(this.nav, { x: start.x + back.x * 0.9 * start.n, y: 0, z: start.z + back.z * 0.9 * start.n }) ?? a.goal!;
+    if (k === 0 && a.aff?.slots?.length) {
+      if (a.slot === undefined) {
+        const s = a.aff.slots.findIndex((_, n) => !this.slotTaken.has(`${i.id}#${n}`));
+        if (s >= 0) { a.slot = s; this.slotTaken.set(`${i.id}#${s}`, b.spec.id); }
       }
+      if (a.slot !== undefined) {
+        const an = this.anchorWorld(i, a.aff.slots[a.slot]!);
+        if (an) { want = snap(this.nav, an.p) ?? want; a.goalYaw = an.yaw + Math.PI; }
+      }
+    } else if (k > 0) {
+      const start = i.queueAt ? { p: { x: i.queueAt.x, y: 0, z: i.queueAt.z }, yaw: i.queueAt.yaw, n: k - 1 }
+        : a.goalYaw !== undefined ? { p: a.goal!, yaw: a.goalYaw, n: k } : null;
+      if (start) {
+        const startP = snap(this.nav, start.p) ?? start.p;
+        if (start.n === 0) want = startP;
+        else { const line = this.lineSpots(i, startP, start.yaw, start.n); want = line[Math.min(start.n, line.length) - 1] ?? startP; }
+      }
+    }
+    // stepping aside for someone: hold the side spot ~3 s, then return to the line
+    if (b.stepAside) {
+      if ((this.now - (b.stepAsideT ?? this.now)) < 3000) return;
+      b.stepAside = undefined; a.cur = undefined;
     }
     if (!a.cur || Math.hypot(a.cur.x - want.x, a.cur.z - want.z) > 0.1) {
       a.cur = want; a.bestDist = Infinity; a.lastProgressT = this.now; a.retries = 0;
@@ -418,7 +546,7 @@ export class World {
       a.phase = 'walk'; b.state = 'walking'; b.anim = 'walk';
       const stuckFor = (this.now - a.lastProgressT) / 1000;
       if (stuckFor > GIVE_UP_S) return fail('NO_PATH', 'blocked for too long');
-      if (stuckFor > 2.5) this.askToYield(b, want);
+      if (stuckFor > 2.5) { this.askToYield(b, want); this.breakDeadlock(b); }
       if (stuckFor > STUCK_S * (a.retries + 1) && b.agent) { a.retries++; b.agent.requestMoveTarget(want); }
     }
     if ((this.now - (a.started ?? this.now)) / 1000 > 900) fail('BUSY', 'waited 15 minutes in line');
@@ -460,6 +588,7 @@ export class World {
   }
 
   private lastYieldAsk = new Map<string, number>();
+  readonly lastFail = new Map<string, string>();
   /** "Excuse me": idle people standing in the way (within 1.3 m, ahead of us or on our goal) step aside. */
   private askToYield(b: Body, goal: Vec3): void {
     if ((this.now - (this.lastYieldAsk.get(b.spec.id) ?? 0)) < 2000) return;
@@ -468,7 +597,8 @@ export class World {
     const ux = dx / L, uz = dz / L;
     for (const o of this.bodies.values()) {
       if (o === b || !o.agent || o.state === 'walking') continue;
-      if (o.active && !(o.active.verb === 'wait' || o.active.verb === 'go_to' || o.active.verb === 'consume')) continue; // people in line or using a device stay
+      const inLine = o.active?.verb === 'use' && o.active.phase === 'queue';
+      if (o.active && !(inLine || o.active.verb === 'wait' || o.active.verb === 'go_to' || o.active.verb === 'consume')) continue; // people using a device stay
       const ox = o.pos.x - b.pos.x, oz = o.pos.z - b.pos.z, od = Math.hypot(ox, oz);
       const onGoal = Math.hypot(o.pos.x - goal.x, o.pos.z - goal.z) < 0.6;
       if (!onGoal && (od > 1.3 || (ox * ux + oz * uz) / (od || 1) < 0.3)) continue;
@@ -477,7 +607,7 @@ export class World {
         for (const dist of [0.8, 1.2]) {
           const p = snap(this.nav, { x: o.pos.x - uz * side * dist + ux * 0.3, y: 0, z: o.pos.z + ux * side * dist + uz * 0.3 }, { x: 0.2, y: 1, z: 0.2 });
           if (!p || Math.hypot(p.x - goal.x, p.z - goal.z) < 0.6) continue;
-          o.stepAside = p; o.agent.requestMoveTarget(p);
+          o.stepAside = p; o.stepAsideT = this.now; o.agent.requestMoveTarget(p);
           this.emit({ t: this.now, type: 'yield', agent: o.spec.id, for: b.spec.id });
           return;
         }
@@ -498,6 +628,7 @@ export class World {
     const a = b.active;
     if (!a) { if (b.state === 'walking') b.state = 'standing'; return; }
     const fail = (code: RejectCode, msg: string) => {
+      if (b.agent) { const v = b.agent.velocity(); this.lastFail.set(b.spec.id, `st=${b.agent.state()} tgt=${b.agent.target().x.toFixed(2)},${b.agent.target().z.toFixed(2)} next=${b.agent.nextTargetInPath().x.toFixed(2)},${b.agent.nextTargetInPath().z.toFixed(2)} dv=${Math.hypot(b.agent.desiredVelocity().x, b.agent.desiredVelocity().z).toFixed(2)} v=${Math.hypot(v.x, v.z).toFixed(2)} goal=${(a.cur ?? a.goal)?.x.toFixed(2)},${(a.cur ?? a.goal)?.z.toFixed(2)}`); }
       this.emit({ t: this.now, type: 'action_failed', agent: b.spec.id, actionId: a.id, verb: a.verb, code, msg });
       this.cancel(b);
       if (b.agent) b.agent.resetMoveTarget();
@@ -510,6 +641,17 @@ export class World {
 
     if (a.after === 'use' && (a.phase === 'walk' || a.phase === 'queue')) return this.advanceUse(b, a, fail);
 
+    if (a.phase === 'walk' && a.goal && a.verb === 'go_to' && a.target && this.bodies.has(a.target) && this.now - (a.lastRetarget ?? 0) > 1000) {
+      a.lastRetarget = this.now;
+      const g = this.resolveTarget(b, a.target);
+      if (!g) return fail('NOT_PRESENT', `${a.target} left`);
+      const s2 = snap(this.nav, g.p);
+      if (s2 && Math.hypot(s2.x - a.goal.x, s2.z - a.goal.z) > 0.3) { a.goal = s2; a.goalYaw = g.yaw; b.agent?.requestMoveTarget(s2); }
+    }
+    if (a.phase === 'walk' && a.goal && b.stepAside) {
+      if (this.now - (b.stepAsideT ?? this.now) < 2500) { a.lastProgressT = this.now; return; }
+      b.stepAside = undefined; b.agent?.requestMoveTarget(a.goal);
+    }
     if (a.phase === 'walk' && a.goal) {
       const d = Math.hypot(b.pos.x - a.goal.x, b.pos.z - a.goal.z);
       if (d < a.bestDist - 0.05) { a.bestDist = d; a.lastProgressT = this.now; }
@@ -525,7 +667,7 @@ export class World {
         }
         if (a.after === 'sit') {
           const i = this.inst(a.target!)!;
-          const seatName = def(i.def).anchors?.seat ? 'seat' : 'seat1';
+          const seatName = this.seatName(i, a.slot ?? 0);
           const seat = this.anchorWorld(i, seatName)!;
           this.despawnAgent(b);
           b.seat = { inst: i.id, anchor: seatName };
@@ -545,13 +687,14 @@ export class World {
         }
       }
       if (stuckFor > GIVE_UP_S) return fail('NO_PATH', 'blocked for too long');
-      if (stuckFor > 2.5) this.askToYield(b, a.goal);
+      if (stuckFor > 2.5) { this.askToYield(b, a.goal); this.breakDeadlock(b); }
       if (stuckFor > STUCK_S * (a.retries + 1) && b.agent) { a.retries++; b.agent.requestMoveTarget(a.goal); }
       return;
     }
 
     if (a.phase === 'perform' && this.now >= a.until!) {
       this.release(a.target!, b.spec.id);
+      if (a.slot !== undefined) this.freeSlot(`${a.target}#${a.slot}`);
       b.state = 'standing'; b.anim = 'idle';
       if ((this.queues.get(a.target!)?.length ?? 0) > 0) this.stepAsideFrom(b);
       if (a.aff?.yields) {

@@ -60,7 +60,7 @@ test('nobody can talk to someone who is not there or cannot hear', async () => {
   w.command('viktor', { verb: 'sit', target: 'chair.guard' });
   runUntil(w, () => false, 3);
   assert.ok(w.command('daniel', { verb: 'arrive' }).ok);
-  w.command('daniel', { verb: 'sit', target: 'meeting.chairS0' });
+  w.command('daniel', { verb: 'sit', target: 'meeting.chairW0' });
   assert.ok(runUntil(w, () => w.bodies.get('daniel')!.state === 'sitting' && w.bodies.get('viktor')!.state === 'sitting', 200));
   const r2 = w.command('viktor', { verb: 'say', to: 'daniel', text: 'Courier is here' });
   assert.ok(!r2.ok && r2.code === 'OUT_OF_EARSHOT');
