@@ -1,6 +1,6 @@
 import { seoulTime } from '../../shared/src/time.js';
 import { rng } from '../../shared/src/rng.js';
-import type { World, WorldEvent } from '../../sim/src/world.js';
+import type { Command, World, WorldEvent } from '../../sim/src/world.js';
 import { BOSS, type Identity, STAFF } from './identity.js';
 import type { Router } from './llm.js';
 import { type BoardChange, type Card, ErrandRunner, diffBoard, errandsFor } from './board.js';
@@ -39,6 +39,12 @@ export class OfficeRuntime {
   private readonly maxConcurrent: number;
   plan: DayPlan | null = null;
   private inFlightIds = new Set<string>();
+  private coatTaken = new Set<string>();
+  readonly frictions = new Map<string, { what: string; why: string; n: number; who: Set<string> }>();
+  /** the day's most common frictions, for the evening review and the improvement list */
+  topFrictions(k = 8): { what: string; why: string; n: number; who: string[] }[] {
+    return [...this.frictions.values()].sort((a, b) => b.n - a.n).slice(0, k).map(f => ({ ...f, who: [...f.who] }));
+  }
   readonly errands = new ErrandRunner();
   /** the live board (the renderer pins these on the kanban) */
   cards: Card[] = [];
@@ -52,6 +58,9 @@ export class OfficeRuntime {
     for (const p of opts.staff ?? STAFF) {
       world.addBody({ id: p.id, name: p.name, heightM: p.heightM, walkSpeed: 1.25 + 0.1 * p.bigFive.conscientiousness });
       const mind = new Mind(p, { world, router, social: this.society });
+      // what got in someone's way today (a full room, a blocked spot, a device they could not use): the Manager's
+      // evening review turns these into office improvements for the Boss to approve
+      mind.onFriction = (what, why) => { const k = `${what} | ${why}`; const f = this.frictions.get(k); if (f) { f.n++; f.who.add(p.id); } else this.frictions.set(k, { what, why, n: 1, who: new Set([p.id]) }); };
       mind.onThinkError = reason => { this.diagnostics.push({ t: world.now, who: p.id, reason }); if (this.diagnostics.length > 500) this.diagnostics.shift(); };
       this.minds.set(p.id, mind);
     }
@@ -119,7 +128,11 @@ export class OfficeRuntime {
       }
       if (now >= leave && !b.active && b.state !== 'sitting') {
         const othersIn = [...w.bodies.values()].some(o => o.spec.id !== id && o.state !== 'offsite' && o.spec.id !== BOSS.id);
-        if (id !== 'guard' || !othersIn) { w.command(id, { verb: 'go_home' }); continue; }
+        if (id !== 'guard' || !othersIn) {
+          // take the coat from the rack on the way out (once), then leave
+          if (!this.coatTaken.has(id) && w.inst('reception.coats')) { this.coatTaken.add(id); this.errands.add({ who: id, why: 'leave', steps: [{ verb: 'use', target: 'reception.coats', action: 'hang_coat' as never }, { verb: 'go_home' }] }); continue; }
+          w.command(id, { verb: 'go_home' }); continue;
+        }
       }
       if (now >= leave && b.state === 'sitting' && !b.active) { w.command(id, { verb: 'stand' }); continue; }
       // replies jump the queue (a person spoken to answers within seconds, not after others finish thinking)
@@ -134,7 +147,7 @@ export class OfficeRuntime {
     this.greetings();
     if (!meeting && !party && now < plan.workEnds) this.habits();
     if (now >= plan.leaveFrom + 30 && this.eveningDone !== t.date && [...w.bodies.values()].every(b => b.state === 'offsite' || b.spec.id === BOSS.id)) {
-      this.eveningDone = t.date;
+      this.eveningDone = t.date; this.coatTaken.clear();
       for (const f of this.society.evening(w.now)) void this.minds.get(f.who)?.feel(f.appraisal);
       // evening reflection, one person after another (free model, small and rare)
       void (async () => { for (const m of this.minds.values()) await m.reflect().catch(() => []); })();
@@ -198,8 +211,12 @@ export class OfficeRuntime {
     if (e.type === 'arrived') {
       const m = this.minds.get(e.agent);
       if (m) {
-        const own = this.world.inst(`chair.${e.agent}`);
-        this.world.command(e.agent, own ? { verb: 'sit', target: own.id } : { verb: 'go_to', target: 'kitchen' });
+        // November in Seoul: coat off at the rack by the entrance first, then to your own place
+        const own = this.world.inst(`chair.${e.agent}`), rack = this.world.inst('reception.coats');
+        const steps: Command[] = [];
+        if (rack) steps.push({ verb: 'use', target: rack.id, action: 'hang_coat' as never });
+        steps.push(own ? { verb: 'sit', target: own.id } : { verb: 'go_to', target: 'kitchen' });
+        this.errands.add({ who: e.agent, why: 'arrive', steps });
       }
     }
     for (const m of this.minds.values()) m.observe(e);

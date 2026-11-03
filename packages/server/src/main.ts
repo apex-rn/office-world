@@ -86,7 +86,7 @@ setInterval(async () => {
       stream.broadcastEvent({ type: 'calendar', ...d });
       if (d.kind === 'meeting') {
         // wait until people have gathered (runtime walks them in from start-5 min)
-        const out = await runMeeting(d.type, world, router, rt.minds, { cards: [...rt.cardOf.values()], metrics: env('METRICS_LINE', 'see analytics'), bossPresent: world.present('boss') });
+        const out = await runMeeting(d.type, world, router, rt.minds, { cards: [...rt.cardOf.values()], metrics: `${env('METRICS_LINE', 'see analytics')}. Office frictions today (fix or propose improvements to the Boss): ${rt.topFrictions(5).map(f => `${f.what} -> ${f.why} (x${f.n})`).join('; ') || 'none'}`, bossPresent: world.present('boss') });
         stream.broadcastEvent({ type: 'meeting_done', meeting: d.type, decisions: out.decisions, praise: out.praise, criticism: out.criticism });
         writeFileSync(join(DATA, `meeting-${t.date}-${d.type}.json`), JSON.stringify(out, null, 1));
       } else if (d.kind === 'birthday') {
@@ -119,6 +119,8 @@ setInterval(async () => {
       }
       writeFileSync(join(AGENTS_DIR, `${agentFile(id)}.identity.md`), workBrief(m.me, m.feelings, m.memory.all(), world.now));
     }
+    // the staff's own improvement list: what got in their way, for the Manager and a Claude work session to fix
+    writeFileSync(join(DATA, 'office_frictions.json'), JSON.stringify({ at: new Date(world.now).toISOString(), items: rt.topFrictions(20) }, null, 1));
   } catch (e) { console.error('work briefs failed:', (e as Error).message); }
 }, 600_000);
 

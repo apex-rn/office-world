@@ -83,3 +83,5 @@
 - Listening reflex: the addressee turns toward the speaker immediately (`World.faceToward`), before the reply is thought.
 - LLM calls time out after 20 s (AbortSignal); `LIFE_REASONING=low` sends `reasoning_effort` (gpt-oss) for fast life thoughts; MAX_THOUGHTS default 5.
 - Still to verify live (J): real reply latency with FreeLLM chains.
+- Coat rack in use: arrival = hang coat → own chair; leaving = take coat → go home.
+- Frictions: every failed action ("wanted X, but Y") is counted per day (`rt.topFrictions`), fed into the Manager's meetings and written to DATA/office_frictions.json — the staff's own list of what to improve in the office (a Claude work session fixes them; the Boss approves).

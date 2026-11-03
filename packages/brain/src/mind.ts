@@ -33,6 +33,7 @@ export class Mind {
   private addressed = false;
   /** follow-up steps from the last thought (run by the runtime without another model call) */
   plan: Command[] = [];
+  onFriction?: (what: string, why: string) => void;
   private lastSpokeAt = 0;
   private satAt = 0;
   thinking = false;
@@ -178,7 +179,7 @@ export class Mind {
       const summary = summarize(parsed.command);
       this.recent.push(summary); if (this.recent.length > 20) this.recent.shift();
       await this.memory.add('observation', res.ok ? `I ${summary}. (${parsed.thought})` : `I wanted to ${summary}, but: ${res.msg}.`, res.ok ? 2 : 3, w.now);
-      if (!res.ok) this.pendingWake = true;
+      if (!res.ok) { this.pendingWake = true; this.onFriction?.(summary, res.msg ?? 'failed'); }
       return parsed.command;
     } finally { this.thinking = false; }
   }
