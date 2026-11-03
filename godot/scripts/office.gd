@@ -444,6 +444,8 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 	# forever. Only a walking body walks; a stopped one falls back to its state's clip (idle).
 	if anim_name == "walk" and state != "walking":
 		anim_name = state
+	elif state == "walking" and p.get("still", 0.0) > 0.4:
+		anim_name = "standing"
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
 		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
@@ -681,9 +683,12 @@ func _process(dt: float) -> void:
 		var n: Node3D = p.node
 		var before := n.position
 		n.position = n.position.lerp(p.pos, clamp(dt * 10.0, 0, 1))
+		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
+		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
+		# striding on the spot
+		p.still = p.get("still", 0.0) + dt if spd < 0.08 else 0.0
 		# stride matches the real ground speed (clip authored at ~1.3 m/s): feet do not skate
 		if p.anim and p.get("walk_clip", "") != "" and (p.anim as AnimationPlayer).current_animation == p.walk_clip:
-			var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 			(p.anim as AnimationPlayer).speed_scale = clamp(spd / 1.3, 0.6, 1.5)
 		elif p.anim:
 			(p.anim as AnimationPlayer).speed_scale = 1.0
