@@ -2,7 +2,18 @@
 
 > Har sessiya: 1) shu faylni o'qi, 2) `docs/WORLD_PLAN.md`dan kerakli bo'limni o'qi, 3) bitta vazifa, 4) `npm test`, 5) shu faylni yangila, 6) commit.
 
-## Holat (2026-11-03)
+## Holat (2026-11-03, kech)
+**Bosqich C — miya yadrosi: asosiy qismlar TAYYOR (17/17 test).**
+- `packages/brain`: identity (11 xodim + Boss), emotion (birinchi shaxs his, o'sish qoidasi), perception (faqat ko'rgan/eshitgani), memory (recency+importance+relevance, embedding ixtiyoriy), llm (OpenAI-mos klient, Router: life→free, critical→faqat Claude, limitda free), mind (hodisaga asoslangan qaror, qat'iy JSON, tana rad etsa xotiraga), runtime (09:00–21:00, kelganda o'z joyiga, bir vaqtda ≤3 o'ylash, koreyscha salom refleksi 15/30/45° + qo'l berish).
+- Kompyuterdagi sessiya (Auto): FreeLLM tekshiruvi (OpenAI + Anthropic /v1/messages + embeddings ishlaydi), run_agent.sh failover, guard/ig_res/yt_res doimiy FreeLLM, voice_samples (FreeLLM), Graphify'ni FreeLLM bilan yangilash.
+
+### Keyingi (C davomi)
+1. FREELLM_PROBE natijasidagi strong/fast model nomlarini Router'ga ulash; serverda haqiqiy FreeLLM bilan 1 soatlik 'jonli ofis' sinovi (headless).
+2. Ish integratsiyasi: board-adapter (board.json → dunyo voqealari: Viktor kartani olib NAVBAT'ga, tayyor ishni Manager'ga), `work(card)`.
+3. Majlislar (stand-up 09:10, juma, favqulodda), tug'ilgan kunlar va 31-sana bayramlari, payroll 25-sana (Viktor seyfdan).
+4. Tiqilinch < 1% (hozir 1.78% og'ir tasodifiy testda).
+
+## Avvalgi holat (2026-11-03, ertalab)
 **Bosqich B — Dunyo yadrosi: asosiy qismi TAYYOR, testlar yashil.**
 
 ### Tayyor

@@ -24,7 +24,9 @@ export class Mind {
   private recent: string[] = [];
   private lastThought = 0;
   private lastFeelingsAt: number;
-  pendingWake = true;
+  pendingWake = false;
+  /** someone spoke to me: worth interrupting what my body is doing */
+  private addressed = false;
   thinking = false;
 
   constructor(readonly me: Identity, private deps: MindDeps, memory?: MemoryStream) {
@@ -37,7 +39,8 @@ export class Mind {
   observe(e: WorldEvent): void {
     if (e.type === 'speech' && e.from !== this.me.id && e.hearers.includes(this.me.id)) {
       this.heard.push(e);
-      if (e.to === this.me.id || e.to === null) this.pendingWake = true;
+      if (e.to === this.me.id) { this.pendingWake = true; this.addressed = true; }
+      else if (e.to === null) this.pendingWake = true;
       void this.memory.add('conversation', `${nameOf(e.from)} said${e.to === this.me.id ? ' to me' : ''}: "${e.text}"`, e.to === this.me.id ? 4 : 2, e.t);
     }
     if ((e.type === 'action_done' || e.type === 'action_failed') && e.agent === this.me.id) {
@@ -63,7 +66,8 @@ export class Mind {
 
   shouldThink(): boolean {
     const w = this.deps.world, b = w.bodies.get(this.me.id)!;
-    if (this.thinking) return false;
+    if (this.thinking || b.state === 'offsite') return false;
+    if (b.active && !this.addressed) return false;            // busy bodies are not interrupted unless spoken to
     if (this.pendingWake) return true;
     // a quiet spell: idle people re-think every 3-6 minutes, busy ones are left alone
     return !b.active && w.now - this.lastThought > 180_000 * (1 + (this.me.id.length % 3) / 2);
@@ -96,7 +100,7 @@ export class Mind {
   /** Think once and act. Returns the command issued (or null). */
   async think(card?: { id: string; title: string; status: string }): Promise<Command | null> {
     const w = this.deps.world;
-    this.thinking = true; this.pendingWake = false; this.lastThought = w.now;
+    this.thinking = true; this.pendingWake = false; this.addressed = false; this.lastThought = w.now;
     try {
       this.tickFeelings();
       const feeling = behaviour(this.me, this.feelings).selfReport;
