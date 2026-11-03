@@ -38,6 +38,7 @@ export class OfficeRuntime {
   private rand: () => number;
   private readonly maxConcurrent: number;
   plan: DayPlan | null = null;
+  private inFlightIds = new Set<string>();
   readonly errands = new ErrandRunner();
   private cards: Card[] = [];
   readonly cardOf = new Map<string, Card>();
@@ -109,6 +110,8 @@ export class OfficeRuntime {
       // after a gathering, people go back to their desks
       if (!meeting && !party && !b.active && b.seat?.inst.startsWith('meeting.') && now < plan.workEnds) { w.command(id, { verb: 'stand' }); this.errands.add({ who: id, why: 'back to desk', steps: [{ verb: 'sit', target: `chair.${id}` }] }); continue; }
       // board errands take priority over free thinking (habits, no model call)
+      // someone spoke to a person who is following their own plan: the plan waits, the answer comes first
+      if (m.wantsReply && this.errands.has(id) && !this.inFlightIds.has(id)) this.errands.drop(id, 'plan');
       if (!b.active && this.errands.has(id)) {
         if (b.state === 'sitting' && this.errands.peek(id)?.verb !== 'sit') { w.command(id, { verb: 'stand' }); continue; }
         this.errands.next(id, w.now, c => w.command(id, c)); continue;
@@ -118,9 +121,13 @@ export class OfficeRuntime {
         if (id !== 'guard' || !othersIn) { w.command(id, { verb: 'go_home' }); continue; }
       }
       if (now >= leave && b.state === 'sitting' && !b.active) { w.command(id, { verb: 'stand' }); continue; }
-      if (this.inFlight < this.maxConcurrent && m.shouldThink()) {
-        this.inFlight++; this.thoughts++;
-        m.think(this.cardOf.get(id)).catch(() => null).finally(() => { this.inFlight--; });
+      // replies jump the queue (a person spoken to answers within seconds, not after others finish thinking)
+      const cap = this.maxConcurrent + (m.wantsReply ? 3 : 0);
+      if (this.inFlight < cap && m.shouldThink()) {
+        this.inFlight++; this.thoughts++; this.inFlightIds.add(id);
+        m.think(this.cardOf.get(id))
+          .then(() => { if (m.plan.length) { this.errands.add({ who: id, why: 'plan', steps: m.plan }); m.plan = []; } })
+          .catch(() => null).finally(() => { this.inFlight--; this.inFlightIds.delete(id); });
       }
     }
     this.greetings();
@@ -184,6 +191,8 @@ export class OfficeRuntime {
       const r = this.society.romance(e.from, e.to, e.t);
       if (r) for (const f of r.feelings) void this.minds.get(f.who)?.feel(f.appraisal);
     }
+    // listening reflex: the person spoken to turns toward the speaker right away, while their answer is being thought
+    if (e.type === 'speech' && e.to && this.world.bodies.has(e.to) && this.world.bodies.get(e.to)!.state !== 'offsite') this.world.faceToward(e.to, e.from);
     // arriving: walk in and go to your own place first (habit reflex), then start thinking
     if (e.type === 'arrived') {
       const m = this.minds.get(e.agent);

@@ -72,3 +72,10 @@ test('evening reflection: first-person conclusions are remembered, trivia is for
   assert.ok(leo.memory.all().some(m => m.kind === 'reflection' && /double-source/.test(m.text)));
   assert.ok(!leo.memory.all().some(m => /walked to the kitchen/.test(m.text)), 'old trivia pruned');
 });
+
+test('parseDecision keeps a short follow-up plan without speech', () => {
+  const d = parseDecision('{"thought":"coffee","action":{"verb":"go_to","target":"kitchen"},"then":[{"verb":"use","target":"kitchen.coffee","action":"brew"},{"verb":"say","text":"hi"},{"verb":"sit","target":"chair.writer"},{"verb":"wait","seconds":9},{"verb":"stand"}]}');
+  assert.ok(d);
+  assert.equal(d.command.verb, 'go_to');
+  assert.deepEqual(d.then.map(c => c.verb), ['use', 'sit', 'wait']);
+});

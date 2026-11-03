@@ -463,6 +463,13 @@ export class World {
 
   // ------------------------------------------------------------------ tick
   /** Greeting reflex: turn to face the other person and stand still for a moment (bow), then resume walking. */
+  /** Turn a standing/walking body to face someone (a listening reflex); seated people only turn their head (renderer). */
+  faceToward(a: string, b: string): void {
+    const A = this.bodies.get(a), B = this.bodies.get(b);
+    if (!A || !B || A.state === 'sitting' || A.state === 'walking') return;
+    A.yaw = Math.atan2(B.pos.x - A.pos.x, B.pos.z - A.pos.z);
+  }
+
   pauseToGreet(a: string, b: string, anim: string): void {
     const A = this.bodies.get(a), B = this.bodies.get(b);
     if (!A || !B) return;

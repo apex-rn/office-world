@@ -63,6 +63,8 @@ export function errandsFor(ch: BoardChange): Errand[] {
 export class ErrandRunner {
   private queue = new Map<string, { e: Errand; i: number; tries: number; busyUntil: number }[]>();
   add(e: Errand): void { const q = this.queue.get(e.who) ?? []; q.push({ e, i: 0, tries: 0, busyUntil: 0 }); this.queue.set(e.who, q); }
+  /** drop queued errands of one kind (e.g. a self-made plan when someone needs the person) */
+  drop(who: string, why: string): void { const q = this.queue.get(who); if (q) this.queue.set(who, q.filter(x => x.e.why !== why)); }
   has(who: string): boolean { return (this.queue.get(who)?.length ?? 0) > 0; }
   peek(who: string): Command | undefined { const c = this.queue.get(who)?.[0]; return c?.e.steps[c.i]; }
 

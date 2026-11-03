@@ -16,7 +16,8 @@ const VOICES = voiceData as Record<string, { en: string[]; uz: string[] }>;
 const ACTION_SCHEMA = `Reply with ONE JSON object only:
 {"thought": "<one short first-person sentence>",
  "action": {"verb": "go_to|sit|stand|use|consume|pick|place|say|wait|go_home", "target": "<id>", "action": "<device verb>", "to": "<person id or null>", "text": "<what you say>", "seconds": <number>}}
-Use only ids from the lists. "say" needs "text" (and "to" if you address someone). Use "use" with the device id and its verb.`;
+Use only ids from the lists. "say" needs "text" (and "to" if you address someone). Use "use" with the device id and its verb.
+Optionally add "then": [up to 3 more actions in the same format, no "say"] for what you plan right after (e.g. walk to the coffee machine, use it, sit back down).`;
 
 export interface MindDeps { world: World; router: Router; social?: { describe(id: string): string } }
 
@@ -30,6 +31,8 @@ export class Mind {
   pendingWake = false;
   /** someone spoke to me: worth interrupting what my body is doing */
   private addressed = false;
+  /** follow-up steps from the last thought (run by the runtime without another model call) */
+  plan: Command[] = [];
   private lastSpokeAt = 0;
   private satAt = 0;
   thinking = false;
@@ -71,6 +74,9 @@ export class Mind {
     this.feelings = decay(this.me, this.feelings, (now - this.lastFeelingsAt) / 3_600_000);
     this.lastFeelingsAt = now;
   }
+
+  /** someone spoke to this person and is waiting for an answer */
+  get wantsReply(): boolean { return this.addressed && !this.thinking; }
 
   shouldThink(): boolean {
     const w = this.deps.world, b = w.bodies.get(this.me.id)!;
@@ -154,7 +160,8 @@ export class Mind {
       const route = this.deps.router.pick('life', w.now);
       if ('deferred' in route) return null;
       let raw = '';
-      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 700 }); }
+      const reasoning = (process.env.LIFE_REASONING as 'low' | undefined) || undefined;
+      try { raw = await route.llm.chat(messages, { model: route.model, json: true, maxTokens: 700, reasoning }); }
       catch (e1) {
         // some providers reject response_format: retry once in plain mode, then report the failure
         try { raw = await route.llm.chat(messages, { model: route.model, maxTokens: 700 }); }
@@ -166,6 +173,7 @@ export class Mind {
       // no sit/stand ping-pong: having just sat down, a person stays at least 90 s unless someone needs them
       if (parsed.command.verb === 'stand' && w.now - this.satAt < 90_000 && !wasAddressed) parsed.command = { verb: 'wait', seconds: 60 };
       const res = w.command(this.me.id, parsed.command);
+      this.plan = res.ok ? parsed.then : [];
       if (res.ok && parsed.command.verb === 'say') this.lastSpokeAt = w.now;
       const summary = summarize(parsed.command);
       this.recent.push(summary); if (this.recent.length > 20) this.recent.shift();
@@ -203,26 +211,36 @@ function jsonCandidates(raw: string): string[] {
   return out;
 }
 
-export function parseDecision(raw: string): { thought: string; command: Command } | null {
+export function parseDecision(raw: string): { thought: string; command: Command; then: Command[] } | null {
   // prefer the last complete object that carries an action (reasoning models often draft first)
-  let j: { thought?: unknown; action?: Record<string, unknown> } | null = null;
+  let j: { thought?: unknown; action?: Record<string, unknown>; then?: unknown } | null = null;
   for (const c of jsonCandidates(raw).reverse()) {
     try { const o = JSON.parse(c); if (o && typeof o === 'object' && o.action) { j = o; break; } } catch { /* next */ }
   }
-  if (!j) return null;
-  const a = j.action;
-  if (!a || typeof a.verb !== 'string') return null;
+  if (!j || !j.action || typeof j.action !== 'object') return null;
+  const command = actionToCommand(j.action);
+  if (!command) return null;
+  const thought = typeof j.thought === 'string' ? j.thought.slice(0, 200) : '';
+  // a short plan of follow-up steps (no speech: what to say depends on what others say meanwhile)
+  const then: Command[] = [];
+  if (Array.isArray(j.then)) for (const t of j.then) {
+    const c = t && typeof t === 'object' ? actionToCommand(t as Record<string, unknown>) : null;
+    if (c && c.verb !== 'say' && then.length < 3) then.push(c);
+  }
+  return { thought, command, then };
+}
+
+function actionToCommand(a: Record<string, unknown>): Command | null {
+  if (typeof a.verb !== 'string') return null;
   const verb = VERB_ALIASES[a.verb.toLowerCase()] ?? a.verb.toLowerCase();
   if (!VERBS.has(verb)) return null;
-  a.verb = verb;
   const s = (k: string) => (typeof a[k] === 'string' ? (a[k] as string) : undefined);
-  const thought = typeof j.thought === 'string' ? j.thought.slice(0, 200) : '';
-  switch (a.verb) {
-    case 'go_to': case 'sit': case 'pick': case 'place': return s('target') ? { thought, command: { verb: a.verb, target: s('target')! } as Command } : null;
-    case 'use': return s('target') && s('action') ? { thought, command: { verb: 'use', target: s('target')!, action: s('action') as never } } : null;
-    case 'say': return s('text') ? { thought, command: { verb: 'say', to: s('to') && s('to') !== 'null' ? s('to')! : null, text: s('text')!.slice(0, 280) } } : null;
-    case 'wait': return { thought, command: { verb: 'wait', seconds: Math.max(5, Math.min(600, Number(a.seconds) || 30)) } };
-    default: return { thought, command: { verb: a.verb } as Command };
+  switch (verb) {
+    case 'go_to': case 'sit': case 'pick': case 'place': return s('target') ? { verb, target: s('target')! } as Command : null;
+    case 'use': return s('target') && s('action') ? { verb: 'use', target: s('target')!, action: s('action') as never } : null;
+    case 'say': return s('text') ? { verb: 'say', to: s('to') && s('to') !== 'null' ? s('to')! : null, text: s('text')!.slice(0, 280) } : null;
+    case 'wait': return { verb: 'wait', seconds: Math.max(5, Math.min(600, Number(a.seconds) || 30)) };
+    default: return { verb } as Command;
   }
 }
 

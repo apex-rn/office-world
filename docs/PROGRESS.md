@@ -76,3 +76,10 @@
 - Navmesh qatlami 1 qavat; zinapoya yo'q (kerak emas).
 - Sofaning 3 ta o'rni bor, hozircha birinchi bo'sh o'ringa yondashadi (o'rin tanlash keyin).
 - GitHub: `apex-rn/office-world` hali ochilmagan — kod faqat shu konteynerda (egasi ochishi kerak).
+
+## 2026-11-03 — latency of the minds
+- A thought may carry `then` (≤3 follow-up steps, no speech) → run as an errand without another model call: fewer gaps where a person stands "frozen".
+- People spoken to jump the thought queue (+3 slots); their self-made plan is dropped so they answer first.
+- Listening reflex: the addressee turns toward the speaker immediately (`World.faceToward`), before the reply is thought.
+- LLM calls time out after 20 s (AbortSignal); `LIFE_REASONING=low` sends `reasoning_effort` (gpt-oss) for fast life thoughts; MAX_THOUGHTS default 5.
+- Still to verify live (J): real reply latency with FreeLLM chains.

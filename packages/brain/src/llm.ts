@@ -2,11 +2,13 @@
 // task kind and fails over from Claude to FreeLLM while Claude is limited, switching back automatically.
 
 export interface ChatMessage { role: 'system' | 'user' | 'assistant'; content: string }
-export interface LLM { chat(messages: ChatMessage[], opts?: { model?: string; maxTokens?: number; temperature?: number; json?: boolean }): Promise<string> }
+/** reasoning: 'low' asks reasoning models (gpt-oss) to think briefly — the main life-thought latency */
+export interface ChatOpts { model?: string; maxTokens?: number; temperature?: number; json?: boolean; reasoning?: 'low' | 'medium' | 'high'; timeoutMs?: number }
+export interface LLM { chat(messages: ChatMessage[], opts?: ChatOpts): Promise<string> }
 
 export class OpenAICompatClient implements LLM {
   constructor(private baseUrl: string, private apiKey: string, private defaultModel = 'auto') {}
-  async chat(messages: ChatMessage[], opts: { model?: string; maxTokens?: number; temperature?: number; json?: boolean } = {}): Promise<string> {
+  async chat(messages: ChatMessage[], opts: ChatOpts = {}): Promise<string> {
     const r = await fetch(`${this.baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
@@ -14,7 +16,10 @@ export class OpenAICompatClient implements LLM {
         model: opts.model ?? this.defaultModel, messages,
         max_tokens: opts.maxTokens ?? 400, temperature: opts.temperature ?? 0.8,
         ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
+        ...(opts.reasoning ? { reasoning_effort: opts.reasoning } : {}),
       }),
+      // a hung provider must not freeze a person: give up and let the retry / next thought handle it
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 20_000),
     });
     if (!r.ok) throw new Error(`LLM ${r.status}: ${(await r.text()).slice(0, 200)}`);
     const j = await r.json() as { choices?: { message?: { content?: string } }[] };
