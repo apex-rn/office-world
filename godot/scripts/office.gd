@@ -24,6 +24,7 @@ var ws := WebSocketPeer.new()
 var people := {}            # id -> {node, anim, target_pos, target_yaw, state}
 var doors := {}             # id -> [pivots]
 var door_open := {}
+var chairs := []            # rolling chairs: {node, home, back}
 var mats := {}
 var cam: Camera3D
 var orbit := {"yaw": -0.6, "pitch": -0.75, "dist": 26.0, "target": Vector3(12, 0, 8.5)}
@@ -231,12 +232,21 @@ func _fitted(path: String, size: Vector3) -> Node3D:
 	var aabb := _aabb(inst, Transform3D.IDENTITY)
 	if aabb.size.length() < 0.001:
 		return inst
-	# GLB furniture faces +Z like our catalog; scale each axis to the real dimensions and stand it on its base
-	var s := Vector3(size.x / max(aabb.size.x, 0.001), size.y / max(aabb.size.y, 0.001), size.z / max(aabb.size.z, 0.001))
-	inst.scale = s
-	inst.position = -Vector3((aabb.position.x + aabb.size.x / 2) * s.x, aabb.position.y * s.y, (aabb.position.z + aabb.size.z / 2) * s.z)
+	# One uniform scale that fits the model inside the catalog's real dimensions: a per-axis scale would stretch
+	# lamps, chairs and plants out of shape. If the model's long side is the catalog's other horizontal axis, turn it 90°.
+	var m := aabb.size
+	var turn := absf(size.x - size.z) > 0.05 and (size.x - size.z) * (m.x - m.z) < 0.0
+	if turn:
+		m = Vector3(m.z, m.y, m.x)
+	var k: float = min(size.x / max(m.x, 0.001), size.y / max(m.y, 0.001), size.z / max(m.z, 0.001))
+	inst.scale = Vector3.ONE * k
+	var c := aabb.get_center()
+	inst.position = -Vector3(c.x, aabb.position.y, c.z) * k   # centred on the spot, standing on its base
+	var pivot := Node3D.new()
+	pivot.rotation.y = PI / 2 if turn else 0.0
+	pivot.add_child(inst)
 	var holder := Node3D.new()
-	holder.add_child(inst)
+	holder.add_child(pivot)
 	return holder
 
 func _aabb(n: Node, t: Transform3D) -> AABB:
@@ -269,6 +279,20 @@ func _furniture() -> void:
 		node.rotation.y = i.yaw
 		node.name = String(i.id).replace(".", "_")
 		add_child(node)
+		if i.def == "office_chair":
+			chairs.append({"node": node, "home": node.position, "back": -Vector3(sin(i.yaw), 0, cos(i.yaw))})
+
+# A standing or walking person at a desk stands where the chair is: roll that chair back out of the way
+# (as in a real office) and roll it home when they sit down or leave.
+func _roll_chairs(dt: float) -> void:
+	for c in chairs:
+		var want: Vector3 = c.home
+		for id in people:
+			var p: Dictionary = people[id]
+			if p.node.visible and p.state != "sitting" and Vector2(p.node.position.x - c.home.x, p.node.position.z - c.home.z).length() < 0.5:
+				want = c.home + c.back * 0.55
+				break
+		c.node.position = c.node.position.lerp(want, clamp(dt * 3.0, 0, 1))
 
 # Small electronics built to their real geometry (a box the size of a monitor's bounding volume looks like a crate)
 func _built(def_id: String, s: Vector3) -> Node3D:
@@ -430,6 +454,7 @@ func _process(dt: float) -> void:
 		if p.bubble_until > 0 and now > p.bubble_until:
 			p.tag.text = id
 			p.bubble_until = 0.0
+	_roll_chairs(dt)
 	for id in doors:
 		var want := 1.35 if door_open.get(id, false) else 0.0
 		for d in doors[id]:
