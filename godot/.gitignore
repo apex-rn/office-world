@@ -10,3 +10,5 @@ assets/furniture/*.png
 assets/furniture/*.jpg.import
 assets/furniture/*.png.import
 boss.token
+# lightmap UV2 caches Godot writes next to imported GLBs
+*.unwrap_cache

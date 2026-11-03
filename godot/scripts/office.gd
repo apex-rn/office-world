@@ -31,6 +31,7 @@ var orbit := {"yaw": -0.6, "pitch": -0.75, "dist": 26.0, "target": Vector3(12, 0
 # eye-level view (V toggles): a person standing in the office, 1.68 m eye height
 var eye_mode := true
 var eye := {"pos": Vector3(3.0, 1.68, 14.5), "yaw": 2.4, "pitch": -0.05}
+var eye_locked := false     # a tool (screenshots, tours) places the eye itself: do not ride with the Boss
 var follow_id := ""
 var hud: Label
 
@@ -525,7 +526,7 @@ func _camera() -> void:
 
 func _update_camera() -> void:
 	if eye_mode:
-		if people.has("boss") and people["boss"].state != "offsite":
+		if not eye_locked and people.has("boss") and people["boss"].state != "offsite":
 			eye.pos = people["boss"].node.position + Vector3(0, 1.82, 0)   # the Boss is 2.00 m tall
 		cam.position = eye.pos
 		cam.rotation = Vector3(eye.pitch, eye.yaw, 0)
