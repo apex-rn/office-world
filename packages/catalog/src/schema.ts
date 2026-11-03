@@ -87,6 +87,10 @@ export interface Zone {
   /** enclosed rooms bound sound and sight by their walls; open zones do not */
   enclosed: boolean;
   outdoor?: boolean;
+  /** small rooms: max people inside; others wait outside its door until someone leaves */
+  capacity?: number;
+  /** the door people use to enter (opening id) */
+  door?: string;
 }
 
 export interface Instance {

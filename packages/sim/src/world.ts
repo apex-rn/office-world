@@ -48,6 +48,8 @@ interface Active {
   /** seat or device slot index this action holds */
   slot?: number;
   lastRetarget?: number;
+  /** waiting outside a full small room since */
+  roomWait?: number;
   after?: 'sit' | 'use' | 'home' | 'go';
 }
 
@@ -326,6 +328,24 @@ export class World {
   }
   private freeSlot(key: string): void { this.slotTaken.delete(key); }
 
+  private useSpotCache: Vec2[] | null = null;
+  /** Every place someone must stand to use or sit on something, except those belonging to `except`. */
+  private useSpots(except: string): Vec2[] {
+    if (!this.useSpotCache) {
+      this.useSpotCache = [];
+      for (const i of this.layout.instances) {
+        const an = def(i.def).anchors ?? {};
+        for (const k of Object.keys(an)) {
+          if (!/^(front|approach\d*|left|right|user)$/.test(k)) continue;
+          const w = localToWorld(i.x, i.z, i.yaw, an[k]!.x, an[k]!.z);
+          (w as Vec2 & { owner?: string }).owner = i.id;
+          this.useSpotCache.push(w);
+        }
+      }
+    }
+    return this.useSpotCache.filter(u => (u as Vec2 & { owner?: string }).owner !== except);
+  }
+
   /** Queue spots for a device: people line up back along the route they came by (the walking path from the line's
    *  start towards the office entrance), one every 0.9 m, so the next in line is always in front of the others. */
   private lineSpots(i: Instance, start: Vec3, _yaw: number, n: number): Vec3[] {
@@ -341,8 +361,9 @@ export class World {
         while (acc + L >= want && line.length < 12) {
           const t = (want - acc) / L;
           const sp = snap(this.nav, { x: a.x + (b.x - a.x) * t, y: 0, z: a.z + (b.z - a.z) * t }, { x: 0.1, y: 0.5, z: 0.1 });
-          if (sp) line.push(sp);
-          want += 0.9;
+          // never wait on another device's use point or a seat's approach (someone would need that exact spot)
+          if (sp && !this.useSpots(i.id).some(u => Math.hypot(u.x - sp.x, u.z - sp.z) < 0.65)) { line.push(sp); want += 0.9; }
+          else want += 0.15;
         }
         acc += L;
       }
@@ -439,6 +460,33 @@ export class World {
       const flowSide = users[0]!.side;
       for (const u of users.slice(1)) if (u.side !== flowSide && !u.inside && u.dist < 1.6) held.add(u.b.spec.id);
     }
+    // small rooms with a capacity: people heading inside wait ~1.3 m outside the door while the room is full
+    for (const z of this.layout.zones) {
+      if (!z.capacity || !z.door) continue;
+      const dc = this.acoustics.doorCentre.get(z.door);
+      if (!dc) continue;
+      const inside = [...this.bodies.values()].filter(b => b.state !== 'offsite' && pointInPolygon(b.pos, z.poly));
+      if (inside.length < z.capacity) continue;
+      for (const b of this.bodies.values()) {
+        if (!b.agent || b.state !== 'walking' || pointInPolygon(b.pos, z.poly)) continue;
+        const g = this.goalOf(b);
+        if (!g || !pointInPolygon(g, z.poly)) continue;
+        if (Math.hypot(b.pos.x - dc.x, b.pos.z - dc.z) > 2.2) continue;
+        // wait beside the door (not in front of it) so people leaving the room can get out
+        if (!b.stepAside) {
+          const d = this.doors.find(x => x.id === z.door);
+          if (d) {
+            const out = pointInPolygon({ x: dc.x + d.n.x * 0.5, z: dc.z + d.n.z * 0.5 }, z.poly) ? -1 : 1;
+            for (const side of [1, -1]) {
+              const p = snap(this.nav, { x: dc.x + d.n.x * out * 1.0 + d.u.x * side * 1.0, y: 0, z: dc.z + d.n.z * out * 1.0 + d.u.z * side * 1.0 }, { x: 0.25, y: 1, z: 0.25 });
+              if (p && !pointInPolygon(p, z.poly)) { b.stepAside = p; b.agent.requestMoveTarget(p); break; }
+            }
+          }
+        }
+        b.stepAsideT = this.now;
+        if (b.active) { b.active.lastProgressT = this.now; b.active.roomWait ??= this.now; }
+      }
+    }
     for (const b of this.bodies.values()) {
       if (!b.agent) continue;
       if (held.has(b.spec.id)) {
@@ -522,9 +570,10 @@ export class World {
       }
     }
     // stepping aside for someone: hold the side spot ~3 s, then return to the line
+    if (a.roomWait && this.now - a.roomWait > 180_000) return fail('BUSY', 'the room stayed full for 3 minutes');
     if (b.stepAside) {
       if ((this.now - (b.stepAsideT ?? this.now)) < 3000) return;
-      b.stepAside = undefined; a.cur = undefined;
+      b.stepAside = undefined; a.cur = undefined; a.roomWait = undefined;
     }
     if (!a.cur || Math.hypot(a.cur.x - want.x, a.cur.z - want.z) > 0.1) {
       a.cur = want; a.bestDist = Infinity; a.lastProgressT = this.now; a.retries = 0;
@@ -648,9 +697,10 @@ export class World {
       const s2 = snap(this.nav, g.p);
       if (s2 && Math.hypot(s2.x - a.goal.x, s2.z - a.goal.z) > 0.3) { a.goal = s2; a.goalYaw = g.yaw; b.agent?.requestMoveTarget(s2); }
     }
+    if (a.roomWait && this.now - a.roomWait > 180_000) return fail('BUSY', 'the room stayed full for 3 minutes');
     if (a.phase === 'walk' && a.goal && b.stepAside) {
       if (this.now - (b.stepAsideT ?? this.now) < 2500) { a.lastProgressT = this.now; return; }
-      b.stepAside = undefined; b.agent?.requestMoveTarget(a.goal);
+      b.stepAside = undefined; a.roomWait = undefined; b.agent?.requestMoveTarget(a.goal);
     }
     if (a.phase === 'walk' && a.goal) {
       const d = Math.hypot(b.pos.x - a.goal.x, b.pos.z - a.goal.z);

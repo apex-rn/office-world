@@ -55,10 +55,10 @@ wall('bal_E', 9.5, D + 0.2, 9.5, 15.2, 0.05, 'solid', 1.1);
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }];
 const zones: Zone[] = [
-  { id: 'wc', name: 'WC', poly: rect(0, 0, 3.05, 3.05), enclosed: true },
+  { id: 'wc', name: 'WC', poly: rect(0, 0, 3.05, 3.05), enclosed: true, capacity: 3, door: 'door_wc' },
   { id: 'kitchen', name: 'Kitchen', poly: rect(3.05, 0, 8.2, 4.0), enclosed: false },
   { id: 'meeting', name: 'Meeting room', poly: rect(8.2, 0, 13.0, 5.0), enclosed: true },
-  { id: 'manager', name: "Manager's office", poly: rect(13.0, 0, W, 5.0), enclosed: true },
+  { id: 'manager', name: "Manager's office", poly: rect(13.0, 0, W, 5.0), enclosed: true, capacity: 5, door: 'door_manager' },
   { id: 'reception', name: 'Reception', poly: rect(0, 3.05, 3.05, D), enclosed: false },
   { id: 'work', name: 'Open work area', poly: [{ x: 3.05, z: 4.0 }, { x: 8.2, z: 4.0 }, { x: 8.2, z: 5.0 }, { x: 13.0, z: 5.0 }, { x: 13.0, z: D }, { x: 3.05, z: D }], enclosed: false },
   { id: 'print', name: 'Print & server corner', poly: rect(13.0, 5.0, W, 9.0), enclosed: false },
