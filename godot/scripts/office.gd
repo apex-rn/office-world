@@ -411,6 +411,10 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 		anim_map = JSON.parse_string(FileAccess.get_file_as_string("res://assets/people/anims.json"))
 	if anim_name.begins_with("bow_") or anim_name == "bow_handshake":
 		_bow(p, 45.0 if anim_name == "bow_45" else 30.0 if anim_name == "bow_30" else 15.0)
+	# the world keeps anim "walk" on a body that has stopped (state standing): that played the stride on the spot
+	# forever. Only a walking body walks; a stopped one falls back to its state's clip (idle).
+	if anim_name == "walk" and state != "walking":
+		anim_name = state
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
 		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
