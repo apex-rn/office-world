@@ -27,6 +27,9 @@ var door_open := {}
 var mats := {}
 var cam: Camera3D
 var orbit := {"yaw": -0.6, "pitch": -0.75, "dist": 26.0, "target": Vector3(12, 0, 8.5)}
+# eye-level view (V toggles): a person standing in the office, 1.68 m eye height
+var eye_mode := true
+var eye := {"pos": Vector3(3.0, 1.68, 14.5), "yaw": 2.4, "pitch": -0.05}
 var follow_id := ""
 var hud: Label
 
@@ -38,6 +41,8 @@ func _ready() -> void:
 	_walls()
 	_doors()
 	_furniture()
+	_ceiling()
+	_lightmap()
 	_camera()
 	_hud()
 	var tok := ""
@@ -67,6 +72,10 @@ func _boss_input(dt: float) -> void:
 	var fwd := Vector2(-sin(orbit.yaw), -cos(orbit.yaw)); var right := Vector2(-fwd.y, fwd.x)
 	var world_v := (right * v.x - fwd * v.y) * 1.4
 	steer_t += dt
+	if eye_mode and not (people.has("boss") and people["boss"].state != "offsite"):
+		var f3 := Vector3(-sin(eye.yaw), 0, -cos(eye.yaw)); var r3 := Vector3(-f3.z, 0, f3.x)
+		eye.pos += (r3 * v.x - f3 * v.y) * 1.4 * dt
+		return
 	if (world_v - steer_sent).length() > 0.05 or (world_v.length() > 0.05 and steer_t > 0.2):
 		_send_boss({"verb": "steer", "vx": world_v.x, "vz": world_v.y})
 		steer_sent = world_v; steer_t = 0.0
@@ -114,6 +123,7 @@ func _environment() -> void:
 	env.volumetric_fog_enabled = true
 	env.volumetric_fog_density = 0.004
 	var we := WorldEnvironment.new()
+	we.name = "WorldEnvironment"
 	we.environment = env
 	add_child(we)
 	var sun := DirectionalLight3D.new()
@@ -417,7 +427,7 @@ func _process(dt: float) -> void:
 	if follow_id != "" and people.has(follow_id):
 		orbit.target = orbit.target.lerp(people[follow_id].node.position, clamp(dt * 3.0, 0, 1))
 	_update_camera()
-	hud.text = "Compound Chronicle HQ   ·   %s   ·   %d people   ·   drag: rotate · wheel: zoom · 1-9: follow · 0: free" % ["live" if ws.get_ready_state() == WebSocketPeer.STATE_OPEN else "connecting…", people.size()] + "   ·   Boss: F kirish/chiqish · WASD yurish · Enter gapirish"
+	hud.text = "Compound Chronicle HQ   ·   %s   ·   %d people   ·   drag: rotate · wheel: zoom · 1-9: follow · 0: free" % ["live" if ws.get_ready_state() == WebSocketPeer.STATE_OPEN else "connecting…", people.size()] + "   ·   V: ko'z/maket · F: Boss kirish · WASD yurish · Enter gapirish"
 
 # ---------------------------------------------------------------- camera + hud
 func _camera() -> void:
@@ -427,11 +437,67 @@ func _camera() -> void:
 	_update_camera()
 
 func _update_camera() -> void:
+	if eye_mode:
+		if people.has("boss") and people["boss"].state != "offsite":
+			eye.pos = people["boss"].node.position + Vector3(0, 1.82, 0)   # the Boss is 2.00 m tall
+		cam.position = eye.pos
+		cam.rotation = Vector3(eye.pitch, eye.yaw, 0)
+		cam.fov = 62
+		return
+	cam.fov = 45
 	var dir := Vector3(cos(orbit.pitch) * sin(orbit.yaw), -sin(orbit.pitch), cos(orbit.pitch) * cos(orbit.yaw))
 	cam.position = orbit.target + dir * orbit.dist
 	cam.look_at(orbit.target, Vector3.UP)
 
+# ---------------------------------------------------------------- ceiling, lights, finishes, baked GI
+func _ceiling() -> void:
+	var w: float = L.room.w; var d: float = L.room.d; var h: float = L.room.h
+	var ceil_m := _mat("ceiling", Color(0.96, 0.96, 0.95), 0.9)
+	_box(Vector3(w + 0.4, 0.05, d + 0.4), Vector3(w / 2, h + 0.025, d / 2), 0, ceil_m)
+	# recessed 600x600 LED panels on a 2.4 m grid with real (baked) light sources
+	var panel := StandardMaterial3D.new()
+	panel.albedo_color = Color(1, 1, 1); panel.emission_enabled = true; panel.emission = Color(1.0, 0.97, 0.92); panel.emission_energy_multiplier = 3.0
+	var x := 1.2
+	while x < w:
+		var z := 1.2
+		while z < d:
+			_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel)
+			var l := OmniLight3D.new()
+			l.position = Vector3(x, h - 0.15, z); l.omni_range = 4.2; l.light_energy = 0.55; l.light_color = Color(1.0, 0.95, 0.88)
+			l.light_bake_mode = Light3D.BAKE_STATIC; l.shadow_enabled = false
+			add_child(l)
+			z += 2.4
+		x += 2.4
+	# baseboards along every solid wall piece that touches the floor
+	var base_m := _mat("metal_black", Color(0.1, 0.1, 0.11), 0.4, 0.3)
+	for p in L.walls:
+		if p.glass or p.y0 > 0.01: continue
+		_box(Vector3(p.hx * 2 + 0.002, 0.08, p.hz * 2 + 0.024), Vector3(p.cx, 0.04, p.cz), p.yaw, base_m)
+
+func _lightmap() -> void:
+	# baked global illumination: open main.tscn in the editor, select LightmapGI, "Bake Lightmaps" (RTX: minutes)
+	var lm := LightmapGI.new()
+	lm.name = "LightmapGI"
+	lm.quality = LightmapGI.BAKE_QUALITY_HIGH
+	lm.bounces = 4
+	lm.directional = true
+	add_child(lm)
+	var cam_attr := CameraAttributesPractical.new()
+	cam_attr.auto_exposure_enabled = true
+	cam_attr.dof_blur_far_enabled = true
+	cam_attr.dof_blur_far_distance = 14.0
+	cam_attr.dof_blur_amount = 0.05
+	if has_node("WorldEnvironment"):
+		(get_node("WorldEnvironment") as WorldEnvironment).camera_attributes = cam_attr
+
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and e.keycode == KEY_V and not chat.has_focus():
+		eye_mode = not eye_mode
+		return
+	if eye_mode and e is InputEventMouseMotion and (e.button_mask & MOUSE_BUTTON_MASK_LEFT):
+		eye.yaw -= e.relative.x * 0.004
+		eye.pitch = clamp(eye.pitch - e.relative.y * 0.004, -1.2, 1.0)
+		return
 	if e is InputEventMouseMotion and (e.button_mask & MOUSE_BUTTON_MASK_LEFT):
 		orbit.yaw -= e.relative.x * 0.005
 		orbit.pitch = clamp(orbit.pitch - e.relative.y * 0.005, -1.45, -0.08)
