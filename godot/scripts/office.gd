@@ -723,16 +723,26 @@ func _process(dt: float) -> void:
 			# the Boss is never drawn from the 100 ms buffer: he follows the newest server position (nudged 0.1 s
 			# ahead along his own steering) with a fast smooth lerp, so keys answer at once and nothing fights the
 			# server (a local copy that ran ahead and snapped back made him jerk at walls and people)
-			# the target glides continuously: newest snapshot + steering x time since it arrived (not a step every 100 ms)
+			# his own body walks at his steering speed every frame (smooth for the eye camera); a soft spring pulls it
+			# toward the server's position (newest snapshot + steering x its age), and it never gets more than 0.35 m
+			# ahead of the server along the walk (a wall or a person stops him without a jump back)
 			var h: Array = p.get("hist", [])
 			var age: float = clamp(now - (h[-1].t if not h.is_empty() else now), 0.0, 0.15)
-			var v3 := Vector3(boss_v.x, 0, boss_v.y)
-			var target: Vector3 = p.pos + v3 * age
-			# while walking, never step back along the walk (a snapshot slightly behind the glide): hold that frame
-			if v3.length() > 0.01 and (target - n.position).dot(v3) < 0.0 and target.distance_to(n.position) < 0.6:
-				target = n.position
+			# the server's real velocity (it accelerates and caps below the requested speed): walking at the requested
+			# speed ran ahead and the spring pulled back — that was the shaking
+			var v3 := Vector3.ZERO
+			if h.size() >= 2 and boss_v.length() > 0.01:
+				# over the last few snapshots (~0.3 s): two equal positions in a row must not read as a stop
+				var first: Dictionary = h[max(0, h.size() - 4)]
+				v3 = ((h[-1].pos as Vector3) - (first.pos as Vector3)) / max(h[-1].t - first.t, 0.05)
+			var server: Vector3 = p.pos + v3 * age
+			var local: Vector3 = p.get("local", n.position)
+			local += v3 * dt
+			local = local.lerp(server, clamp(dt * 3.0, 0, 1))
+			if local.distance_to(server) > 2.0: local = server   # teleport (arrival, seat): no slide across the room
+			p.local = local
 			var face: float = atan2(boss_v.x, boss_v.y) if boss_v.length() > 0.01 else p.yaw
-			at = {"pos": n.position.lerp(target, clamp(dt * 20.0, 0, 1)), "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 10.0, 0, 1))}
+			at = {"pos": local, "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 8.0, 0, 1))}
 		n.position = at.pos
 		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
