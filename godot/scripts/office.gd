@@ -73,6 +73,7 @@ func _ready() -> void:
 var url := SERVER_URL
 var steer_sent := Vector2.ZERO
 var steer_t := 0.0
+var boss_v := Vector2.ZERO   # this client's own steering (m/s): the Boss moves at once, the server only corrects him
 var chat: LineEdit
 
 func _send_boss(cmd: Dictionary) -> void:
@@ -80,6 +81,7 @@ func _send_boss(cmd: Dictionary) -> void:
 		ws.send_text(JSON.stringify({"t": "boss", "cmd": cmd}))
 
 func _boss_input(dt: float) -> void:
+	boss_v = Vector2.ZERO
 	if chat.has_focus():
 		return
 	var v := Vector2(Input.get_axis("ui_left", "ui_right") + float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
@@ -95,6 +97,7 @@ func _boss_input(dt: float) -> void:
 		var f3 := Vector3(-sin(eye.yaw), 0, -cos(eye.yaw)); var r3 := Vector3(-f3.z, 0, f3.x)
 		eye.pos += (r3 * v.x - f3 * v.y) * speed * dt
 		return
+	boss_v = world_v
 	if (world_v - steer_sent).length() > 0.05 or (world_v.length() > 0.05 and steer_t > 0.2):
 		_send_boss({"verb": "steer", "vx": world_v.x, "vz": world_v.y})
 		steer_sent = world_v; steer_t = 0.0
@@ -716,6 +719,18 @@ func _process(dt: float) -> void:
 		var n: Node3D = p.node
 		var before := n.position
 		var at: Dictionary = _interp(p, now - INTERP_DELAY)
+		if id == "boss" and p.state != "offsite" and (boss_v.length() > 0.01 or p.get("pred", false)):
+			# client-side prediction: the Boss moves the moment a key is pressed; the server's position (which runs
+			# ~0.15 s behind the keys) only pulls him back gently, or at once after a real block (wall, person)
+			var local: Vector3 = p.get("local", n.position) + Vector3(boss_v.x, 0, boss_v.y) * dt
+			var server: Vector3 = p.pos + Vector3(boss_v.x, 0, boss_v.y) * 0.15
+			local = server if local.distance_to(server) > 1.2 else local.lerp(server, clamp(dt * 2.5, 0, 1))
+			p.local = local
+			p.pred = boss_v.length() > 0.01 or local.distance_to(p.pos) > 0.03
+			var face: float = atan2(boss_v.x, boss_v.y) if boss_v.length() > 0.01 else p.yaw
+			at = {"pos": local, "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 10.0, 0, 1))}
+		else:
+			p.local = at.pos
 		n.position = at.pos
 		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
