@@ -151,6 +151,8 @@ export class Mind {
     const interruptible = b.active && (b.active.verb === 'wait' || b.active.target?.startsWith('desk.'));
     if (interruptible && w.now - this.lastThought > 120_000) { this.tickBody(w.now, b.active?.target?.startsWith('desk.') ?? false); if (urgency(this.needs, this.me.habits.smoker) >= 0.8) return true; }
     if (b.active && !this.addressed) return false;            // busy bodies are not interrupted unless spoken to
+    // idle with a pressing need: don't wait for the quiet-spell re-think
+    if (!b.active && w.now - this.lastThought > 60_000) { this.tickBody(w.now, false); if (urgency(this.needs, this.me.habits.smoker) >= 0.8) return true; }
     if (this.pendingWake) return true;
     // a quiet spell: idle people re-think every 3-6 minutes, busy ones are left alone
     return !b.active && w.now - this.lastThought > 180_000 * (1 + (this.me.id.length % 3) / 2);
@@ -252,6 +254,10 @@ export class Mind {
       if (!res.ok && /stand up first/.test(res.msg ?? '')) {
         const up = w.command(this.me.id, { verb: 'stand' });
         if (up.ok) { res = up; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
+      } else if (!res.ok && /hands full/.test(res.msg ?? '')) {
+        // finish what is in your hand first (the drink, the snack), then do what you wanted
+        const drink = w.command(this.me.id, { verb: 'consume' });
+        if (drink.ok) { res = drink; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
       } else if (!res.ok && /sit at (chair\.[\w-]+) first/.test(res.msg ?? '')) {
         const chair = /sit at (chair\.[\w-]+) first/.exec(res.msg ?? '')![1]!;
         const sit = w.command(this.me.id, { verb: 'sit', target: chair });

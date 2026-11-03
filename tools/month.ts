@@ -53,12 +53,14 @@ const flag = (k: string) => problems.set(k, (problems.get(k) ?? 0) + 1);
 type Day = { speech: number; failed: Map<string, number>; meetings: string[]; events: string[]; typingSamples: number; samples: number; seatedAtMeeting: number[] };
 let day: Day | null = null, dayKey = '';
 const blockedLog: string[] = [];
+const ytlog: string[] = [];
 const lastCmd = new Map<string, unknown>();
 const origCommand = w.command.bind(w);
 w.command = ((id: string, c: never) => { const r = origCommand(id, c); if ((r as { ok: boolean }).ok) lastCmd.set(id, c); return r; }) as typeof w.command;
 rt.onEvent = e => {
   if (!day) return;
   if (e.type === 'speech') day.speech++;
+  if ((e as { agent?: string }).agent === 'yt_res' && /failed|done/.test(e.type) && ytlog.length < 400) ytlog.push(`${new Date(e.t).toISOString().slice(11, 19)} ${e.type} ${(e as { verb?: string }).verb} ${(e as { msg?: string; detail?: string }).msg ?? (e as { detail?: string }).detail ?? ''}`); // YTLOG
   if (e.type === 'action_failed' && /blocked/.test((e as { msg?: string }).msg ?? '') && blockedLog.length < 12) blockedLog.push(`${seoulTime(e.t).date} ${(e as { agent: string }).agent} ${JSON.stringify(lastCmd.get((e as { agent: string }).agent))}`);
   if (e.type === 'action_failed') { const b = w.bodies.get((e as { agent: string }).agent); const k = `${(e as { agent: string }).agent} ${e.verb}${b?.active?.target ? '' : ''}: ${(e as { msg?: string }).msg?.slice(0, 50)} near (${b?.pos.x.toFixed(0)},${b?.pos.z.toFixed(0)})`; day.failed.set(k, (day.failed.get(k) ?? 0) + 1); }
 };
@@ -91,7 +93,7 @@ while (w.now < end) {
     }
     for (const [id, m] of rt.minds) {
       const b = w.bodies.get(id)!;
-      if (b.state !== 'offsite' && m.needs.bladder >= 1) flag(`bladder at 100%: ${id}`);
+      if (b.state !== 'offsite' && m.needs.bladder >= 1) flag(`bladder at 100%: ${id} (${b.state} ${b.active?.verb ?? '-'}:${b.active?.target ?? ''} ${rt.activity})`);
       if (b.state !== 'offsite' && m.needs.hunger >= 1) flag(`hunger at 100%: ${id}`);
     }
     if (t.minuteOfDay > 23 * 60 && present.length) flag(`still in the office after 23:00: ${present.map(b => b.spec.id).join(',')}`);
@@ -129,4 +131,5 @@ function report(date: string, d: Day): void {
 console.log(`\n${DAYS} days in ${Math.round((Date.now() - t0) / 1000)} s, ${calls} model calls (scripted)`);
 console.log('top frictions:', rt.topFrictions(8).map(f => `${f.what} -> ${f.why} x${f.n}`).join('\n  '));
 console.log('blocked:', blockedLog.join('\n  '));
+if (process.env.YTLOG) console.log(ytlog.slice(-40).join('\n'));
 console.log('PROBLEMS:'); for (const [k, n] of [...problems.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40)) console.log(`  ${n}x ${k}`);
