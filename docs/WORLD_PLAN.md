@@ -478,3 +478,22 @@ Taxmin: 20–30 Pro limit oynasi (bonus va tejash vositalari bilan kamroq). Har 
   - ish tezligi va sifati tushmaydi, aksincha oshadi; xato saboqqa aylanadi (§11.2);
   - bu qoida his-tuyg'u yadrosida kod sifatida bajariladi (`packages/brain/src/emotion.ts`).
 
+## 29. Majlislar va bayramlar (2026-11-03, Boss) — `packages/brain/src/calendar.ts`
+**Majlislar** (Manager olib boradi, majlis xonasida):
+- har kuni ertalab 09:10–09:30: bugungi rejalar;
+- har kuni kechqurun 20:20–20:50: kunlik tahlil;
+- har dushanba 10:00–11:30: o'tgan hafta bo'yicha katta tahlil majlisi (muhokama va qarorlar).
+
+**Har oyning 31-sanasi** (ofis 31-oktyabrda ochilgan): "ofis N oylik bo'ldi".
+- Ish 18:00 da tugaydi; tabriklar, yaxshi tilaklar, ishlarida omad tilash.
+- Bazm va diskoteka; uyga 23:30 dan keyin qaytiladi.
+- 31-oktyabr = "N yillik".
+
+**Tug'ilgan kun** (hech kim qarimaydi, lekin tug'ilgan kun bor):
+- qolgan xodimlar va Manager 07:30 da kelib, ofisni "Happy Birthday" uslubida bezatadi;
+- tug'ilgan kun egasi kelganda xor bo'lib "Happy birthday to you" aytiladi, keyin qarsaklar, bazm va tabriklar;
+- har kim pul sovg'a qiladi (taxminan $200), boshqa sovg'a yo'q;
+- bazm tugagach ishga qaytiladi (qachon qaytishni Manager aytadi).
+
+**Yangi yil:** hamma ofisda 10 soat: 31-dekabr 18:00 dan 1-yanvar 04:00 gacha, yarim tunda sanoq (countdown). Bu vaqtda ish yo'q, faqat bazm. 1-yanvar dam olish kuni.
+
