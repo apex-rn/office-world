@@ -1,2 +1,11 @@
 # Godot editor/import cache (rebuilt on open)
 .godot/
+# textures Godot extracts from the GLBs on import (the GLB already holds them; regenerated on first open)
+assets/people/*.jpg
+assets/people/*.png
+assets/people/*.jpg.import
+assets/people/*.png.import
+assets/furniture/*.jpg
+assets/furniture/*.png
+assets/furniture/*.jpg.import
+assets/furniture/*.png.import
