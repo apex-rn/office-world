@@ -257,7 +257,8 @@ export class World {
       return this.finishInstant(b, 'place', it.id);
     }
 
-    if (b.state === 'sitting' && c.verb !== 'stand' && c.verb !== 'wait') {
+    const deskWork = c.verb === 'use' && c.action === 'work' && b.seat?.inst === c.target.replace(/^desk\./, 'chair.');
+    if (b.state === 'sitting' && c.verb !== 'stand' && c.verb !== 'wait' && !deskWork) {
       // work/use from the seat is only allowed for the device the seat belongs to; anything else needs standing up first
       return rej('BUSY', 'sitting — stand up first');
     }
@@ -293,6 +294,13 @@ export class World {
         }
         const aff = i && def(i.def).affordances?.find(a => a.verb === c.action);
         if (!i || !aff) return rej('UNKNOWN_TARGET', `${c.target} cannot ${c.action}`);
+        // working at your own desk is done sitting in its chair (desk.X <-> chair.X): no walking, the hands type
+        if (aff.verb === 'work' && b.state === 'sitting' && b.seat?.inst === i.id.replace(/^desk\./, 'chair.')) {
+          const r = this.begin(b, { verb: 'use', phase: 'timer', target: i.id, until: this.now + between(this.rand, aff.duration[0], aff.duration[1]) * 1000 });
+          b.anim = aff.anim;
+          return r;
+        }
+        if (aff.verb === 'work' && b.seat?.inst !== i.id.replace(/^desk\./, 'chair.')) return rej('NOT_ALLOWED', `sit at ${i.id.replace(/^desk\./, 'chair.')} first, then work`);
         if (aff.yields && b.holding) return rej('HANDS_FULL', `hands full (${b.holding})`);
         const at = aff.at === 'self' ? { p: { x: i.x, y: 0, z: i.z }, yaw: i.yaw } : this.anchorWorld(i, aff.at);
         if (!at) return rej('UNKNOWN_TARGET', 'device has no use point');
@@ -827,7 +835,9 @@ export class World {
     }
 
     if (a.phase === 'timer' && this.now >= a.until!) {
-      if (a.verb === 'consume' && b.holding) { const it = this.items.get(b.holding); if (it) it.fill = 0; }
+      // finished the drink/snack: the empty mug or wrapper goes to the dishes (hands free again)
+      if (a.verb === 'consume' && b.holding) { this.items.delete(b.holding); b.holding = null; }
+      if (b.state === 'sitting' && b.anim === 'typing') b.anim = 'sit_idle';
       return done();
     }
   }

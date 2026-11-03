@@ -294,3 +294,14 @@ export const STAFF: Identity[] = [
 ];
 
 export const STAFF_BY_ID: ReadonlyMap<string, Identity> = new Map(STAFF.map(p => [p.id, p]));
+
+// what each person actually does, so an empty board never makes people copy each other's update
+export const ROLE_WORK: Record<string, string> = {
+  manager: 'run the team, set priorities, unblock people', guard: 'office security, the safe and payday, visitors, the CCTV',
+  cleaner: 'keep the office clean and tidy', ig_res: 'Instagram research: trends, competitor Reels, which hooks get saves and shares',
+  yt_res: 'YouTube research: analytics, retention curves, topics with search demand, the path to monetization',
+  facts: 'fact-checking every script and claim before it ships', writer: 'scripts and hooks for Shorts, Reels and long videos',
+  shorts: 'editing Shorts and Reels: pacing, captions, the first 2 seconds', longform: 'long-form YouTube videos: structure, edit, chapters',
+  qa: 'quality checks before publishing: facts, audio, captions, platform rules', publisher: 'publishing: titles, thumbnails, schedule, upload limits',
+};
+

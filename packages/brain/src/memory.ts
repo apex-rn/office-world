@@ -1,7 +1,7 @@
 // Memory stream — WORLD_PLAN §11.2. Every observation, conversation, feeling and work outcome is remembered with an
 // importance score; recall ranks by recency + importance + relevance (embeddings when available, keywords otherwise).
 
-export type MemoryKind = 'observation' | 'conversation' | 'feeling' | 'work' | 'reflection' | 'lesson';
+export type MemoryKind = 'observation' | 'conversation' | 'feeling' | 'work' | 'reflection' | 'lesson' | 'plan';
 
 export interface Memory { id: number; at: number; kind: MemoryKind; text: string; importance: number; embedding?: number[] }
 

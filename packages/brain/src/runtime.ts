@@ -147,7 +147,13 @@ export class OfficeRuntime {
       // someone spoke to a person who is following their own plan: the plan waits, the answer comes first
       if (m.wantsReply && this.errands.has(id) && !this.inFlightIds.has(id)) this.errands.drop(id, 'plan');
       if (!b.active && this.errands.has(id)) {
-        if (b.state === 'sitting' && this.errands.peek(id)?.verb !== 'sit') { w.command(id, { verb: 'stand' }); continue; }
+        // stand up only for a step that needs walking: working at your own desk, drinking, waiting or talking happen seated
+        const nx = this.errands.peek(id);
+        const seatedOk = !!nx && (nx.verb === 'wait' || nx.verb === 'consume' || nx.verb === 'say' || nx.verb === 'stand'
+          || (nx.verb === 'use' && nx.action === 'work' && b.seat?.inst === nx.target.replace(/^desk\./, 'chair.'))
+          || (nx.verb === 'sit' && b.seat?.inst === nx.target));
+        if (b.state === 'sitting' && nx && !seatedOk && nx.verb !== 'sit') { w.command(id, { verb: 'stand' }); continue; }
+        if (b.state === 'sitting' && nx?.verb === 'sit' && b.seat?.inst === nx.target) { this.errands.next(id, w.now, () => ({ ok: true })); continue; }
         this.errands.next(id, w.now, c => w.command(id, c)); continue;
       }
       if (now >= leave && !b.active && b.state !== 'sitting') {

@@ -1,6 +1,6 @@
 import type { World } from '../../sim/src/world.js';
 import type { Card } from './board.js';
-import { SHARED_WORLDVIEW } from './identity.js';
+import { ROLE_WORK, SHARED_WORLDVIEW } from './identity.js';
 import type { ChatMessage, Router } from './llm.js';
 import type { Mind } from './mind.js';
 
@@ -21,16 +21,6 @@ const PURPOSE: Record<MeetingType, string> = {
   morning_plan: "today's plan: who does what by when, blockers, the one thing that matters most today",
   evening_review: "today's results: what shipped, what the numbers say, what we learned, what moves to tomorrow",
   weekly_review: 'last week in depth: views, followers, wins and misses, why, and the three bets for this week',
-};
-
-// what each person actually does, so an empty board never makes people copy each other's update
-const ROLE_WORK: Record<string, string> = {
-  manager: 'run the team, set priorities, unblock people', guard: 'office security, the safe and payday, visitors, the CCTV',
-  cleaner: 'keep the office clean and tidy', ig_res: 'Instagram research: trends, competitor Reels, which hooks get saves and shares',
-  yt_res: 'YouTube research: analytics, retention curves, topics with search demand, the path to monetization',
-  facts: 'fact-checking every script and claim before it ships', writer: 'scripts and hooks for Shorts, Reels and long videos',
-  shorts: 'editing Shorts and Reels: pacing, captions, the first 2 seconds', longform: 'long-form YouTube videos: structure, edit, chapters',
-  qa: 'quality checks before publishing: facts, audio, captions, platform rules', publisher: 'publishing: titles, thumbnails, schedule, upload limits',
 };
 
 function persona(m: Mind): string {

@@ -86,3 +86,10 @@
 - Coat rack in use: arrival = hang coat → own chair; leaving = take coat → go home.
 - Frictions: every failed action ("wanted X, but Y") is counted per day (`rt.topFrictions`), fed into the Manager's meetings and written to DATA/office_frictions.json — the staff's own list of what to improve in the office (a Claude work session fixes them; the Boss approves).
 - Speech fix: gpt-oss spends max_tokens on reasoning → meeting turns (120-160 tokens) came back empty and were dropped silently. Now: reasoning 'low', +700 token room, one retry, `clean()` keeps only spoken words; life thoughts 1200 tokens, reflection 1100.
+
+## 2026-11-03 — Mind v2 (phase 1 of the behaviour upgrade)
+- Body needs (`brain/src/needs.ts`): hunger, thirst, caffeine (per coffeePerDay), bladder, mental fatigue, social, nicotine (smokers). They rise with time, fall when an action meets them, appear in the prompt as first-person feelings, and a pressing one (≥0.8) interrupts desk work. No schedules.
+- Real desk work: `use desk.<me> work` while seated in `chair.<me>` (typing, 10-60 min); offered in every prompt. People stand up / sit down by themselves when an action needs it (mind auto-step), drink the coffee they made (consume, hands free), errands no longer stand a seated person up for seated steps.
+- Morning plan: one background call per person per day ("HH:MM – what"), shown in every later thought and stored as memory.
+- Conversations: per-partner dialogue (last 6 lines) in the prompt, closed naturally.
+- Headless 4 h check (scripted model): 10/10 staff typing at 13:00, coffee/toilet trips happen, 0 frictions (was: 2/10 typing, 179 rejections).
