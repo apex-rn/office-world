@@ -73,6 +73,7 @@ func _ready() -> void:
 var url := SERVER_URL
 var steer_sent := Vector2.ZERO
 var steer_t := 0.0
+var boss_v := Vector2.ZERO   # this client's own steering (m/s): the Boss moves at once, the server only corrects him
 var chat: LineEdit
 
 func _send_boss(cmd: Dictionary) -> void:
@@ -80,6 +81,7 @@ func _send_boss(cmd: Dictionary) -> void:
 		ws.send_text(JSON.stringify({"t": "boss", "cmd": cmd}))
 
 func _boss_input(dt: float) -> void:
+	boss_v = Vector2.ZERO
 	if chat.has_focus():
 		return
 	var v := Vector2(Input.get_axis("ui_left", "ui_right") + float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
@@ -95,6 +97,7 @@ func _boss_input(dt: float) -> void:
 		var f3 := Vector3(-sin(eye.yaw), 0, -cos(eye.yaw)); var r3 := Vector3(-f3.z, 0, f3.x)
 		eye.pos += (r3 * v.x - f3 * v.y) * speed * dt
 		return
+	boss_v = world_v
 	if (world_v - steer_sent).length() > 0.05 or (world_v.length() > 0.05 and steer_t > 0.2):
 		_send_boss({"verb": "steer", "vx": world_v.x, "vz": world_v.y})
 		steer_sent = world_v; steer_t = 0.0
@@ -448,7 +451,10 @@ func _play(p: Dictionary, state: String, anim_name: String) -> void:
 		anim_name = "standing"
 	var want: String = anim_map.get(anim_name, anim_map.get(state, ""))
 	if want != "" and ap.has_animation(want) and ap.current_animation != want:
-		ap.play(want, 0.3)   # 0.3 s blend: no robotic snapping between poses
+		# 0.3 s blend between poses; sitting down / standing up eases over 0.6 s so the body lowers instead of popping
+		var sit_clip: String = anim_map.get("sitting", "")
+		var blend := 0.6 if (want == sit_clip or ap.current_animation == sit_clip) else 0.3
+		ap.play(want, blend)
 	p.walk_clip = anim_map.get("walk", "")
 
 # Korean bow (Rocketbox has no bow clip): bend the spine chain forward, hold, and straighten — on top of idle
@@ -486,6 +492,11 @@ func _apply_snap(s: Dictionary) -> void:
 		# the root stays on the floor: the seated clip itself puts the pelvis on the seat (no double lift)
 		p.pos = Vector3(b.x, 0.0, b.z)
 		p.yaw = b.yaw
+		# snapshot buffer: bodies are drawn ~100 ms in the past, between two real samples (no jumps at 10 Hz)
+		var hist: Array = p.get("hist", [])
+		hist.append({"t": Time.get_ticks_msec() / 1000.0, "pos": p.pos, "yaw": b.yaw})
+		if hist.size() > 6: hist.pop_front()
+		p.hist = hist
 		p.state = b.state
 		# when the camera is the Boss's own eyes, his body is not drawn (he saw the top of his own capsule)
 		var own_eyes: bool = b.id == "boss" and eye_mode and not eye_locked
@@ -507,10 +518,12 @@ const APP := {"shorts": "Premiere Pro — Shorts edit", "writer": "Google Docs �
 	"manager": "Team board — overview", "guard": "CCTV — entrance · hall · balcony · server"}
 
 func _add_screen(i: Dictionary, node: Node3D) -> void:
-	var box := _aabb(node, Transform3D.IDENTITY)
+	# the box in the node's own frame: _aabb applies the node's transform, and the node is already placed in the
+	# room, so without the inverse a monitor's screen landed metres away (its room z added to its front face)
+	var box := _aabb(node, node.transform.affine_inverse())
 	var sz: Vector2; var cy: float
 	match String(i.def):
-		"monitor_24": sz = Vector2(i.w - 0.03, 0.29); cy = i.h - 0.159
+		"monitor_24": sz = Vector2(i.w - 0.016, 0.30); cy = i.h - 0.159   # = the glass of monitor_24.glb (furnish.py)
 		"tv_65": sz = Vector2(i.w - 0.03, i.h - 0.03); cy = i.h / 2
 		_: sz = Vector2(i.w - 0.08, i.h - 0.12); cy = i.h / 2 + 0.03
 	var panel := MeshInstance3D.new()
@@ -521,7 +534,10 @@ func _add_screen(i: Dictionary, node: Node3D) -> void:
 	if not lit: m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.emission_enabled = lit; m.emission = Color(0.0, 0.0, 0.0); m.roughness = 0.15
 	panel.material_override = m
-	panel.position = Vector3(0, cy, box.end.z + 0.0015)
+	# on the glass itself: the monitor's box reaches past the screen (its stand base sits 5 cm further forward),
+	# which left the live panel floating in front of the lit glass as a second screen
+	var front: float = 0.0425 if i.def == "monitor_24" else box.end.z + 0.0015
+	panel.position = Vector3(0, cy, front)
 	node.add_child(panel)
 	var t := Label3D.new()
 	t.font_size = 40 if i.def == "monitor_24" else 64
@@ -619,6 +635,24 @@ func _pin_cards(cards: Array) -> void:
 			more.font_size = 64; more.pixel_size = 0.0005; more.modulate = Color(0.1, 0.1, 0.12)
 			more.position = Vector3(-w / 2 + 0.02 + ci * cw + cw / 2, 0.08, 0.017); root.add_child(more)
 
+const INTERP_DELAY := 0.1   # seconds bodies are drawn behind the newest snapshot (one 10 Hz interval)
+
+# position and facing at render time t, between the two buffered snapshots around it
+func _interp(p: Dictionary, t: float) -> Dictionary:
+	var h: Array = p.get("hist", [])
+	if h.is_empty():
+		return {"pos": p.pos, "yaw": p.yaw}
+	if h.size() == 1 or t <= h[0].t:
+		return {"pos": h[0].pos, "yaw": h[0].yaw}
+	for i in range(h.size() - 1, 0, -1):
+		var a: Dictionary = h[i - 1]; var b: Dictionary = h[i]
+		if t >= a.t:
+			var k: float = clamp((t - a.t) / max(b.t - a.t, 0.001), 0.0, 1.0)
+			# a big step is a teleport (arrival, seat snap): no slide across the room
+			if (b.pos as Vector3).distance_to(a.pos) > 2.0: k = 1.0
+			return {"pos": (a.pos as Vector3).lerp(b.pos, k), "yaw": lerp_angle(a.yaw, b.yaw, k)}
+	return {"pos": h[-1].pos, "yaw": h[-1].yaw}
+
 func _speech(e: Dictionary) -> void:
 	if not people.has(e.from):
 		return
@@ -689,7 +723,32 @@ func _process(dt: float) -> void:
 		var p: Dictionary = people[id]
 		var n: Node3D = p.node
 		var before := n.position
-		n.position = n.position.lerp(p.pos, clamp(dt * 10.0, 0, 1))
+		var at: Dictionary = _interp(p, now - INTERP_DELAY)
+		if id == "boss" and p.state != "offsite":
+			# the Boss is never drawn from the 100 ms buffer: he follows the newest server position (nudged 0.1 s
+			# ahead along his own steering) with a fast smooth lerp, so keys answer at once and nothing fights the
+			# server (a local copy that ran ahead and snapped back made him jerk at walls and people)
+			# his own body walks at his steering speed every frame (smooth for the eye camera); a soft spring pulls it
+			# toward the server's position (newest snapshot + steering x its age), and it never gets more than 0.35 m
+			# ahead of the server along the walk (a wall or a person stops him without a jump back)
+			var h: Array = p.get("hist", [])
+			var age: float = clamp(now - (h[-1].t if not h.is_empty() else now), 0.0, 0.15)
+			# the server's real velocity (it accelerates and caps below the requested speed): walking at the requested
+			# speed ran ahead and the spring pulled back — that was the shaking
+			var v3 := Vector3.ZERO
+			if h.size() >= 2 and boss_v.length() > 0.01:
+				# over the last few snapshots (~0.3 s): two equal positions in a row must not read as a stop
+				var first: Dictionary = h[max(0, h.size() - 4)]
+				v3 = ((h[-1].pos as Vector3) - (first.pos as Vector3)) / max(h[-1].t - first.t, 0.05)
+			var server: Vector3 = p.pos + v3 * age
+			var local: Vector3 = p.get("local", n.position)
+			local += v3 * dt
+			local = local.lerp(server, clamp(dt * 3.0, 0, 1))
+			if local.distance_to(server) > 2.0: local = server   # teleport (arrival, seat): no slide across the room
+			p.local = local
+			var face: float = atan2(boss_v.x, boss_v.y) if boss_v.length() > 0.01 else p.yaw
+			at = {"pos": local, "yaw": lerp_angle(n.rotation.y, face, clamp(dt * 8.0, 0, 1))}
+		n.position = at.pos
 		var spd: float = Vector2(n.position.x - before.x, n.position.z - before.z).length() / max(dt, 0.001)
 		# "walking" but not getting anywhere (blocked in a crowd, no path): _play shows them standing instead of
 		# striding on the spot
@@ -699,7 +758,7 @@ func _process(dt: float) -> void:
 			(p.anim as AnimationPlayer).speed_scale = clamp(spd / 1.3, 0.6, 1.5)
 		elif p.anim:
 			(p.anim as AnimationPlayer).speed_scale = 1.0
-		n.rotation.y = lerp_angle(n.rotation.y, p.yaw, clamp(dt * 6.0, 0, 1))
+		n.rotation.y = at.yaw
 		if p.bubble_until > 0 and now > p.bubble_until:
 			p.bubble.visible = false
 			p.bubble_until = 0.0
