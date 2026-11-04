@@ -142,19 +142,24 @@ func _environment() -> void:
 	env.ssil_enabled = true
 	env.ssr_enabled = true              # reflections in glass, marble and polished wood
 	env.glow_enabled = true
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.004
+	env.volumetric_fog_enabled = false
+	env.tonemap_exposure = 1.15
+	env.glow_intensity = 0.4
+	env.glow_bloom = 0.1
 	var we := WorldEnvironment.new()
 	we.name = "WorldEnvironment"
 	we.environment = env
 	add_child(we)
-	# an office lit by its ceiling: only a faint daylight fill through the windows, no hard sun shadows
-	env.ambient_light_energy = 1.25
+	# Luxury modern architectural lighting: warm bright sun casting soft shadows through south windows
+	env.ambient_light_energy = 0.85
 	var sun := DirectionalLight3D.new()
-	sun.light_energy = 0.25
-	sun.light_color = Color(0.95, 0.97, 1.0)
-	sun.shadow_enabled = false
-	sun.rotation_degrees = Vector3(-38, 200, 0)     # late afternoon, through the south windows
+	sun.light_energy = 1.2
+	sun.light_color = Color(1.0, 0.96, 0.90)   # warm natural sunlight
+	sun.shadow_enabled = true
+	sun.shadow_bias = 0.04
+	sun.shadow_opacity = 0.65
+	sun.shadow_blur = 1.5
+	sun.rotation_degrees = Vector3(-38, 200, 0)     # sunny afternoon through the south windows
 	add_child(sun)
 
 func _mat(name: String, fallback: Color, rough := 0.6, metal := 0.0, scale := 1.0) -> StandardMaterial3D:
@@ -208,13 +213,13 @@ func _box(size: Vector3, pos: Vector3, yaw: float, m: Material, parent: Node3D =
 func _floors() -> void:
 	var w: float = L.room.w
 	var d: float = L.room.d
-	_box(Vector3(w + 0.4, 0.04, d + 0.4), Vector3(w / 2, -0.02, d / 2), 0, _mat("walnut", Color(0.36, 0.25, 0.17), 0.45, 0, 0.5))
+	_box(Vector3(w + 0.4, 0.04, d + 0.4), Vector3(w / 2, -0.02, d / 2), 0, _mat("walnut", Color(0.42, 0.30, 0.21), 0.30, 0.05, 0.5))
 	for z in L.zones:
 		var xs: Array = z.poly.map(func(p): return p[0])
 		var zs: Array = z.poly.map(func(p): return p[1])
 		var x0: float = xs.min(); var x1: float = xs.max(); var z0: float = zs.min(); var z1: float = zs.max()
 		var m: Material = null
-		if z.id in ["meeting", "manager"]: m = _mat("carpet", Color(0.24, 0.25, 0.29), 1.0)
+		if z.id in ["meeting", "manager"]: m = _mat("carpet", Color(0.20, 0.26, 0.32), 0.85)
 		elif z.outdoor: m = _mat("stone", Color(0.55, 0.55, 0.52), 0.85)
 		elif z.id == "wc": m = _mat("marble", Color(0.93, 0.92, 0.9), 0.25)
 		if m:
@@ -222,7 +227,7 @@ func _floors() -> void:
 
 func _walls() -> void:
 	for p in L.walls:
-		var m: Material = _glass() if p.glass else _mat("plaster", Color(0.93, 0.91, 0.88), 0.9)
+		var m: Material = _glass() if p.glass else _mat("plaster", Color(0.97, 0.96, 0.94), 0.7)
 		var h: float = p.y1 - p.y0
 		_box(Vector3(p.hx * 2, h, p.hz * 2), Vector3(p.cx, (p.y0 + p.y1) / 2, p.cz), p.yaw, m)
 	for wdw in L.windows:
@@ -653,6 +658,14 @@ func _interp(p: Dictionary, t: float) -> Dictionary:
 			return {"pos": (a.pos as Vector3).lerp(b.pos, k), "yaw": lerp_angle(a.yaw, b.yaw, k)}
 	return {"pos": h[-1].pos, "yaw": h[-1].yaw}
 
+
+func _on_payday(e: Dictionary) -> void:
+	_log_line("🏦 Safe / Viktor", "🎉 Bugun oylik kuni! Hamma xodimlarga oylik va bonuslar topshirildi!")
+	for id in people:
+		var p: Dictionary = people[id]
+		if p.state != "offsite":
+			_play(p, p.state, "clap")
+
 func _speech(e: Dictionary) -> void:
 	if not people.has(e.from):
 		return
@@ -713,6 +726,7 @@ func _process(dt: float) -> void:
 					boss_auto = false
 					if not (people.has("boss") and people["boss"].state != "offsite"): _send_boss({"verb": "arrive"})
 			elif m.t == "event" and m.e.get("type", "") == "speech": _speech(m.e)
+			elif m.t == "event" and m.e.get("type", "") == "payday": _on_payday(m.e)
 			elif m.t == "board": _pin_cards(m.cards); board_cards = m.cards
 			elif m.t == "event" and m.e.get("type", "") == "meeting_done": _write_whiteboard(m.e)
 	elif ws.get_ready_state() == WebSocketPeer.STATE_CLOSED:
@@ -812,7 +826,8 @@ func _ceiling() -> void:
 		while z < d:
 			ceiling_parts.append(_box(Vector3(0.6, 0.01, 0.6), Vector3(x, h - 0.006, z), 0, panel))
 			var l := OmniLight3D.new()
-			l.position = Vector3(x, h - 0.15, z); l.omni_range = 5.0; l.light_energy = 1.1; l.light_color = Color(1.0, 0.97, 0.93)
+			l.position = Vector3(x, h - 0.15, z); l.omni_range = 5.5; l.light_energy = 0.85; l.light_color = Color(1.0, 0.96, 0.91)
+			l.omni_attenuation = 1.2
 			l.light_bake_mode = Light3D.BAKE_STATIC; l.shadow_enabled = false
 			add_child(l)
 			z += 2.4
