@@ -543,7 +543,10 @@ export class World {
       // the first through (inside, else closest) sets the direction of flow; people coming the other way wait
       users.sort((x, y) => (Number(y.inside) - Number(x.inside)) || x.dist - y.dist);
       const flowSide = users[0]!.side;
-      for (const u of users.slice(1)) if (u.side !== flowSide && !u.inside && u.dist < 1.6) held.add(u.b.spec.id);
+      for (const u of users.slice(1)) {
+        if (u.side !== flowSide && !u.inside && u.dist < 1.6) held.add(u.b.spec.id);
+        else if (u.side === flowSide && !u.inside && u.dist < 1.35 && (users[0]!.inside || users[0]!.dist < 0.85)) held.add(u.b.spec.id);
+      }
     }
     // small rooms with a capacity: people heading inside wait ~1.3 m outside the door while the room is full
     for (const z of this.layout.zones) {
@@ -598,9 +601,15 @@ export class World {
       const pri = (id: string) => [...(id + slot)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
       if (pri(b.spec.id) > pri(o.spec.id)) return;          // the other one yields
       const dx = o.pos.x - b.pos.x, dz = o.pos.z - b.pos.z, L = Math.hypot(dx, dz) || 1;
+      let p: Vec3 | null = null;
       for (const side of [1, -1]) {
-        const p = snap(this.nav, { x: b.pos.x - (dz / L) * side * 0.7 - (dx / L) * 0.3, y: 0, z: b.pos.z + (dx / L) * side * 0.7 - (dz / L) * 0.3 }, { x: 0.2, y: 1, z: 0.2 });
-        if (!p) continue;
+        p = snap(this.nav, { x: b.pos.x - (dz / L) * side * 0.7 - (dx / L) * 0.3, y: 0, z: b.pos.z + (dx / L) * side * 0.7 - (dz / L) * 0.3 }, { x: 0.2, y: 1, z: 0.2 });
+        if (p) break;
+      }
+      if (!p) {
+        p = snap(this.nav, { x: b.pos.x - (dx / L) * 0.85, y: 0, z: b.pos.z - (dz / L) * 0.85 }, { x: 0.25, y: 1, z: 0.25 });
+      }
+      if (p) {
         b.stepAside = p; b.stepAsideT = this.now; b.agent.requestMoveTarget(p);
         this.emit({ t: this.now, type: 'yield', agent: b.spec.id, for: o.spec.id });
         if (b.active) b.active.lastProgressT = this.now;

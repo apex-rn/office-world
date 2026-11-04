@@ -281,6 +281,16 @@ export class Mind {
         const chair = /sit at (chair\.[\w-]+) first/.exec(res.msg ?? '')![1]!;
         const sit = w.command(this.me.id, { verb: 'sit', target: chair });
         if (sit.ok) { res = sit; issued = { verb: 'x' } as never; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
+      } else if (!res.ok && /cannot hear you from here/.test(res.msg ?? "") && parsed.command.verb === "say" && parsed.command.to) {
+        const targetBody = w.bodies.get(parsed.command.to);
+        if (targetBody && targetBody.state !== "offsite") {
+          const go = w.command(this.me.id, { verb: "go_to", target: parsed.command.to });
+          if (go.ok) { res = go; issued = { verb: "x" } as never; parsed.then = [parsed.command, ...parsed.then].slice(0, 4); }
+          else {
+            parsed.command.to = null;
+            res = w.command(this.me.id, parsed.command);
+          }
+        }
       }
       // what a person obviously does next when the model did not say: drink the coffee you made, then back to your desk
       if (res.ok && issued.verb === 'use' && /brew_coffee|take_food|take_drink|fill_water|heat_food/.test(String(issued.action))) {
