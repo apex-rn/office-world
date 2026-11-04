@@ -94,3 +94,21 @@
 - Conversations: per-partner dialogue (last 6 lines) in the prompt, closed naturally.
 - Headless 4 h check (scripted model): 10/10 staff typing at 13:00, coffee/toilet trips happen, 0 frictions (was: 2/10 typing, 179 rejections).
 - Month simulator `tools/month.ts [days] [start]` (scripted model, real everything else; ~20 s per office day). 30-day run: ~226 speech/day, ~78 % desk work, all meetings/payday/birthday fired. Bugs found and fixed: typing while standing, hands stuck full (staff starved), errand double-consume blocking thoughts, cleaner blocked dusting desks (furniture approach), urgent needs while idle. Open: guard sometimes still in at 23:00 (door/exit after everyone left), rare 10-min stall at the coat rack, 8-10 of 11 seated in some meetings.
+
+## HANDOFF (2026-11-04) — read this first in a new session
+**Where things are**
+- Code: GitHub `apex-rn/office-world`, branch `main` (all merged; 43 tests; `npm test`, `npx tsc --noEmit`).
+- Boss's PC (Windows): repo `C:\Users\MSI\office-world` (always on main; the desktop icons pull it), office data/logs
+  `%USERPROFILE%\office-world-data\` (`office.log` = service log incl. `llm:`/`meeting:`/`think:`/`clock:` lines,
+  `state.json`, `meeting-*.json`), launcher config `%USERPROFILE%\.config\office\launch.json` (+ `launcher.log`),
+  desktop icons `office.bat` (watch), `office-boss.bat` (walk in as Boss), `office-stop.bat`.
+  Godot 4.7.2 `C:\Users\MSI\apps\godot\`, portable Node `C:\Users\MSI\apps\node`. PC session notes: `C:\Users\MSI\monetization\cloud\FAILOVER_PROGRESS.md`.
+- Models: FreeLLM local `127.0.0.1:3001` (chains to be created in its dashboard: `auto:office-fast`, `auto:office-strong`);
+  never bare `auto`. Vultr server 64.176.231.4 suspended (unpaid) until ~10th — not used now.
+**Who owns what** (two Claude sessions): cloud session = `packages/**` (brain, sim, catalog, server) + merges to main;
+PC session (Remote Control) = `godot/**`, `ops/windows/**`, assets, Blender (`tools/assets/furnish.py`). PC pushes `pc/*` branches; cloud squash-merges after tests. PC must not use send_message.
+**State**: Mind v2 (needs, desk work, day plan, conversations), meetings seat 11/11 and speak, greetings with words,
+smooth standing turns, live screens/kanban/whiteboard, Boss avatar, one-click launch. Month sim: `node --import tsx tools/month.ts 30 2026-11-01`.
+**Next**: (1) PC: pc/smooth (interpolation, sit/stand transitions, head turns); (2) real-model 15-min check after the
+morning meeting (speech quality, desk work, WC/kitchen); (3) FreeLLM chains; (4) Graphify office graph (PC, after FreeLLM);
+(5) behaviour phase 2 (gestures, small talk topics from the graph). Open: brief jam at the meeting-room door.
